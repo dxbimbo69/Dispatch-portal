@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breeze Airways — Group II Aircraft Section Final</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0B1F3A;--blue:#1A5FB4;--blue-lt:#DDEEFF;--cyan:#0EA5C4;--ink:#0F0F0E;--ink2:#2E2E2C;--ink3:#6B6A64;--surface:#F7F6F2;--white:#FFFFFF;--gray:#E8E6DC;--gray-mid:#C8C5B8;--green:#1A7A3C;--green-lt:#E3F5EA;--red:#B91C1C;--red-lt:#FEE2E2;--amber:#B45309;--amber-lt:#FEF3C7;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;scroll-behavior:smooth;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;}
+.hdr{background:var(--navy);padding:0;}
+.hdr-inner{display:grid;grid-template-columns:1fr auto;align-items:end;gap:2rem;max-width:860px;margin:0 auto;padding:2.5rem 2rem 2rem;}
+.hdr-badge{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);margin-bottom:.6rem;}
+.hdr-title{font-family:'Syne',sans-serif;font-size:clamp(20px,3.5vw,30px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:.4rem;}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.5);}
+.hdr-pills{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.hdr-pill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;text-align:right;}
+.hdr-pill span{color:var(--cyan);}
+.hdr-stripe{height:3px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--navy));}
+.prog-bar{position:sticky;top:0;z-index:90;background:rgba(247,246,242,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray);padding:.55rem 2rem;}
+.prog-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.prog-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}
+.prog-track{flex:1;height:5px;background:var(--gray);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .35s ease;}
+.prog-count{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--blue);white-space:nowrap;}
+.wrap{max-width:860px;margin:0 auto;padding:2rem;}
+.info-card{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:1.5rem;margin-bottom:2rem;}
+.info-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--gray);}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.field input{width:100%;padding:9px 12px;border:1.5px solid var(--gray);border-radius:8px;font-size:14px;font-family:'Instrument Sans',sans-serif;color:var(--ink);background:var(--surface);}
+.field input:focus{outline:none;border-color:var(--blue);}
+.q-card{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:1.5rem;margin-bottom:1rem;}
+.q-card.answered{border-left:3px solid var(--cyan);}
+.q-card.correct{border-left:3px solid var(--green);background:var(--green-lt);}
+.q-card.incorrect{border-left:3px solid var(--red);background:var(--red-lt);}
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:6px;}
+.q-num{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--blue);background:var(--blue-lt);border-radius:5px;padding:3px 9px;}
+.q-type{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--gray);color:var(--ink3);}
+.q-pts{font-size:11px;font-weight:600;color:var(--ink3);}
+.q-text{font-size:14.5px;line-height:1.65;color:var(--ink);font-weight:500;}
+.options{display:flex;flex-direction:column;gap:8px;margin-top:1rem;}
+.option{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1.5px solid var(--gray);border-radius:8px;cursor:pointer;transition:all .15s;user-select:none;}
+.option:hover{border-color:var(--blue);background:var(--blue-lt);}
+.option.selected{border-color:var(--blue);background:var(--blue-lt);}
+.option.correct-ans{border-color:var(--green);background:var(--green-lt);}
+.option.wrong-ans{border-color:var(--red);background:var(--red-lt);}
+.opt-letter{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--ink3);background:var(--gray);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.option.selected .opt-letter{background:var(--blue);color:#fff;}
+.option.correct-ans .opt-letter{background:var(--green);color:#fff;}
+.option.wrong-ans .opt-letter{background:var(--red);color:#fff;}
+.opt-text{font-size:13.5px;line-height:1.55;color:var(--ink2);}
+.sa-answer{width:100%;margin-top:.75rem;padding:10px 12px;border:1.5px solid var(--gray);border-radius:8px;font-size:13px;font-family:'Instrument Sans',sans-serif;min-height:100px;resize:vertical;background:var(--surface);}
+.sa-answer:focus{outline:none;border-color:var(--blue);}
+.submit-wrap{margin:2rem 0;}
+.submit-card{background:var(--navy);border-radius:12px;padding:2rem;text-align:center;}
+.submit-card h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:.4rem;}
+.submit-card p{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem;}
+.submit-btn{display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:var(--navy);font-family:'Syne',sans-serif;font-size:14px;font-weight:800;padding:13px 36px;border-radius:8px;border:none;cursor:pointer;transition:all .2s;}
+.submit-btn:hover{background:#12B8DB;}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.results{display:none;max-width:860px;margin:0 auto;padding:2rem;}
+.results.show{display:block;}
+.result-banner{border-radius:16px;padding:2.5rem;text-align:center;margin-bottom:2rem;}
+.result-banner.pass{background:linear-gradient(135deg,#0F4C24,#1A7A3C);}
+.result-banner.fail{background:linear-gradient(135deg,#7F1D1D,#B91C1C);}
+.result-banner.submitted{background:linear-gradient(135deg,#78350F,#B45309);}
+.result-icon{font-size:52px;margin-bottom:.75rem;}
+.result-verdict{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:.4rem;}
+.result-score{font-size:44px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1;}
+.result-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:.5rem;}
+.result-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:1.5rem;}
+.rmeta{background:rgba(255,255,255,.1);border-radius:8px;padding:.85rem;text-align:center;}
+.rmeta-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;}
+.rmeta-lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px;}
+.result-actions{display:flex;gap:10px;justify-content:center;margin:1.5rem 0;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:13px;font-family:'Instrument Sans',sans-serif;font-weight:600;color:var(--ink);cursor:pointer;}
+.btn:hover{background:var(--gray);}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.instructor-note{background:var(--amber-lt);border:1.5px solid var(--amber);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+.instructor-note h4{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--amber);margin-bottom:.4rem;}
+.instructor-note p{font-size:13px;color:var(--ink2);}
+.review-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:1rem;}
+.model-answer{margin-top:.75rem;background:var(--amber-lt);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:.75rem 1rem;font-size:13px;color:var(--ink2);line-height:1.6;}
+.student-answer{margin-top:.75rem;background:var(--blue-lt);border-left:3px solid var(--blue);border-radius:0 6px 6px 0;padding:.75rem 1rem;font-size:13px;color:var(--ink2);line-height:1.6;}
+.q-cite{font-size:11.5px;color:var(--ink3);font-style:italic;margin-top:.5rem;}
+@media(max-width:600px){.hdr-inner{grid-template-columns:1fr;}.info-grid{grid-template-columns:1fr;}.result-meta{grid-template-columns:1fr 1fr;}}
+@media print{.prog-bar,.submit-wrap,.result-actions,.submit-btn{display:none!important;}.q-card{break-inside:avoid;}.model-answer{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-inner">
+    <div>
+      <div class="hdr-badge">Breeze Airways · Dispatch Training · Group II Aircraft</div>
+      <div class="hdr-title">Group II Aircraft<br>Section Final</div>
+      <div class="hdr-sub">Modules 6, 16/18/19, 17, 20 & 21 · 25 Questions · Passing Score: 20/25 (80%)</div>
+    </div>
+    <div class="hdr-pills">
+      <div class="hdr-pill">Questions: <span>25</span></div>
+      <div class="hdr-pill">Passing score: <span>20 / 25</span></div>
+      <div class="hdr-pill">Open <span>book</span></div>
+    </div>
+  </div>
+  <div class="hdr-stripe"></div>
+</header>
+<div class="prog-bar">
+  <div class="prog-inner">
+    <span class="prog-label">Progress</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="prog-count" id="prog-count">0 / 25</span>
+  </div>
+</div>
+<div class="wrap" id="exam-wrap">
+  <form id="exam-form" onsubmit="return false;">
+    <div class="info-card">
+      <div class="info-title">Student information</div>
+      <div class="info-grid">
+        <div class="field"><label>First name</label><input type="text" id="s-first" placeholder="Jane" required></div>
+        <div class="field"><label>Last name</label><input type="text" id="s-last" placeholder="Smith" required></div>
+        <div class="field"><label>Employee ID</label><input type="text" id="s-id" placeholder="BZ-1234" required></div>
+        <div class="field"><label>Date</label><input type="date" id="s-date" required></div>
+      </div>
+    </div>
+    <div id="questions-wrap"></div>
+    <div class="submit-wrap">
+      <div class="submit-card">
+        <h3>Ready to submit?</h3>
+        <p>Auto-scored questions graded instantly. Short answer questions show model answers for instructor review.</p>
+        <button class="submit-btn" id="submit-btn" onclick="submitExam()">Submit test &rarr;</button>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="results" id="results-screen">
+  <div class="result-banner" id="result-banner">
+    <div class="result-icon" id="result-icon"></div>
+    <div class="result-verdict" id="result-verdict"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="result-meta">
+      <div class="rmeta"><div class="rmeta-val" id="rm-correct"></div><div class="rmeta-lbl">Auto-scored correct</div></div>
+      <div class="rmeta"><div class="rmeta-val" id="rm-wrong"></div><div class="rmeta-lbl">Auto-scored incorrect</div></div>
+      <div class="rmeta"><div class="rmeta-val" id="rm-sa"></div><div class="rmeta-lbl">Instructor graded</div></div>
+    </div>
+  </div>
+  <div class="instructor-note" id="instructor-note" style="display:none;">
+    <h4>&#9888; Instructor: Short answer and scenario questions require manual grading</h4>
+    <p>Model answers are shown below each question. Review the student&apos;s written responses and assign points. Add short answer points to the auto-scored total to determine the final score.</p>
+  </div>
+  <div class="result-actions">
+    <button class="btn btn-primary" onclick="window.print()">&#128438; Print for grading</button>
+    <button class="btn" onclick="document.getElementById('review-wrap').scrollIntoView({behavior:'smooth'})">Review answers</button>
+  </div>
+  <div class="review-title">Full question review</div>
+  <div id="review-wrap"></div>
+</div>
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwdhpV6jhDZ7HCKxWt1xZlgCMUocwORbtS0m-CF22wUZ21NxMVDDMLkSXBgUgM4rdpb9g/exec';
+const PASS_THRESHOLD = 80;
+const EXAM_NAME = 'Group II Aircraft Section Final';
+
+const QUESTIONS = [
+  {n:1,type:'tf',pts:4,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the conditions and procedures in the MEL are followed.',options:['True','False'],correct:0,cite:'Module 6 / IOCM MEL/CDL procedures'},
+  {n:2,type:'tf',pts:4,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it functions the same way as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural EXTERNAL parts — not avionics or systems'},
+  {n:3,type:'tf',pts:4,text:'On both the A220 and E190, the maximum tailwind component for takeoff and landing is 10 knots.',options:['True','False'],correct:0,cite:'A220 AFM / E190 AFM'},
+  {n:4,type:'tf',pts:4,text:'Ballast fuel on the E190/195 is considered usable fuel and does not need to be remarked on the dispatch release.',options:['True','False'],correct:1,cite:'Module 20 slide 5 — ballast fuel is UNUSABLE and MUST be remarked'},
+  {n:5,type:'tf',pts:4,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},
+  {n:6,type:'mc',pts:4,text:'Breeze plans for a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW of:',options:['1,000 lbs','2,000 lbs','3,000 lbs','4,000 lbs'],correct:1,cite:'Module 16/18/19 W&B policy'},
+  {n:7,type:'mc',pts:4,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s FIRST action in Aerodata?',options:['Revise the dispatch release with the MEL applied','Block the FDP immediately so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL','File a safety report in Ideagen'],correct:1,cite:'Module 6 / IOCC-INFO-05'},
+  {n:8,type:'mc',pts:4,text:'When is ballast fuel required on the E190/195, and how much?',options:['Always required — 3,000 lbs minimum','When there are 15 or fewer passengers onboard — 5,000 lbs','When the aircraft is below MZFW — amount determined by W&B','Ballast fuel is not required on the E190'],correct:1,cite:'Module 20 slide 5'},
+  {n:9,type:'mc',pts:4,text:'Which of the following correctly describes the Clean Aircraft Concept under 14 CFR 121.629?',options:['The dispatcher must confirm the aircraft has been washed before winter operations','Dispatch, release, or takeoff is prohibited when frost, ice, or snow may reasonably adhere to critical surfaces unless the approved deicing/anti-icing program is followed','The crew must perform a visual inspection of the aircraft before every winter departure','Anti-icing fluid must be applied at all temperatures below 10°C'],correct:1,cite:'14 CFR 121.629 / Module 17'},
+  {n:10,type:'mc',pts:4,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The minimum fuel for landing; equal to company landing fuel minimums','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less of fuel remaining','Total fuel planned for the flight including all reserves and contingency'],correct:1,cite:'Module 20 slide 17'},
+  {n:11,type:'mc',pts:4,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of the required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','A destination alternate must always be added regardless of the 1-2-3 rule'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17'},
+  {n:12,type:'mc',pts:4,text:'A MEL amendment is considered complete only when:',options:['The dispatcher sends the revised release via ACARS','MOC confirms the MEL has been entered in the maintenance log','The PIC replies via ACARS acknowledging the amendment with time and initials','The supervisor approves the amendment in N-FP'],correct:2,cite:'Module 6 slide 34'},
+  {n:13,type:'mc',pts:4,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from deicing completion to takeoff; begins at wheels-up','The estimated time anti-icing fluid prevents contamination formation; begins when the FINAL application of fluid commences','The maximum allowed taxi time in winter conditions; begins at pushback','The time limit to complete the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},
+  {n:14,type:'sa',pts:4,text:'What are the critical surfaces that must be free of contamination before takeoff under the Clean Aircraft Concept? List all of them.',model:'Wings, horizontal stabilizers, vertical stabilizers, control surfaces, and engine inlets.',cite:'Module 17 slide 8 / GDAP'},
+  {n:15,type:'sa',pts:4,text:'What is the difference between deicing and anti-icing? When does a dispatcher need to understand this difference operationally?',model:'Deicing REMOVES existing frost, ice, or snow. Anti-icing PREVENTS the formation or accumulation of frost, ice, and snow for a limited holdover period. Dispatchers must understand this to assess whether a departure is safe relative to the holdover time — if HOT has expired and conditions continue, the aircraft must be re-treated before takeoff.',cite:'Module 17 / GDAP'},
+  {n:16,type:'sa',pts:4,text:'Briefly describe what the GDAP (Ground Deice/Anti-Icing Program) contains and why it matters to dispatch. Cite the applicable regulation.',model:'The GDAP contains company procedures for cold weather operations including: deicing/anti-icing fluid types and their application, holdover time tables, crew and dispatcher responsibilities, the Clean Aircraft Concept, and winter operational guidance. Dispatch is responsible for ensuring compliance with the GDAP before releasing flights when contamination may be present.',cite:'14 CFR 121.629 / GDAP'},
+  {n:17,type:'sa',pts:4,text:'What is the dispatcher\'s responsibility during any in-flight emergency? Cite the regulation and identify the two primary reference manuals.',model:'Per § 121.557, the dispatcher must advise the pilot in command of the emergency, ascertain the PIC\'s decision, and have the decision recorded. If unable to communicate with the pilot, the dispatcher declares the emergency and takes necessary action. Primary references: IOCM (Chapter 14) and the ERM (Emergency Response Manual).',cite:'§ 121.557 / IOCM Chapter 14 / ERM'},
+  {n:18,type:'sa',pts:4,text:'When should the Aerodata FDP Block procedure be used, and when does the dispatcher unblock it? What happens if a crew tries to run performance while the FDP is blocked?',model:'Block immediately when MOC notifies dispatch of an incoming MEL/CDL — before the revised release is issued — to prevent incorrect takeoff performance numbers. Unblock after receiving ACARS acknowledgment from the PIC with time and initials confirming receipt of the revised release. If the crew tries to run performance while blocked, they receive a message stating that dispatch has blocked their FDP.',cite:'Module 6 / IOCC-INFO-05'},
+  {n:19,type:'sa',pts:4,text:'Where can the Special Flight Permit (SFP) dispatch procedures be found, and who is required to sign the SFP per the current IOCM?',model:'SFP dispatch procedures are found in the IOCM. Per the updated IOCM Step 4, the Manager of Flight Dispatch, or their designee (typically the dispatcher), must sign the SFP.',cite:'IOCM / Module 6 slide 38'},
+  {n:20,type:'sa',pts:4,text:'What are the two driftdown methods available in N-FP, and when does N-FP use Method 1 (Weight Reduce) instead of Method 2 (Escape Routes)?',model:'Method 1 (Weight Reduce): N-FP penalizes aircraft weight to meet MORA clearance requirements. Method 2 (Escape Routes): N-FP generates specific escape routes to a suitable airport. Method 1 is used when Method 2 cannot be generated safely — i.e., no valid escape route exists.',cite:'Module 20 slide 33'},
+  {n:21,type:'mc',pts:4,text:'Reference MEL 30-21-00 (E-jet) — restricts operations: no flight into known or forecast icing conditions. Given KMDW METAR: 082215Z 01011KT 1¾SM -DZ BR OVC007 09/09 A2996. Could you operate with this MEL applied?',options:['Yes — drizzle and mist are not icing conditions','No — OAT is 09°C which is above freezing; icing is not a factor','No — temperature/dewpoint spread of 0°C with visible moisture (BR/mist) at 9°C meets the definition of icing conditions (≤10°C with visible moisture), and drizzle is present','Yes — the MEL only restricts known icing, and this METAR does not show ice pellets or freezing drizzle'],correct:2,cite:'Breeze icing conditions definition: ≤10°C with visible moisture'},
+  {n:22,type:'mc',pts:4,text:'You are dispatching an E190 with 13 passengers from BNA to PVD. What fuel planning action is required and what must appear on the release?',options:['No special action — normal fuel planning applies for any passenger count','Add 5,000 lbs of ballast fuel (considered unusable) and remark the release — required for 15 or fewer passengers on the E190/195','Reduce planned fuel by 5,000 lbs to compensate for the light load','Contact MOC to confirm weight and balance before releasing'],correct:1,cite:'Module 20 slide 5'},
+  {n:23,type:'sa',pts:4,text:'Your flight sends an ACARS: \'Holding over MARSH. FOB 11.2. Still in holding.\' Burn from MARSH to destination is 900 lbs. Alternate fuel is 2,100 lbs. Reserve is 3,200 lbs. What is BINGO fuel, and how much hold fuel does the crew have remaining? What should you do next?',model:'BINGO = Burn (900) + Alt (2,100) + Reserve (3,200) = 6,200 lbs. FOB = 11,200 lbs. Hold fuel remaining = 11,200 - 6,200 = 5,000 lbs. Next step: Concur BINGO fuel with the crew so both dispatcher and PIC are aligned on when a divert or landing attempt must begin. Continue monitoring.',cite:'Module 20 slides 17-20'},
+  {n:24,type:'sa',pts:4,text:'MOC calls: E190 has MEL 36-11-01 applied, restricting flight to FL310 or below. Current release is planned at FL380. The crew has already run their performance numbers. What must you do, in order?',model:'1) Block the FDP in Aerodata immediately. 2) Revise the dispatch release with the MEL applied and cruise altitude at or below FL310. 3) Send the revised release to the crew. 4) Once the PIC acknowledges via ACARS with time and initials, unblock the FDP. 5) Confirm the crew has correct performance data for FL310.',cite:'Module 6 / IOCC-INFO-05 / Module 16/18/19 E190'},
+  {n:25,type:'sa',pts:4,text:'It is January. You are dispatching a Breeze A220 from BDL to MCO. OAT at BDL is -4°C and light snow is falling. The aircraft was deiced with Type IV fluid 35 minutes ago. The crew calls and says they are ready to push. What questions must you ask or assess before clearing the aircraft?',model:'1) Has the Holdover Time (HOT) been exceeded? Verify HOT for Type IV fluid at -4°C in light snow against the HOT table. 2) If HOT has expired or is close to expiring, a pre-takeoff contamination check is required (inspection of critical surfaces within 5 minutes before beginning takeoff). 3) Are critical surfaces confirmed free of contamination? 4) Has a cold weather pre-flight inspection been completed? 5) If HOT is expired and contamination is present, the aircraft must be re-deiced/anti-iced before departure.',cite:'Module 17 / GDAP / 14 CFR 121.629'}
+];
+
+const wrap = document.getElementById('questions-wrap');
+document.getElementById('s-date').value = new Date().toISOString().slice(0,10);
+const totalQ = QUESTIONS.length;
+
+QUESTIONS.forEach(q => {
+  const card = document.createElement('div');
+  card.className = 'q-card'; card.id = 'qcard-' + q.n;
+  const typeLabel = q.type==='tf'?'True / False':q.type==='sa'?'Short Answer — Instructor graded':'Multiple Choice';
+  let inner = '<div class="q-top"><span class="q-num">Q'+q.n+'</span><span class="q-type">'+typeLabel+'</span><span class="q-pts">'+q.pts+' pts</span></div><div class="q-text">'+q.text+'</div>';
+  if (q.type === 'sa') {
+    inner += '<textarea class="sa-answer" id="sa-'+q.n+'" placeholder="Write your answer here..." oninput="markSA('+q.n+')"></textarea>';
+  } else {
+    inner += '<div class="options">'+q.options.map((o,oi)=>'<label class="option" id="opt-'+q.n+'-'+oi+'" onclick="sel('+q.n+','+oi+')"><span class="opt-letter">'+'ABCD'[oi]+'</span><span class="opt-text">'+o+'</span></label>').join('')+'</div>';
+  }
+  card.innerHTML = inner;
+  wrap.appendChild(card);
+});
+
+const selected = {}, saAnswers = {};
+
+function sel(qn,oi){
+  selected[qn]=oi;
+  document.querySelectorAll('[id^="opt-'+qn+'-"]').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('opt-'+qn+'-'+oi).classList.add('selected');
+  document.getElementById('qcard-'+qn).classList.add('answered');
+  updateProg();
+}
+function markSA(qn){
+  const val=document.getElementById('sa-'+qn).value.trim();
+  saAnswers[qn]=val;
+  if(val) document.getElementById('qcard-'+qn).classList.add('answered');
+  updateProg();
+}
+function updateProg(){
+  const d=Object.keys(selected).length+Object.keys(saAnswers).filter(k=>saAnswers[k]).length;
+  document.getElementById('prog-fill').style.width=(d/totalQ*100)+'%';
+  document.getElementById('prog-count').textContent=d+' / '+totalQ;
+}
+
+async function submitExam(){
+  const first=document.getElementById('s-first').value.trim(),last=document.getElementById('s-last').value.trim(),id=document.getElementById('s-id').value.trim(),date=document.getElementById('s-date').value;
+  if(!first||!last||!id){alert('Please fill in your name and Employee ID.');return;}
+  const mcQs=QUESTIONS.filter(q=>q.type!=='sa');
+  const saQs=QUESTIONS.filter(q=>q.type==='sa');
+  const ua=mcQs.filter(q=>selected[q.n]===undefined).length;
+  if(ua>0&&!confirm(ua+' auto-scored question'+(ua>1?'s are':' is')+' unanswered. Submit anyway?'))return;
+  document.getElementById('submit-btn').disabled=true;
+
+  let earned=0; const results={};
+  mcQs.forEach(q=>{const a=selected[q.n];const c=a!==undefined&&a===q.correct;if(c)earned+=q.pts;results[q.n]={selected:a,correct:c};});
+  const mcPts=mcQs.reduce((s,q)=>s+q.pts,0);
+  const pct=mcPts>0?Math.round(earned/mcPts*100):0;
+  const pass=pct>=PASS_THRESHOLD&&saQs.length===0;
+
+  try{
+    const payload={first,last,id,date,score:pct,pass:saQs.length?'Pending instructor grading':pass?'Pass':'Fail',correct:mcQs.filter(q=>results[q.n]?.correct).length,total:mcQs.length,exam:EXAM_NAME,submittedAt:new Date().toISOString(),answers:mcQs.map(q=>{return{q:q.n,selected:selected[q.n]!==undefined?q.options[selected[q.n]]:'Not answered',correct:q.options[q.correct],isCorrect:results[q.n]?.correct};})};
+    await new Promise(resolve=>{const form=document.createElement('form');form.method='POST';form.action=SHEET_URL;form.target='hf';form.style.display='none';const inp=document.createElement('input');inp.type='hidden';inp.name='data';inp.value=JSON.stringify(payload);form.appendChild(inp);const ifr=document.createElement('iframe');ifr.name='hf';ifr.style.display='none';ifr.onload=resolve;setTimeout(resolve,8000);document.body.appendChild(ifr);document.body.appendChild(form);form.submit();});
+  }catch(e){}
+  // ── Send to BZ Score Tracker ──────────────────────────────────────
+  try {
+    const missedQs = mcQs.filter(q=>!results[q.n]?.correct).map(q=>({
+      number: q.n,
+      question: q.text,
+      studentAnswer: selected[q.n]!==undefined ? q.options[selected[q.n]] : "Not answered",
+      correctAnswer: q.options[q.correct]
+    }));
+    const trackerPayload = {
+      employeeId: id,
+      firstName: first,
+      lastName: last,
+      quizName: EXAM_NAME,
+      score: pct,
+      pointsEarned: earned,
+      pointsPossible: mcPts,
+      passingScore: PASS_THRESHOLD,
+      missedQuestions: missedQs
+    };
+    fetch(SHEET_URL, {method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(trackerPayload)}).catch(()=>{});
+  } catch(te){}
+  // ─────────────────────────────────────────────────────────────────
+
+  document.getElementById('exam-wrap').style.display='none';
+  document.querySelector('.prog-bar').style.display='none';
+  const screen=document.getElementById('results-screen');screen.classList.add('show');
+  const banner=document.getElementById('result-banner');
+  banner.className='result-banner '+(saQs.length?'submitted':pass?'pass':'fail');
+  document.getElementById('result-icon').textContent=saQs.length?'📋':pass?'✅':'❌';
+  document.getElementById('result-verdict').textContent=saQs.length?'SUBMITTED — PENDING GRADING':(pass?'PASS':'FAIL');
+  document.getElementById('result-score').textContent=earned+' / '+mcPts+' pts auto-scored';
+  document.getElementById('result-sub').textContent=first+' '+last+' · '+id+' · '+date;
+  document.getElementById('rm-correct').textContent=mcQs.filter(q=>results[q.n]?.correct).length;
+  document.getElementById('rm-wrong').textContent=mcQs.filter(q=>!results[q.n]?.correct&&selected[q.n]!==undefined).length;
+  document.getElementById('rm-sa').textContent=saQs.length;
+  if(saQs.length) document.getElementById('instructor-note').style.display='block';
+
+  let html='';
+  QUESTIONS.forEach(q=>{
+    if(q.type==='sa'){
+      const ans=saAnswers[q.n]||'';
+      html+='<div class="q-card" style="margin-bottom:.75rem;"><div class="q-top"><span class="q-num">Q'+q.n+'</span><span class="q-type">Short Answer — Instructor graded</span><span class="q-pts">'+q.pts+' pts</span></div><div class="q-text">'+q.text+'</div>'+(ans?'<div class="student-answer"><strong>Student answer:</strong><br>'+ans.replace(/\n/g,'<br>')+'</div>':'<div style="margin-top:.75rem;font-size:13px;color:var(--ink3);font-style:italic;">No answer provided</div>')+'<div class="model-answer"><strong>Model answer:</strong> '+q.model+'<div class="q-cite">📄 '+q.cite+'</div></div></div>';
+    } else {
+      const r=results[q.n];
+      html+='<div class="q-card '+(r?.correct?'correct':'incorrect')+'" style="margin-bottom:.75rem;"><div class="q-top"><span class="q-num">Q'+q.n+'</span><span class="q-type">'+(q.type==='tf'?'T/F':'MC')+'</span><span class="q-pts">'+(r?.correct?'✓ +'+q.pts+' pts':'✗ 0 pts')+'</span></div><div class="q-text">'+q.text+'</div><div class="options" style="margin-top:.75rem;">'+q.options.map((o,oi)=>{let cls='';if(oi===q.correct)cls='correct-ans';else if(oi===r?.selected&&!r?.correct)cls='wrong-ans';return'<div class="option '+cls+'" style="cursor:default;"><span class="opt-letter">'+'ABCD'[oi]+'</span><span class="opt-text">'+o+(oi===q.correct?' <strong>(correct)</strong>':'')+(oi===r?.selected&&!r?.correct?' <em>(your answer)</em>':'')+'</span></div>';}).join('')+'</div><div class="q-cite">📄 '+q.cite+'</div></div>';
+    }
+  });
+  document.getElementById('review-wrap').innerHTML=html;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

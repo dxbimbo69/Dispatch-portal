@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breeze Airways — Dispatch Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F3A;--blue:#1A5FB4;--blue-lt:#DDEEFF;--cyan:#0EA5C4;
+  --ink:#0F0F0E;--ink2:#2E2E2C;--ink3:#6B6A64;
+  --surface:#F7F6F2;--white:#FFFFFF;--gray:#E8E6DC;
+  --green:#1A7A3C;--green-lt:#E3F5EA;
+  --red:#B91C1C;--red-lt:#FEE2E2;
+  --amber:#B45309;--amber-lt:#FEF3C7;
+  --purple:#6D28D9;--purple-lt:#EDE9FE;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;scroll-behavior:smooth;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;}
+
+/* Header */
+.hdr{background:var(--navy);}
+.hdr-inner{max-width:900px;margin:0 auto;padding:2rem 2rem 1.75rem;}
+.hdr-badge{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);margin-bottom:.5rem;}
+.hdr-title{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,34px);font-weight:800;color:#fff;line-height:1.1;}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.45);margin-top:.4rem;}
+.hdr-stripe{height:3px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--navy));}
+
+/* Controls */
+.controls{max-width:900px;margin:0 auto;padding:1.5rem 2rem 1rem;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.deck-btn{padding:7px 16px;border:1.5px solid var(--gray);border-radius:20px;background:var(--white);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--ink2);}
+.deck-btn:hover{border-color:var(--blue);color:var(--blue);}
+.deck-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.controls-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.shuffle-btn{padding:7px 14px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.shuffle-btn:hover{background:var(--gray);}
+.progress-text{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--ink3);}
+
+/* Card area */
+.card-area{max-width:900px;margin:0 auto;padding:0 2rem 3rem;}
+.card-counter{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-align:center;margin-bottom:1rem;}
+
+/* Flashcard */
+.flashcard-wrap{perspective:1200px;margin-bottom:1.5rem;}
+.flashcard{
+  position:relative;width:100%;min-height:280px;
+  transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);
+  cursor:pointer;
+}
+.flashcard.flipped{transform:rotateX(180deg);}
+.card-face{
+  position:absolute;inset:0;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:20px;padding:2.5rem;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;
+  box-shadow:0 8px 32px rgba(0,0,0,.1);
+}
+.card-front{
+  background:var(--navy);
+  border:2px solid rgba(255,255,255,.08);
+}
+.card-back{
+  background:var(--white);
+  border:2px solid var(--gray);
+  transform:rotateX(180deg);
+}
+.card-label{
+  font-family:'Syne',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;
+  margin-bottom:1rem;padding:3px 10px;border-radius:10px;
+}
+.card-front .card-label{color:var(--cyan);background:rgba(14,165,196,.15);}
+.card-back .card-label{color:var(--green);background:var(--green-lt);}
+.card-question{
+  font-family:'Syne',sans-serif;font-size:clamp(17px,2.5vw,22px);
+  font-weight:700;color:#fff;line-height:1.4;
+  max-width:680px;
+}
+.card-answer{
+  font-size:clamp(14px,2vw,17px);color:var(--ink2);
+  line-height:1.65;max-width:680px;
+}
+.card-answer strong{color:var(--navy);}
+.card-cite{
+  margin-top:1rem;font-size:11px;color:var(--ink3);
+  font-style:italic;
+}
+.card-hint{
+  margin-top:.75rem;font-size:12px;color:rgba(255,255,255,.35);
+}
+.flip-hint{
+  text-align:center;font-size:12px;color:var(--ink3);margin-bottom:1.5rem;
+}
+
+/* Nav buttons */
+.card-nav{display:flex;gap:12px;justify-content:center;align-items:center;margin-bottom:1rem;}
+.nav-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 24px;border-radius:10px;font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;border:none;
+}
+.nav-prev{background:var(--white);color:var(--ink2);border:1.5px solid var(--gray);}
+.nav-prev:hover{background:var(--gray);}
+.nav-next{background:var(--navy);color:#fff;}
+.nav-next:hover{background:var(--blue);}
+
+/* Know it / Still learning */
+.feedback-btns{display:flex;gap:10px;justify-content:center;margin-top:1rem;}
+.fb-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;}
+.fb-know{background:var(--green-lt);color:var(--green);}
+.fb-know:hover{background:var(--green);color:#fff;}
+.fb-learn{background:var(--red-lt);color:var(--red);}
+.fb-learn:hover{background:var(--red);color:#fff;}
+
+/* Stats bar */
+.stats-bar{
+  max-width:900px;margin:0 auto;padding:0 2rem 1.5rem;
+  display:flex;gap:12px;flex-wrap:wrap;
+}
+.stat-pill{cursor:pointer;border:none;font-family:inherit;
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;
+}
+.stat-total{background:var(--blue-lt);color:var(--blue);}
+.stat-know{background:var(--green-lt);color:var(--green);}
+.stat-learn{background:var(--red-lt);color:var(--red);}
+.stat-unseen{background:var(--gray);color:var(--ink3);}
+
+/* Deck complete */
+.deck-complete{
+  text-align:center;padding:3rem 2rem;
+  background:var(--white);border:2px solid var(--gray);border-radius:20px;
+}
+.deck-complete h3{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--navy);margin-bottom:.5rem;}
+.deck-complete p{font-size:14px;color:var(--ink3);margin-bottom:1.5rem;}
+.restart-btn{padding:10px 24px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* Category badge colors */
+.cat-regs{background:#EDE9FE;color:#6D28D9;}
+.cat-fuel{background:#FEF3C7;color:#B45309;}
+.cat-wx{background:#DBEAFE;color:#1D4ED8;}
+.cat-ops{background:#D1FAE5;color:#065F46;}
+.cat-atc{background:#FEE2E2;color:#991B1B;}
+.cat-mel{background:#F3F4F6;color:#374151;}
+.cat-perf{background:#FDF4FF;color:#86198F;}
+
+@media(max-width:600px){
+  .card-face{padding:1.75rem 1.25rem;}
+  .card-nav{flex-wrap:wrap;}
+  .controls{gap:6px;}
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  25%  { opacity: 1; }
+  75%  { opacity: 0.8; }
+  100% { transform: translateY(110vh) translateX(var(--drift, 0px)) rotate(900deg); opacity: 0; }
+}
+.secret-card-front { background: linear-gradient(135deg, #0B1F3A, #6D28D9) !important; }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-badge">Breeze Airways &middot; Dispatch Training</div>
+    <div class="hdr-title">Dispatch Flashcards</div>
+    <div class="hdr-sub">Click a card to reveal the answer &middot; Mark what you know to track your progress</div>
+  </div>
+  <div class="hdr-stripe"></div>
+</header>
+
+<div class="controls">
+  <button class="deck-btn active" onclick="loadDeck('all')">All Cards</button>
+  <button class="deck-btn" onclick="loadDeck('regs')">Regulations</button>
+  <button class="deck-btn" onclick="loadDeck('fuel')">Fuel &amp; Weights</button>
+  <button class="deck-btn" onclick="loadDeck('wx')">Weather &amp; NOTAMs</button>
+  <button class="deck-btn" onclick="loadDeck('ops')">Dispatch Ops</button>
+  <button class="deck-btn" onclick="loadDeck('atc')">ATC &amp; Flow</button>
+  <button class="deck-btn" onclick="loadDeck('mel')">MEL / CDL</button>
+  <button class="deck-btn" onclick="loadDeck('perf')">Aircraft &amp; Perf</button>
+  <button class="deck-btn" onclick="loadDeck('wrong')">&#10007; Still Learning</button>
+  <div class="controls-right">
+    <button class="shuffle-btn" onclick="shuffle()">&#9700; Shuffle</button>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <span class="stat-pill stat-total" id="stat-total">&#9632; 0 total</span>
+  <button class="stat-pill stat-know" id="stat-know" onclick="filterStat('know')">&#10003; 0 know it</button>
+  <button class="stat-pill stat-learn" id="stat-learn" onclick="filterStat('learn')">&#10007; 0 still learning</button>
+  <button class="stat-pill stat-unseen" id="stat-unseen" onclick="filterStat('unseen')">&#9642; 0 unseen</button>
+</div>
+
+<div class="card-area">
+  <div class="card-counter" id="card-counter">Card 1 of 0</div>
+  <div class="flip-hint">&#8593; Click the card to flip it</div>
+  <div class="flashcard-wrap">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-label" id="card-cat-label">Question</div>
+        <div class="card-question" id="card-question"></div>
+        <div class="card-hint">Tap to reveal answer</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">Answer</div>
+        <div class="card-answer" id="card-answer"></div>
+        <div class="card-cite" id="card-cite"></div>
+      </div>
+    </div>
+  </div>
+  <div id="deck-complete" class="deck-complete" style="display:none;">
+    <div style="font-size:48px;margin-bottom:.75rem;">&#127881;</div>
+    <h3>Deck complete!</h3>
+    <p id="complete-msg">You've gone through all the cards.</p>
+    <button class="restart-btn" onclick="restart()">&#8635; Start over</button>
+  </div>
+  <div class="card-nav">
+    <button class="nav-btn nav-prev" onclick="prevCard()">&#8592; Previous</button>
+    <button class="nav-btn nav-next" onclick="nextCard()">Next &#8594;</button>
+  </div>
+  <div class="feedback-btns" id="feedback-btns" style="display:none;">
+    <button class="fb-btn fb-know" onclick="markKnow()">&#10003; Know it</button>
+    <button class="fb-btn fb-learn" onclick="markLearn()">&#10007; Still learning</button>
+  </div>
+</div>
+
+<script>
+const ALL_CARDS = [
+  // ── REGULATIONS ──────────────────────────────────────────────────────────
+  {cat:'regs',q:"What does § 121.533(b) establish?",a:"Joint responsibility between the aircraft dispatcher and the pilot in command for preflight planning, delay, and the dispatch release of each flight.",cite:"§ 121.533(b)"},
+  {cat:'regs',q:"What are the dispatcher's three SOLE responsibilities under § 121.533(c)? (M-I-C)",a:"<strong>M</strong> — Monitor flight progress<br><strong>I</strong> — Issue necessary safety information to the PIC<br><strong>C</strong> — Cancel or redispatch if the flight cannot operate safely",cite:"§ 121.533(c)"},
+  {cat:'regs',q:"What are the dispatcher's three JOINT responsibilities with the PIC? (P-P-D)",a:"<strong>P</strong> — Preflight planning<br><strong>P</strong> — Delay<br><strong>D</strong> — Dispatch release (§ 121.663 — both must sign)",cite:"§ 121.533(b) / GOM"},
+  {cat:'regs',q:"What is the 1-2-3 Rule and which regulation establishes it?",a:"No destination alternate required if, for <strong>1 hour before and 1 hour after ETA</strong>, the forecast shows ceiling ≥ <strong>2,000 ft AGL</strong> and visibility ≥ <strong>3 SM</strong>.",cite:"§ 121.619"},
+  {cat:'regs',q:"Per § 121.557, what must the dispatcher do when an in-flight emergency arises and they CANNOT reach the pilot?",a:"The dispatcher shall <strong>declare the emergency</strong> and take any action considered necessary. A written report must be submitted within <strong>10 days</strong>.",cite:"§ 121.557(b)(c)"},
+  {cat:'regs',q:"Within how many days must a dispatcher submit a written report after exercising emergency authority?",a:"<strong>10 days</strong> from the date of the emergency.",cite:"§ 121.557(c)"},
+  {cat:'regs',q:"What does § 121.663 say about delegating dispatch authority?",a:"A dispatcher may delegate authority to <strong>sign</strong> a release for a specific flight, but may <strong>NOT</strong> delegate their authority to dispatch.",cite:"§ 121.663"},
+  {cat:'regs',q:"What does D-A-M-I-T stand for (§ 121.687 — Dispatch Release contents)?",a:"<strong>D</strong>estination &nbsp; <strong>A</strong>lternates &nbsp; <strong>M</strong>inimum fuel &nbsp; <strong>I</strong>dentification (aircraft/trip #) &nbsp; <strong>T</strong>ype of operation",cite:"§ 121.687"},
+  {cat:'regs',q:"What does § 121.601(b) require the dispatcher to provide to the PIC before a flight?",a:"All available <strong>weather reports and forecasts</strong> for each route to be flown and airport to be used, including adverse phenomena (CAT, thunderstorms, wind shear).",cite:"§ 121.601(b)"},
+  {cat:'regs',q:"What does § 121.629 (the Clean Aircraft Concept) require?",a:"Dispatch, release, or takeoff is <strong>prohibited</strong> when frost, ice, or snow may reasonably adhere to critical surfaces — unless the approved deicing/anti-icing program is followed.",cite:"14 CFR 121.629"},
+  {cat:'regs',q:"What regulation requires an approved flight following system for supplemental operations?",a:"<strong>§ 121.125</strong> — certificate holders conducting supplemental operations must have an approved flight following system.",cite:"§ 121.125"},
+  {cat:'regs',q:"Per GOM 7.12.3-4, if the Captain and Dispatcher cannot agree on required fuel, what happens?",a:"The <strong>larger</strong> of the two computed fuel requirements is used and entered on the dispatch release.",cite:"GOM 7.12.3-4"},
+  {cat:'regs',q:"What is § 121.647 and why does it matter to dispatchers?",a:"Requires fuel computations to account for: wind/weather forecast, anticipated traffic delays, one instrument approach and possible missed approach, and any other conditions that may delay landing.",cite:"§ 121.647"},
+  {cat:'regs',q:"Per § 121.639, what is the minimum fuel required for takeoff?",a:"Fuel to fly to the destination, then to the most distant alternate, then for <strong>45 minutes</strong> at normal cruise speed. Breeze company minimum landing fuel is <strong>60 minutes</strong> (standard 70 minutes).",cite:"§ 121.639 / IOCM 9.4"},
+  {cat:'regs',q:"What are the Breeze SKIIE core company values?",a:"<strong>S</strong>afety &nbsp; <strong>K</strong>indness &nbsp; <strong>I</strong>ntegrity &nbsp; <strong>I</strong>ngenuity &nbsp; <strong>E</strong>xcellence",cite:"Module 15"},
+  {cat:'regs',q:"What does § 121.645 require for international supplemental operations (fuel)?",a:"Fuel to destination + <strong>10% of total trip time</strong> + fuel to most distant alternate + <strong>30 minutes holding</strong> at 1,500 ft above alternate.",cite:"§ 121.645"},
+
+  // ── FUEL & WEIGHTS ────────────────────────────────────────────────────────
+  {cat:'fuel',q:"What is Breeze's standard planned landing fuel? Minimum landing fuel?",a:"<strong>Standard: 70 minutes</strong><br><strong>Minimum: 60 minutes</strong><br>FAR minimum is 45 minutes.",cite:"IOCM 9.4"},
+  {cat:'fuel',q:"What is BINGO fuel and how is it calculated?",a:"Minimum fuel at a given point:<br><strong>Burn to destination + Alternate fuel + 45-minute reserve</strong>",cite:"Module 20"},
+  {cat:'fuel',q:"What is 'Minimum Fuel' vs 'Emergency Fuel'?",a:"<strong>Minimum Fuel</strong> — ~45 minutes reserve remaining. Crew notifies ATC, prioritizes landing.<br><strong>Emergency Fuel</strong> — 30 minutes or less. Full emergency declaration required.",cite:"Module 20"},
+  {cat:'fuel',q:"When is ballast fuel required on the E190/195 and how much?",a:"Required when there are <strong>15 or fewer passengers</strong> onboard. Amount: <strong>5,000 lbs</strong>. Considered <strong>unusable</strong> — must be remarked on the release.",cite:"Module 20 / IOCM 9.7"},
+  {cat:'fuel',q:"What is the Breeze company required buffer between planned TOGW and MTOW?",a:"<strong>2,000 lbs</strong> minimum buffer between planned Takeoff Gross Weight and Maximum Takeoff Weight.",cite:"Module 16/18/19 W&B policy"},
+  {cat:'fuel',q:"What does PFACT represent on the dispatch release?",a:"Fuel bias and/or performance factor to account for increased fuel burn — e.g., required by CDL items (WiFi radome on A220). If multiple items, individual penalties cannot be seen separately.",cite:"Dispatch Release Guide"},
+  {cat:'fuel',q:"What is MINTO (MIN TO) on the dispatch release?",a:"FAR 121.639 minimum fuel for takeoff — includes enroute burn, alternate (most distant), holding, contingency, ballast, and reserve. Also called <strong>'Above-the-line Fuel'</strong>.",cite:"§ 121.639 / Release Guide"},
+  {cat:'fuel',q:"What does 'XTRA LDG' on the release represent?",a:"If no alternate is planned, 15 min is added to ALT/NIL line (reaching 60 min minimum). If no additional fuel added, the remaining 10 min (to reach 70 min standard) goes to <strong>XTRA LDG</strong>.",cite:"IOCM 9.4"},
+  {cat:'fuel',q:"What does ZFW stand for and what does it represent?",a:"<strong>Zero Fuel Weight</strong> — aircraft weight including all payload and crew, but <strong>excluding all usable fuel</strong>.",cite:"W&B fundamentals"},
+  {cat:'fuel',q:"What is BOW on the dispatch release?",a:"<strong>Basic Operating Weight</strong> — weight of aircraft with standard crew, fluids, and equipment, but without payload or fuel.",cite:"W&B fundamentals"},
+  {cat:'fuel',q:"For inflight fuel calculations (BINGO), what must you change in N-FP and why?",a:"Change <strong>MLF/MLT to 45 minutes</strong> (FAR minimum) to accurately calculate BINGO/minimum fuel for divert situations.",cite:"Module 20"},
+  {cat:'fuel',q:"What required remark must appear on every ballast fuel release?",a:"<strong>5000 LBS BALLAST FUEL HAS BEEN PLANNED AND IS CONSIDERED UNUSABLE</strong>",cite:"IOCM 9.7"},
+  {cat:'fuel',q:"What is tanker fuel and what is the required remark?",a:"Fuel carried beyond what is needed at the destination for economic reasons. Remark: <strong>TANKERED FUEL FOR ECONOMICAL PURPOSES. USE AS NEEDED FOR DEVIATIONS.</strong>",cite:"IOCM / Dispatch Teams SharePoint"},
+
+  // ── WEATHER & NOTAMs ──────────────────────────────────────────────────────
+  {cat:'wx',q:"What are the 5 required elements in a METAR?",a:"<strong>1.</strong> Winds &nbsp; <strong>2.</strong> Visibility &nbsp; <strong>3.</strong> Sky condition &nbsp; <strong>4.</strong> Temperature &nbsp; <strong>5.</strong> Altimeter",cite:"IOCM 18 / IOCMTR-19"},
+  {cat:'wx',q:"How long is a METAR valid? When are TAFs issued?",a:"<strong>METAR:</strong> 1 hour<br><strong>TAF:</strong> 24–30 hours validity, issued at <strong>0000, 0600, 1200, 1800Z</strong>",cite:"IOCM 18.4.1"},
+  {cat:'wx',q:"What is a RAMTAF and who does Breeze request them from?",a:"A <strong>Replaced Aerodrome Meteorological TAF</strong> — supplements or replaces an NWS TAF. Requested from <strong>DTN via email (aviationteam@dtn.com)</strong>.",cite:"EWINS / Module 11/12"},
+  {cat:'wx',q:"What are the three things required when using a RAMTAF as the controlling forecast?",a:"<strong>1.</strong> Remark the release with the reason<br><strong>2.</strong> Record supporting METARs (3 hrs before/after ETA) and evidence<br><strong>3.</strong> Retain records for minimum <strong>3 months</strong>",cite:"EWINS 6.3"},
+  {cat:'wx',q:"What is 'forecast shopping' and is it allowed?",a:"Selecting a RAMTAF over an NWS TAF simply because it shows better conditions. <strong>Explicitly prohibited</strong> by Breeze EWINS policy.",cite:"EWINS 6.3"},
+  {cat:'wx',q:"What does EDR stand for in N-Tracking and what does a high value mean?",a:"<strong>Eddy Dissipation Rate</strong> — an aircraft-independent measure of turbulence. High EDR = more turbulent air is likely.",cite:"Module 11/12"},
+  {cat:'wx',q:"What is the AWC TFM Convective Forecast (TCF) and how often is it refreshed?",a:"A <strong>4/6/8-hour wide-area convective forecast</strong> refreshed every <strong>2 hours</strong> — useful for traffic flow and general convective planning.",cite:"Module 11/12"},
+  {cat:'wx',q:"What are the 5 main types of NOTAMs?",a:"<strong>1.</strong> NOTAM D &nbsp; <strong>2.</strong> FDC NOTAM &nbsp; <strong>3.</strong> Pointer NOTAM &nbsp; <strong>4.</strong> Military NOTAM &nbsp; <strong>5.</strong> Company NOTAM<br><em>Also: SNOWTAM, GPS NOTAM, Center Area NOTAM</em>",cite:"IOCM Chapter 24"},
+  {cat:'wx',q:"What is an FDC NOTAM?",a:"<strong>Regulatory</strong> NOTAMs covering instrument flight procedure changes, TFRs, and airspace changes.",cite:"IOCM 24.4.1"},
+  {cat:'wx',q:"What is a Pointer NOTAM?",a:"A NOTAM issued to <strong>highlight or cross-reference another NOTAM</strong> (such as an FDC NOTAM), assisting users in finding important information not listed under an airport/NAVAID identifier. Keyword 'AIRSPACE' = TFR-related.",cite:"IOCM 24.5"},
+  {cat:'wx',q:"What is a SNOWTAM's maximum validity period?",a:"<strong>24 hours</strong>",cite:"NOTAM standards"},
+  {cat:'wx',q:"A NOTAM is issued under 'ZZZ' — what does this mean?",a:"Issued by the <strong>U.S. NOTAM Office (USNOF)</strong> for special data when time did not permit publishing under a specific location identifier.",cite:"IOCM 24.4.1(I)"},
+  {cat:'wx',q:"ISA standard sea level conditions — what are they?",a:"<strong>+15°C</strong> and <strong>1013 hPa / 29.92 inHg</strong>",cite:"Module 11/12"},
+  {cat:'wx',q:"What does the Aviation Forecast Discussion (AFD) provide dispatchers?",a:"A written forecaster narrative that helps interpret TAF information and supports better go/no-go and alternate decisions.",cite:"Module 11/12"},
+  {cat:'wx',q:"Destination is considered 'marginal' under IOCM 8.2.5 when?",a:"Ceiling forecast below <strong>1,000 ft AGL</strong> AND visibility below <strong>3 miles</strong>.",cite:"IOCM 8.2.5"},
+  {cat:'wx',q:"First alternate is considered 'marginal' under IOCM 8.2.5 when?",a:"Ceiling forecast below <strong>600 ft AGL</strong> AND visibility below <strong>2 miles</strong>.",cite:"IOCM 8.2.5"},
+  {cat:'wx',q:"When is a second alternate required?",a:"When <strong>both the destination and first alternate</strong> forecast conditions are marginal (per IOCM 8.2.5 definitions).",cite:"IOCM 8.2.5"},
+
+  // ── DISPATCH OPS ──────────────────────────────────────────────────────────
+  {cat:'ops',q:"What is the DECIDE model used for in dispatch?",a:"Aeronautical Decision Making framework:<br><strong>D</strong>etect &nbsp; <strong>E</strong>stimate &nbsp; <strong>C</strong>hoose &nbsp; <strong>I</strong>dentify &nbsp; <strong>D</strong>o &nbsp; <strong>E</strong>valuate",cite:"Module 15 DRM"},
+  {cat:'ops',q:"What are the common ADM pitfalls for dispatchers?",a:"Confirmation bias &nbsp;·&nbsp; Over-reliance on automation &nbsp;·&nbsp; Time pressure/task saturation &nbsp;·&nbsp; Breakdown in communications &nbsp;·&nbsp; Schedule pressure",cite:"Module 15"},
+  {cat:'ops',q:"What are the 7 C's of effective dispatcher communication?",a:"<strong>C</strong>lear &nbsp; <strong>C</strong>oncise &nbsp; <strong>C</strong>oncrete &nbsp; <strong>C</strong>orrect &nbsp; <strong>C</strong>onsideration &nbsp; <strong>C</strong>omplete &nbsp; <strong>C</strong>ourteous",cite:"Module 15"},
+  {cat:'ops',q:"What does 'adequate airport' vs 'suitable airport' mean?",a:"<strong>Adequate</strong> — has proper facilities for the aircraft.<br><strong>Suitable</strong> — adequate airport that also meets weather criteria. Dispatchers make adequate airports suitable.",cite:"IOCM Chapter 7"},
+  {cat:'ops',q:"What is the preferred method of shift turnover at Breeze per the IOCM?",a:"<strong>Written turnover</strong> is standard. Verbal is done only when necessary.",cite:"IOCM Chapter 3, Section 3.3"},
+  {cat:'ops',q:"A dispatch release is good for how long after the ETD?",a:"A release expires <strong>2 hours (120 minutes)</strong> after the ETD. Must be recomputed if generated well beyond the 120-minute mark.",cite:"IOCM 4.2.1.2"},
+  {cat:'ops',q:"What IOCM chapter covers amending vs. revising a dispatch release?",a:"<strong>Chapter 5</strong> — defines when to issue a new release (revise) vs. amend an existing one.",cite:"IOCM Chapter 5"},
+  {cat:'ops',q:"Per IOCM 2.4.2, what must both the PIC and dispatcher agree on before any flight may be released?",a:"That the flight as planned can be <strong>accomplished safely</strong> and in accordance with all applicable company policies and procedures.",cite:"IOCM 2.4.2"},
+  {cat:'ops',q:"How do Breeze Part 91 repositioning/training flights get planned?",a:"Consistently with <strong>Part 121 domestic flight rules</strong>, even though the operation is technically Part 91.",cite:"Module 3 / Company policy"},
+  {cat:'ops',q:"What is ASAP and when is a report rejected?",a:"Aviation Safety Action Program. Rejected for: <strong>intentional violations, criminal activity, substance abuse, falsification, or events already under FAA investigation</strong>.",cite:"Module 15"},
+  {cat:'ops',q:"Where is Breeze Airways' IOCC headquartered?",a:"<strong>6340 S 3000 E, Cottonwood Heights, UT 84121</strong>",cite:"Module 1"},
+  {cat:'ops',q:"What is 'fuel is not a plan' — what does it mean operationally?",a:"Adding contingency fuel must be tied to a <strong>specific tactical purpose</strong> (forecast reroute, hold, deice delays, etc.) — not used as a vague hedge.",cite:"Module 15 DRM"},
+  {cat:'ops',q:"What is the IOCM chapter governing meteorology requirements for dispatch?",a:"<strong>IOCM Chapter 18</strong>",cite:"IOCM Chapter 18"},
+  {cat:'ops',q:"When is a High Minimums Captain designation applied and what does it mean?",a:"Applied to captains with limited experience. HM captains receive <strong>+100 ft and +½ SM</strong> to published landing minimums. Cannot be applied to Exemption 22897.",cite:"IOCM 4.4.3.3 / 14 CFR 121.625"},
+  {cat:'ops',q:"What is OpSpec C054?",a:"Contains the <strong>High Minimums Captain RVR conversion chart</strong> — converts standard RVR to required RVR for HM captains.",cite:"OpSpecs C054"},
+
+  // ── ATC & FLOW ────────────────────────────────────────────────────────────
+  {cat:'atc',q:"What is an Airport Acceptance Rate (AAR)?",a:"The number of <strong>arrivals an airport can accept per hour</strong>, based on runways in use, weather, and NAVAID status.",cite:"Module 10"},
+  {cat:'atc',q:"What is a Ground Delay Program (GDP)?",a:"An ATC traffic management initiative that assigns <strong>EDCTs</strong> to flights bound for a capacity-constrained airport, metering arrivals to match the AAR.",cite:"Module 10"},
+  {cat:'atc',q:"What is an EDCT and who at Breeze submits change requests?",a:"<strong>Expect Departure Clearance Time</strong> — the runway release time assigned. Change requests submitted by <strong>Dispatch Supervisors</strong> with justification.",cite:"Module 10"},
+  {cat:'atc',q:"What is a SWAP and what does it provide?",a:"<strong>Severe Weather Avoidance Plan</strong> — coordinated ATC plan that provides pre-validated reroutes around severe convective weather affecting the NAS.",cite:"Module 10"},
+  {cat:'atc',q:"What website is Breeze's primary ATC interface for flow programs, delays, and reroutes?",a:"<strong>NASStatus.faa.gov</strong> (NAS STATUS)",cite:"Module 10"},
+  {cat:'atc',q:"What is Breeze's primary method of communicating with flight crews? Secondary?",a:"<strong>Primary:</strong> ACARS (automated, creates a record)<br><strong>Secondary:</strong> ARINC VHF voice (for complex issues or high-workload situations)",cite:"Module 13"},
+  {cat:'atc',q:"When is ARINC voice most appropriate over ACARS?",a:"When the issue is <strong>complicated, requires quick decision-making</strong>, or the crew is in a high-workload situation (turbulence, diversion) where ACARS messaging is difficult.",cite:"Module 13"},
+  {cat:'atc',q:"What is the SATCOM access number and what does priority code 3 mean?",a:"Number: <strong>(480) 730-3900</strong><br>Priority 3 = <strong>Operational Low (Safety of Flight)</strong><br>Priority 4 = Non-Operational",cite:"Module 13"},
+  {cat:'atc',q:"What is an NRS Waypoint and what does the first letter always indicate?",a:"RNAV waypoint in a national grid. First letter is always <strong>'K'</strong> — indicating the 48 contiguous states.",cite:"Module 10"},
+  {cat:'atc',q:"Who are Tier 1 centers for ZNY (New York Center)?",a:"<strong>ZOB (Cleveland), ZDC (Washington), ZBW (Boston)</strong> — the ARTCCs directly touching ZNY.",cite:"Module 10"},
+  {cat:'atc',q:"What does 'NORVSM' mean as an ATC remark?",a:"The aircraft is <strong>not certified for RVSM</strong> (Reduced Vertical Separation Minimum) operations.",cite:"ATC remarks"},
+  {cat:'atc',q:"What is RAIM and how does N-FP handle it?",a:"<strong>Receiver Autonomous Integrity Monitoring</strong> — uses a 5th satellite to verify GPS position integrity. <strong>N-FP automatically checks RAIM</strong>; if RAIM NOT CHECKED, click 'RAIM Validate' in Reports.",cite:"IOCMTR-14: 4.4.9.5"},
+
+  // ── MEL / CDL ─────────────────────────────────────────────────────────────
+  {cat:'mel',q:"What is the difference between a MEL, CDL, ACI, and NEF?",a:"<strong>MEL</strong> — operates with inoperative equipment under defined conditions<br><strong>CDL</strong> — missing/deviated non-structural external part (fairing, seal)<br><strong>ACI</strong> — tracking only, no operational relief<br><strong>NEF</strong> — non-essential furnishing, no effect on ops, tracked in AML",cite:"Module 6"},
+  {cat:'mel',q:"When MOC notifies dispatch of an incoming MEL, what is the dispatcher's FIRST action in Aerodata?",a:"<strong>Block the FDP immediately</strong> — before the revised release is issued — to prevent the crew from running incorrect takeoff performance numbers.",cite:"Module 6 / IOCC-INFO-05"},
+  {cat:'mel',q:"When is an MEL amendment considered complete?",a:"Only when the <strong>PIC replies via ACARS acknowledging the amendment with time and initials</strong>.",cite:"Module 6 slide 34"},
+  {cat:'mel',q:"What color in N-OC indicates an aircraft is OOS and not airworthy?",a:"<strong>Red</strong> = OOS / not airworthy. <strong>Purple</strong> = scheduled maintenance.",cite:"Module 6"},
+  {cat:'mel',q:"Who must sign a Special Flight Permit (SFP) per the current IOCM?",a:"The <strong>Manager of Flight Dispatch</strong>, or their designee (typically the dispatcher).",cite:"IOCM / Module 6 slide 38"},
+  {cat:'mel',q:"What required remark must appear when a performance restrictive MEL restricts the flight to FL310?",a:"<strong>FLIGHT LEVEL RSTR TO FL310 DUE TO MEL [ITEM NUMBER]</strong>",cite:"IOCM 4.4.7.3"},
+  {cat:'mel',q:"Per IOCM 21.3.2, what is the dispatcher responsible for regarding MEL/CDL items?",a:"Ensuring that MEL/CDL limitations are not <strong>contradictory to any 14 CFR, Company policies, NOTAMs, TFRs, or aircraft operating procedures</strong>.",cite:"IOCM 21.3.2"},
+  {cat:'mel',q:"In N-FP, how do restrictive vs. non-restrictive MELs appear on the List page?",a:"<strong>Restrictive MELs show in red</strong>. Non-restrictive MELs show in black.",cite:"IOCM 21.4"},
+  {cat:'mel',q:"What does FDP Block mean and when do you unblock it?",a:"Blocks the crew from running takeoff performance in Aerodata. Unblock after <strong>PIC ACARS acknowledgment with time and initials</strong> confirming receipt of the revised release.",cite:"Module 6 / IOCC-INFO-05"},
+
+  // ── AIRCRAFT & PERFORMANCE ────────────────────────────────────────────────
+  {cat:'perf',q:"What are the critical surfaces under the Clean Aircraft Concept?",a:"Wings &nbsp;·&nbsp; Horizontal stabilizers &nbsp;·&nbsp; Vertical stabilizers &nbsp;·&nbsp; Control surfaces &nbsp;·&nbsp; Engine inlets<br><em>The fuselage is NOT a critical surface.</em>",cite:"14 CFR 121.629 / Module 17 / GDAP"},
+  {cat:'perf',q:"What is Holdover Time (HOT) and when does it begin?",a:"Estimated time anti-icing fluid remains effective. Begins when the <strong>FINAL application of fluid commences</strong> — not at pushback or takeoff.",cite:"Module 17 / GDAP"},
+  {cat:'perf',q:"What is the difference between deicing and anti-icing fluids?",a:"<strong>Deicing</strong> — REMOVES existing frost, ice, or snow<br><strong>Anti-icing</strong> — PREVENTS formation or accumulation after application for a limited holdover period",cite:"Module 17 / GDAP"},
+  {cat:'perf',q:"The Breeze Cold Weather Operations period runs from when to when?",a:"<strong>October 15th through April 15th</strong> each year.",cite:"Module 17 / GDAP"},
+  {cat:'perf',q:"When visibility is forecast below ¾ SM or RVR 4000, what additional performance requirement applies?",a:"Effective runway length must be at least <strong>115% of the required landing field length</strong>, verified using the <strong>RWA section in N-FP</strong>.",cite:"OpSpec C054 / § 121.195"},
+  {cat:'perf',q:"What is MORA and how does it relate to driftdown?",a:"<strong>Minimum Off-Route Altitude</strong> — provides obstacle clearance (2,000 ft over mountainous terrain). N-FP validates driftdown escape routes against MORA.",cite:"Module 20"},
+  {cat:'perf',q:"What are the two driftdown methods in N-FP and when is Method 1 used?",a:"<strong>Method 1 (Weight Reduce)</strong> — penalizes aircraft weight to meet MORA<br><strong>Method 2 (Escape Routes)</strong> — generates specific escape paths<br>Method 1 used when Method 2 cannot be generated safely.",cite:"Module 20 slide 33"},
+  {cat:'perf',q:"E190 maximum tailwind component for takeoff and landing?",a:"<strong>10 knots</strong> (also applies to A220).",cite:"E190 AFM / A220 AFM"},
+  {cat:'perf',q:"E190 maximum planned fuel quantity in N-FP and why is it set below the AFM limit?",a:"<strong>28,000 lbs</strong> — set conservatively below AFM maximum due to fuel specific gravity variations and fuel truck delivery differences.",cite:"Module 16/18/19 E190"},
+  {cat:'perf',q:"What does single pack operations restriction apply to on the A220?",a:"A220 single pack operations conducted at or below <strong>FL310</strong>.",cite:"Module 16/18/19 A220 slide 27"},
+  {cat:'perf',q:"What is the A220 maximum altitude for slat/flap extension and why does it matter to dispatch?",a:"<strong>20,000 ft</strong> — relevant for <strong>driftdown and engine-out planning</strong> where flap extension may be required.",cite:"Module 16/18/19 A220 / AFM"},
+  {cat:'perf',q:"What is the E190 maximum unpressurized operating altitude?",a:"<strong>FL100 (10,000 ft)</strong> — also applies when MEL 21-31-02 (Outflow Valve) requires unpressurized operation.",cite:"Module 16/18/19 E190 slide 28"},
+  {cat:'perf',q:"What MEL on the E190 restricts the cabin to unpressurized and limits flight to FL100?",a:"<strong>MEL 21-31-02 (Outflow Valve)</strong> — requires cabin to be unpressurized and restricts flight to FL100 or below.",cite:"Module 16/18/19 E190 slide 28"},
+  {cat:'perf',q:"OpSpec A012 — what does it authorize?",a:"Domestic fueling requirements for destinations within <strong>950 NM</strong> of U.S. territorial limits.",cite:"IOCM 27.10.8.1 / OpSpec A012"},
+  {cat:'perf',q:"What is the E190 classified as for overwater operations (LEOW vs EOW)?",a:"<strong>LEOW — Limited Extended Overwater</strong>. Restricted to 162 NM off the coast in authorized areas per OpSpec A013.",cite:"OpSpecs A013"},
+  {cat:'perf',q:"What does Wind Shear (WS) in the Route Details indicate?",a:"The higher the WS number, the rougher the air. A <strong>good indicator for altitude selection</strong> to keep flights out of turbulence.",cite:"Dispatch Release Guide"},
+  {cat:'perf',q:"What is the Air Florida Flight 90 case study used to illustrate in Module 17?",a:"The catastrophic consequences of <strong>failing to properly deice</strong> — reinforces the life-safety importance of the Clean Aircraft Concept.",cite:"Module 17 slide 11"},
+
+  // ── EXEMPTION 22897 ───────────────────────────────────────────────────────
+  {cat:'ops',q:"What is Exemption 22897 and when does it apply?",a:"Allows dispatchers to release a flight when the TAF has <strong>conditional language (TEMPO/PROB)</strong> indicating possible below-minimums conditions at ETA — provided the <strong>main body shows AT or ABOVE minimums</strong> at ETA.",cite:"IOCMTR-20"},
+  {cat:'ops',q:"What is the required release remark for Exemption 22897?",a:"<strong>EXEMPTION 22897 APPLIED. PLEASE REVIEW THE ALTERNATES IN ACCORDANCE WITH A005 AND 22897.</strong>",cite:"IOCMTR-20"},
+  {cat:'ops',q:"When applying Exemption 22897, what is the minimum conditional language visibility at the destination?",a:"Forecast visibility no less than <strong>½ of the lowest minimum visibility</strong> for the approach expected to be used.",cite:"IOCMTR-20"},
+  {cat:'ops',q:"Exemption 22897 does NOT apply to which 5 situations?",a:"1. Destinations/alternates outside the <strong>48 contiguous U.S.</strong><br>2. <strong>High Minimums Captains</strong><br>3. <strong>Ceiling requirement</strong> of circle-to-land approach<br>4. <strong>Part 121 Supplemental</strong> operations<br>5. <strong>Part 91</strong> operations",cite:"IOCMTR-20"},
+  {cat:'ops',q:"Under Exemption 22897, what standard applies to the second alternate's conditional language?",a:"Second alternate conditional language must be <strong>AT or ABOVE alternate minimums</strong> — no reduction is allowed.",cite:"IOCMTR-20"},,
+  {cat:'secret',q:"🎉 You found it!",a:"<strong>Thanks for studying!</strong><br><br>Take a picture of this card and show it to <strong>Brian Spencer</strong> for a prize!<br><br><a href='mailto:Brian.spencer@flybreeze.com' style='color:var(--cyan);font-weight:700;'>Brian.spencer@flybreeze.com</a>",cite:"Easter egg — nice work finding this!"}
+];
+
+const STORAGE_KEY = 'bz_flashcard_state';
+let deck = [...ALL_CARDS];
+let currentIndex = 0;
+let state = {};
+let activeDeck = 'all';
+
+function filterStat(type) {
+  loadState();
+  if (type === 'all') deck = [...ALL_CARDS];
+  else if (type === 'know') deck = ALL_CARDS.filter(c => state[getCardId(c)] === 'know' && c.cat !== 'secret');
+  else if (type === 'learn') deck = ALL_CARDS.filter(c => state[getCardId(c)] === 'learn' && c.cat !== 'secret');
+  else if (type === 'unseen') deck = ALL_CARDS.filter(c => !state[getCardId(c)] && c.cat !== 'secret');
+  currentIndex = 0;
+  document.querySelectorAll('.deck-btn').forEach(b => b.classList.remove('active'));
+  renderCard();
+  updateStats();
+}
+
+function loadState() {
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { state = {}; }
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function getCardId(card) {
+  return card.cat + '_' + card.q.slice(0,30).replace(/\s/g,'_');
+}
+
+function loadDeck(type) {
+  activeDeck = type;
+  loadState();
+  if (type === 'all') deck = [...ALL_CARDS];
+  else if (type === 'wrong') deck = ALL_CARDS.filter(c => state[getCardId(c)] === 'learn' && c.cat !== 'secret');
+  else deck = ALL_CARDS.filter(c => c.cat === type && c.cat !== 'secret');
+  currentIndex = 0;
+  document.querySelectorAll('.deck-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  renderCard();
+  updateStats();
+}
+
+function shuffle() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  currentIndex = 0;
+  renderCard();
+}
+
+const CAT_COLORS = {
+  regs:'cat-regs', fuel:'cat-fuel', wx:'cat-wx',
+  ops:'cat-ops', atc:'cat-atc', mel:'cat-mel', perf:'cat-perf'
+};
+const CAT_LABELS = {
+  regs:'Regulations', fuel:'Fuel & Weights', wx:'Weather & NOTAMs',
+  ops:'Dispatch Ops', atc:'ATC & Flow', mel:'MEL / CDL', perf:'Aircraft & Perf'
+};
+
+function renderCard() {
+  const fc = document.getElementById('flashcard');
+  fc.classList.remove('flipped');
+  document.getElementById('feedback-btns').style.display = 'none';
+  document.getElementById('deck-complete').style.display = 'none';
+  fc.style.display = '';
+
+  if (!deck.length) {
+    document.getElementById('card-counter').textContent = 'No cards in this deck';
+    document.getElementById('card-question').textContent = '';
+    document.getElementById('card-answer').innerHTML = '';
+    return;
+  }
+  if (currentIndex > deck.length - 1) {
+    showComplete();
+    return;
+  }
+
+  const card = deck[currentIndex
+];
+  const id = getCardId(card);
+  document.getElementById('card-counter').textContent = 'Card ' + (currentIndex+1) + ' of ' + deck.length;
+  const label = document.getElementById('card-cat-label');
+  label.textContent = CAT_LABELS[card.cat] || card.cat;
+  label.className = 'card-label ' + (CAT_COLORS[card.cat] || '');
+  document.getElementById('card-question').textContent = card.q;
+  // Secret card special styling
+  const frontFace = document.querySelector('.card-front');
+  if (card.cat === 'secret') {
+    frontFace.style.background = 'linear-gradient(135deg, #0B1F3A, #6D28D9)';
+  } else {
+    frontFace.style.background = '';
+  }
+  document.getElementById('card-answer').innerHTML = card.a;
+  document.getElementById('card-cite').textContent = card.cite ? '📄 ' + card.cite : '';
+  updateStats();
+}
+
+function flipCard() {
+  if (currentIndex >= deck.length) return;
+  const fc = document.getElementById('flashcard');
+  fc.classList.toggle('flipped');
+  const flipped = fc.classList.contains('flipped');
+  document.getElementById('feedback-btns').style.display = flipped ? 'flex' : 'none';
+  // Secret card confetti!
+  if (flipped && deck[currentIndex] && deck[currentIndex].cat === 'secret') {
+    rainConfetti();
+  }
+}
+
+function nextCard() {
+  // Allow going one past end to show complete screen
+  if (currentIndex >= deck.length - 1) {
+    showComplete();
+    return;
+  }
+  currentIndex++;
+  const fc = document.getElementById('flashcard');
+  fc.classList.remove('flipped');
+  document.getElementById('feedback-btns').style.display = 'none';
+  renderCard();
+}
+function prevCard() {
+  currentIndex = Math.max(currentIndex - 1, 0);
+  const fc = document.getElementById('flashcard');
+  fc.classList.remove('flipped');
+  document.getElementById('feedback-btns').style.display = 'none';
+  renderCard();
+}
+
+function markKnow() {
+  const card = deck[currentIndex];
+  state[getCardId(card)] = 'know';
+  saveState();
+  nextCard();
+}
+function markLearn() {
+  const card = deck[currentIndex];
+  state[getCardId(card)] = 'learn';
+  saveState();
+  nextCard();
+}
+
+function showComplete() {
+  document.getElementById('flashcard').style.display = 'none';
+  document.getElementById('deck-complete').style.display = 'block';
+  const know = deck.filter(c => state[getCardId(c)] === 'know').length;
+  const learn = deck.filter(c => state[getCardId(c)] === 'learn').length;
+  document.getElementById('complete-msg').textContent =
+    'You went through all ' + deck.length + ' cards. ' + know + ' marked ✓ Know it, ' + learn + ' still learning.';
+}
+
+function restart() {
+  currentIndex = 0;
+  document.getElementById('deck-complete').style.display = 'none';
+  renderCard();
+}
+
+function updateStats() {
+  loadState();
+  // Total reflects current deck; know/learn/unseen reflect current deck cards
+  const deckTotal = deck.length;
+  const know = deck.filter(c => state[getCardId(c)] === 'know' && c.cat !== 'secret').length;
+  const learn = deck.filter(c => state[getCardId(c)] === 'learn' && c.cat !== 'secret').length;
+  const unseen = deckTotal - know - learn;
+  document.getElementById('stat-total').textContent = '◼ ' + deckTotal + ' total';
+  document.getElementById('stat-know').textContent = '✓ ' + know + ' know it';
+  document.getElementById('stat-learn').textContent = '✗ ' + learn + ' still learning';
+  document.getElementById('stat-unseen').textContent = '◆ ' + unseen + ' unseen';
+}
+
+// ── Confetti ──────────────────────────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#0EA5C4','#1A5FB4','#1A7A3C','#D4A027','#B91C1C','#6D28D9','#fff','#F9E795','#F96167','#02C39A'];
+  for (let i = 0; i < 200; i++) {
+    const el = document.createElement('div');
+    const size = 6 + Math.random() * 10;
+    const drift = (Math.random() - 0.5) * 400;
+    const duration = 2 + Math.random() * 3;
+    const delay = Math.random() * 1.2;
+    el.style.cssText = 'position:fixed;top:-20px;z-index:9999;pointer-events:none;border-radius:'+(Math.random()>0.5?'50%':'2px')+';opacity:1;';
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.width = size + 'px';
+    el.style.height = (size * (0.4 + Math.random() * 0.8)) + 'px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animation = 'confettiFall ' + duration + 's ease-in ' + delay + 's forwards';
+    el.dataset.drift = drift;
+    document.body.appendChild(el);
+    // Animate with JS for drift
+    let start = null;
+    const totalMs = (duration + delay) * 1000;
+    function animate(ts) {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / totalMs, 1);
+      const y = progress * window.innerHeight * 1.1;
+      const x = drift * progress;
+      const rot = progress * 900;
+      el.style.transform = 'translateY(' + y + 'px) translateX(' + x + 'px) rotate(' + rot + 'deg)';
+      el.style.opacity = progress < 0.7 ? 1 : (1 - (progress - 0.7) / 0.3);
+      if (progress < 1) requestAnimationFrame(animate);
+      else el.remove();
+    }
+    setTimeout(() => requestAnimationFrame(animate), delay * 1000);
+  }
+}
+
+function rainConfetti() {
+  launchConfetti();
+  setTimeout(launchConfetti, 350);
+  setTimeout(launchConfetti, 700);
+  setTimeout(launchConfetti, 1100);
+  setTimeout(launchConfetti, 1600);
+  setTimeout(launchConfetti, 2300);
+}
+
+// ── Arrow key navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextCard();
+  else if (e.key === 'ArrowLeft') prevCard();
+  else if (e.key === ' ') { e.preventDefault(); flipCard(); }
+  else if (e.key === '1') markKnow();
+  else if (e.key === '2') markLearn();
+});
+
+loadState();
+renderCard();
+updateStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breeze Airways — Dispatch Training Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F3A; --navy-dk:#060F1D; --blue:#1A5FB4; --blue-lt:#DDEEFF;
+  --cyan:#0EA5C4; --cyan-lt:rgba(14,165,196,.12);
+  --gold:#D4A027; --gold-lt:#FDF5E0;
+  --ink:#0F0F0E; --ink2:#2E2E2C; --ink3:#6B6A64;
+  --surface:#F7F6F2; --white:#FFFFFF;
+  --gray:#E8E6DC; --gray-mid:#C8C5B8;
+  --green:#1A7A3C; --green-lt:#E3F5EA;
+  --red:#B91C1C; --red-lt:#FEE2E2;
+  --pass:80;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;scroll-behavior:smooth;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--navy-dk);color:var(--ink);min-height:100vh;}
+
+/* ── Screens ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── Login screen ── */
+#screen-login{
+  background:var(--navy-dk);
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+#screen-login::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(14,165,196,.18) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 40% at 80% 80%,rgba(26,95,180,.15) 0%,transparent 60%);
+  z-index:0;pointer-events:none;
+}
+.login-box{
+  position:relative;z-index:1;
+  width:100%;max-width:440px;padding:2rem;text-align:center;
+}
+.login-logo{
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);
+  margin-bottom:2.5rem;display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.login-logo::before,.login-logo::after{content:'';flex:1;height:1px;background:rgba(14,165,196,.3);}
+.login-title{
+  font-family:'Syne',sans-serif;font-size:clamp(28px,5vw,42px);
+  font-weight:800;color:#fff;line-height:1.1;margin-bottom:.5rem;
+}
+.login-title span{color:var(--cyan);}
+.login-sub{font-size:14px;color:rgba(255,255,255,.45);margin-bottom:3rem;}
+.login-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:2rem;backdrop-filter:blur(12px);
+  position:relative;z-index:2;
+}
+.login-label{
+  display:block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);
+  margin-bottom:8px;text-align:left;
+}
+.login-input{
+  width:100%;padding:14px 16px;
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);
+  border-radius:10px;font-size:18px;font-family:'Syne',sans-serif;font-weight:700;
+  color:#fff;letter-spacing:.08em;text-align:center;
+  transition:all .2s;outline:none;pointer-events:all;position:relative;z-index:2;
+}
+.login-input::placeholder{color:rgba(255,255,255,.2);font-weight:400;letter-spacing:0;}
+.login-input:focus{border-color:var(--cyan);background:rgba(14,165,196,.08);box-shadow:0 0 0 3px rgba(14,165,196,.15);}
+.login-btn{
+  width:100%;margin-top:1rem;padding:14px;
+  background:var(--cyan);color:var(--navy-dk);
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
+  border:none;border-radius:10px;cursor:pointer;
+  letter-spacing:.06em;text-transform:uppercase;
+  transition:all .2s;
+}
+.login-btn:hover{background:#12B8DB;transform:translateY(-1px);box-shadow:0 8px 24px rgba(14,165,196,.3);}
+.login-error{
+  margin-top:.75rem;font-size:13px;color:#F87171;
+  display:none;
+}
+.login-footer{margin-top:2rem;font-size:12px;color:rgba(255,255,255,.2);}
+
+/* ── Portal screen ── */
+#screen-portal{background:var(--surface);}
+.portal-header{
+  background:var(--navy);padding:.85rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,.3);
+  gap:1rem;min-width:0;
+}
+.portal-brand{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.portal-logo{
+  font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.2em;color:rgba(255,255,255,.4);
+}
+.portal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.portal-user{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.portal-id{
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:600;
+  color:var(--cyan);background:rgba(14,165,196,.1);
+  border:1px solid rgba(14,165,196,.3);border-radius:20px;
+  padding:4px 12px;white-space:nowrap;max-width:220px;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.logout-btn{
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);
+  border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  font-size:12px;font-family:'Instrument Sans',sans-serif;
+  padding:5px 12px;cursor:pointer;transition:all .15s;
+}
+.logout-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
+
+.portal-wrap{max-width:900px;margin:0 auto;padding:2.5rem 2rem;}
+.portal-welcome{margin-bottom:2rem;}
+.portal-welcome h2{
+  font-family:'Instrument Sans',sans-serif;font-size:34px;font-weight:700;
+  color:var(--navy);margin-bottom:.4rem;line-height:1.3;letter-spacing:-.01em;
+}
+.portal-welcome p{font-size:15px;color:var(--ink3);line-height:1.5;}
+
+
+/* ── Home screen ── */
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2rem;}
+.home-card{background:var(--white);border:2px solid var(--gray);border-radius:20px;padding:2rem 1.75rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+.home-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--navy),var(--blue));opacity:0;transition:opacity .2s;pointer-events:none;}
+.home-card:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:0 12px 32px rgba(26,95,180,.15);}
+.home-card:hover::before{opacity:1;}
+.home-card:hover .home-card-icon,.home-card:hover .home-card-title,.home-card:hover .home-card-sub,.home-card:hover .home-card-arrow{color:#fff;position:relative;z-index:1;}
+.home-card-icon,.home-card-title,.home-card-sub,.home-card-arrow{position:relative;z-index:1;}
+.home-card-study::before{background:linear-gradient(135deg,#1A5A3A,#22A05A);}
+.home-card-study:hover{border-color:#22A05A;box-shadow:0 12px 32px rgba(34,160,90,.15);}
+.home-card-icon{font-size:36px;margin-bottom:1rem;}
+.home-card-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy);margin-bottom:.6rem;transition:color .2s;}
+.home-card-sub{font-size:13px;color:var(--ink3);line-height:1.6;flex:1;transition:color .2s;}
+.home-card-arrow{font-size:22px;font-weight:700;color:var(--blue);margin-top:1.25rem;transition:color .2s;}
+.home-card-study .home-card-arrow{color:#22A05A;}
+.back-home-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--white);border:1.5px solid var(--gray);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;margin-bottom:1.5rem;transition:all .15s;}
+.back-home-btn:hover{background:var(--gray);}
+.study-coming-soon{background:var(--white);border:2px solid var(--gray);border-radius:20px;padding:4rem 2rem;text-align:center;}
+@media(max-width:700px){.home-grid{grid-template-columns:1fr;}}
+
+/* ── Portal tabs ── */
+.tab-bar{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:2px solid var(--gray);padding-bottom:0;}
+.tab-btn{padding:.6rem 1.25rem;border:none;background:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink3);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;border-radius:6px 6px 0 0;}
+.tab-btn:hover{color:var(--navy);background:var(--gray);}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-lt);}
+.tab-count{background:var(--gray);color:var(--ink3);font-size:10px;padding:1px 6px;border-radius:10px;margin-left:5px;}
+.tab-btn.active .tab-count{background:var(--blue);color:#fff;}
+.quiz-section-group{margin-bottom:2rem;}
+.type-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.type-kc{background:#EEF2FF;color:#3730A3;}
+.type-test{background:#FEF3C7;color:#92400E;}
+/* ── Module sections ── */
+.module-section{margin-bottom:2.5rem;}
+.module-section-label{
+  font-family:'Syne',sans-serif;font-size:18px;font-weight:700;
+  color:var(--navy);
+  margin-bottom:.75rem;padding-bottom:.5rem;
+  border-bottom:1px solid var(--gray);
+  letter-spacing:0;text-transform:none;
+}
+.quiz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.quiz-card{
+  background:var(--white);border:1.5px solid var(--gray);
+  border-radius:14px;padding:1.5rem;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.quiz-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  opacity:0;transition:opacity .2s;
+}
+.quiz-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,95,180,.12);}
+.quiz-card:hover::before{opacity:1;}
+.quiz-card.completed::before{opacity:1;background:linear-gradient(90deg,var(--green),#2D9E5E);}
+.quiz-card.completed{border-color:var(--green);}
+.qc-mod{
+  font-family:'Syne',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--cyan);
+  margin-bottom:.4rem;
+}
+.qc-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:.3rem;line-height:1.2;}
+.qc-sub{font-size:14px;color:var(--ink3);margin-bottom:1rem;}
+.qc-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.qc-badge{
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:var(--gray);color:var(--ink3);
+}
+.qc-score{
+  font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;
+  margin-left:auto;
+}
+.qc-score.pass{background:var(--green-lt);color:var(--green);}
+.qc-score.fail{background:var(--red-lt);color:var(--red);}
+.qc-score.pending{background:var(--gray);color:var(--ink3);}
+.start-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:1rem;padding:8px 16px;
+  background:var(--navy);color:#fff;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  border:none;border-radius:8px;cursor:pointer;transition:all .15s;
+  letter-spacing:.04em;
+}
+.start-btn:hover{background:var(--blue);}
+.start-btn.retake{background:transparent;color:var(--blue);border:1.5px solid var(--blue);}
+.start-btn.retake:hover{background:var(--blue-lt);}
+
+/* ── Exam screen ── */
+#screen-exam{background:var(--surface);}
+.exam-topbar{
+  background:var(--navy);padding:.75rem 2rem;
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+}
+.back-to-portal{
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.15);border-radius:8px;
+  font-size:12px;font-family:'Instrument Sans',sans-serif;
+  padding:5px 12px;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:5px;
+}
+.back-to-portal:hover{background:rgba(255,255,255,.2);color:#fff;}
+.exam-topbar-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;}
+.exam-prog-wrap{flex:1;display:flex;align-items:center;gap:10px;}
+.exam-prog-track{flex:1;height:4px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;max-width:200px;}
+.exam-prog-fill{height:100%;border-radius:2px;background:var(--cyan);transition:width .3s;}
+.exam-prog-count{font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);white-space:nowrap;}
+
+/* ── Exam content (reuse quiz styles) ── */
+.hdr{background:var(--navy);padding:0;}
+.hdr-inner{display:grid;grid-template-columns:1fr auto;align-items:end;gap:2rem;max-width:860px;margin:0 auto;padding:2rem 2rem 1.75rem;}
+.hdr-badge{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);margin-bottom:.5rem;}
+.hdr-title{font-family:'Syne',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:.3rem;}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.5);}
+.hdr-pills{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.hdr-pill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;text-align:right;}
+.hdr-pill span{color:var(--cyan);}
+.hdr-stripe{height:3px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--navy));}
+.wrap{max-width:860px;margin:0 auto;padding:2rem;}
+.info-card{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:1.5rem;margin-bottom:2rem;}
+.info-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--gray);}
+.info-prefilled{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.info-field{}
+.info-field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+.info-field .info-val{font-size:15px;font-weight:600;color:var(--navy);font-family:'Syne',sans-serif;}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.field input{width:100%;padding:9px 12px;border:1.5px solid var(--gray);border-radius:8px;font-size:14px;font-family:'Instrument Sans',sans-serif;color:var(--ink);background:var(--surface);transition:border .15s;}
+.field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,180,.1);}
+.q-card{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:1.5rem;margin-bottom:1rem;transition:border-color .2s;}
+.q-card:focus-within{border-color:var(--blue);}
+.q-card.answered{border-left:3px solid var(--cyan);}
+.q-card.correct{border-left:3px solid var(--green);background:var(--green-lt);}
+.q-card.incorrect{border-left:3px solid var(--red);background:var(--red-lt);}
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+.q-num{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--blue);background:var(--blue-lt);border-radius:5px;padding:3px 9px;}
+.q-pts{font-size:11px;font-weight:600;color:var(--ink3);}
+.q-text{font-size:14.5px;line-height:1.65;color:var(--ink);font-weight:500;}
+.options{display:flex;flex-direction:column;gap:8px;margin-top:1rem;}
+.option{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1.5px solid var(--gray);border-radius:8px;cursor:pointer;transition:all .15s;user-select:none;}
+.option:hover{border-color:var(--blue);background:var(--blue-lt);}
+.option.selected{border-color:var(--blue);background:var(--blue-lt);}
+.option.correct-ans{border-color:var(--green);background:var(--green-lt);}
+.option.wrong-ans{border-color:var(--red);background:var(--red-lt);}
+.opt-letter{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--ink3);background:var(--gray);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;}
+.option.selected .opt-letter{background:var(--blue);color:#fff;}
+.option.correct-ans .opt-letter{background:var(--green);color:#fff;}
+.option.wrong-ans .opt-letter{background:var(--red);color:#fff;}
+.opt-text{font-size:13.5px;line-height:1.55;color:var(--ink2);}
+.submit-wrap{margin:2rem 0;}
+.submit-card{background:var(--navy);border-radius:12px;padding:2rem;text-align:center;}
+.submit-card h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:.4rem;}
+.submit-card p{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem;}
+.submit-btn{display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:var(--navy-dk);font-family:'Syne',sans-serif;font-size:14px;font-weight:800;padding:13px 36px;border-radius:8px;border:none;cursor:pointer;transition:all .2s;}
+.submit-btn:hover{background:#12B8DB;transform:translateY(-1px);}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.result-banner{border-radius:16px;padding:2.5rem;text-align:center;margin-bottom:2rem;}
+.result-banner.pass{background:linear-gradient(135deg,#0F4C24,#1A7A3C);}
+.result-banner.fail{background:linear-gradient(135deg,#7F1D1D,#B91C1C);}
+.result-icon{font-size:52px;margin-bottom:.75rem;}
+.result-verdict{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:.4rem;}
+.result-score{font-size:48px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1;}
+.result-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:.5rem;}
+.result-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:1.5rem;}
+.rmeta{background:rgba(255,255,255,.1);border-radius:8px;padding:.85rem;text-align:center;}
+.rmeta-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;}
+.rmeta-lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px;}
+.result-actions{display:flex;gap:10px;justify-content:center;margin-bottom:2rem;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:13px;font-family:'Instrument Sans',sans-serif;font-weight:600;color:var(--ink);cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--gray);}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);}
+.review-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:1rem;}
+.q-cite{font-size:11.5px;color:var(--ink3);font-style:italic;margin-top:.5rem;}
+@media(max-width:600px){.hdr-inner{grid-template-columns:1fr;}.info-prefilled{grid-template-columns:1fr;}.result-meta{grid-template-columns:1fr 1fr;}.quiz-grid{grid-template-columns:1fr;}}
+
+
+/* ── Grading ── */
+.grade-q{background:#F7F6F2;border:1.5px solid var(--gray);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.grade-q-num{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:.4rem;}
+.grade-q-text{font-size:13.5px;font-weight:600;color:var(--navy);margin-bottom:.75rem;line-height:1.5;}
+.grade-student-ans{background:#fff;border:1.5px solid var(--gray);border-radius:8px;padding:.75rem 1rem;font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:.75rem;white-space:pre-wrap;}
+.grade-model{background:var(--amber-lt);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:.75rem 1rem;font-size:12px;color:var(--ink2);margin-bottom:.75rem;line-height:1.6;}
+.grade-score-row{display:flex;align-items:center;gap:10px;}
+.grade-score-row label{font-size:12px;font-weight:600;color:var(--ink3);}
+.grade-score-input{width:70px;padding:6px 10px;border:1.5px solid var(--gray);border-radius:6px;font-size:14px;font-family:'Syne',sans-serif;font-weight:700;text-align:center;}
+.grade-score-input:focus{outline:none;border-color:var(--blue);}
+.grade-max{font-size:12px;color:var(--ink3);}
+.grade-pending-badge{background:var(--amber-lt);color:var(--amber);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid var(--amber);}
+.grade-done-badge{background:var(--green-lt);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.grade-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;}
+.grade-btn:hover{background:#1d8f44;}
+/* ── Admin screen ── */
+#screen-admin{background:var(--surface);}
+.admin-header{background:var(--navy);padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.admin-badge{background:var(--gold);color:var(--navy-dk);font-family:'Syne',sans-serif;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-left:8px;}
+.admin-wrap{max-width:1100px;margin:0 auto;padding:1.5rem 2rem 3rem;}
+.admin-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.5rem;}
+.admin-metric{background:var(--white);border:1.5px solid var(--gray);border-radius:10px;padding:.85rem 1rem;}
+.admin-metric-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+.admin-metric-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--navy);line-height:1;}
+.admin-metric-sub{font-size:11px;color:var(--ink3);margin-top:3px;}
+.admin-section-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1.5px solid var(--gray);}
+.admin-table-wrap{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;margin-bottom:1.5rem;overflow-x:auto;}
+.admin-filter-row{display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center;}
+.admin-filter-row input,.admin-filter-row select{padding:7px 11px;border:1.5px solid var(--gray);border-radius:8px;font-size:13px;font-family:'Instrument Sans',sans-serif;background:var(--white);color:var(--ink);outline:none;}
+.admin-filter-row input:focus,.admin-filter-row select:focus{border-color:var(--blue);}
+.admin-filter-row input{min-width:200px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;padding:9px 14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);border-bottom:1.5px solid var(--gray);background:var(--surface);white-space:nowrap;}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--gray);vertical-align:middle;color:var(--ink);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#FAFAF7;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.badge-pass{background:var(--green-lt);color:var(--green);}
+.badge-fail{background:var(--red-lt);color:var(--red);}
+.badge-pending{background:var(--gray);color:var(--ink3);}
+.progress-mini{display:flex;gap:6px;align-items:center;}
+.progress-mini-bar{height:5px;border-radius:3px;background:var(--gray);overflow:hidden;width:60px;flex-shrink:0;}
+.progress-mini-fill{height:100%;border-radius:3px;}
+.gs-pull-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--cyan);color:var(--navy-dk);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:all .15s;letter-spacing:.04em;}
+.gs-pull-btn:hover{background:#12B8DB;}
+.gs-status{font-size:12px;color:var(--ink3);margin-left:8px;}
+@media(max-width:900px){.admin-summary{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.admin-summary{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">Breeze Airways</div>
+    <div class="login-title">Dispatch<br><span>Training</span> Portal</div>
+    <div class="login-sub">Enter your Employee ID to access your training materials</div>
+    <div class="login-card">
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
+        <div>
+          <label class="login-label" for="login-first">First name</label>
+          <input class="login-input" type="text" id="login-first" placeholder="Jane" autocomplete="off"
+            style="font-size:15px;letter-spacing:0;text-align:left;"
+            onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <div>
+          <label class="login-label" for="login-last">Last name</label>
+          <input class="login-input" type="text" id="login-last" placeholder="Smith" autocomplete="off"
+            style="font-size:15px;letter-spacing:0;text-align:left;"
+            onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+      </div>
+      <label class="login-label" for="login-id">Employee ID</label>
+      <input class="login-input" type="text" id="login-id" placeholder="BZ-1234" autocomplete="off"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="login-btn" onclick="doLogin()">Enter portal &rarr;</button>
+      <div class="login-error" id="login-error">Please fill in your name and Employee ID</div>
+    </div>
+    <div class="login-footer">Breeze Airways Integrated Operations Control Center &nbsp;·&nbsp; Dispatch Training</div>
+  </div>
+</div>
+
+<!-- ══ PORTAL SCREEN ═════════════════════════════════════════════ -->
+<div class="screen" id="screen-portal">
+  <header class="portal-header">
+    <div class="portal-brand">
+      <span class="portal-logo">BZ</span>
+      <span class="portal-title">Dispatch Training Portal</span>
+    </div>
+    <div class="portal-user">
+      <span class="portal-id" id="portal-id-display"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+  <div class="portal-wrap">
+    <div class="portal-welcome">
+      <h2 id="portal-welcome-msg">Welcome back</h2>
+      <p>Choose a section below to get started.</p>
+    </div>
+
+    <!-- Home screen — 3 cards -->
+    <div id="portal-home" class="home-grid">
+      <div class="home-card" onclick="showPortalSection('kc')">
+        <div class="home-card-icon">&#9642;</div>
+        <div class="home-card-title">Knowledge Checks</div>
+        <div class="home-card-sub">Module-by-module quizzes covering Basic Indoctrination, General Subjects, and Group II Aircraft</div>
+        <div class="home-card-arrow">&#8594;</div>
+      </div>
+      <div class="home-card" onclick="showPortalSection('test')">
+        <div class="home-card-icon">&#9654;</div>
+        <div class="home-card-title">Tests &amp; Finals</div>
+        <div class="home-card-sub">Section finals and comprehensive exam. Open book. Results recorded automatically.</div>
+        <div class="home-card-arrow">&#8594;</div>
+      </div>
+      <div class="home-card home-card-study" onclick="window.open('breeze_study_materials.html','_blank')">
+        <div class="home-card-icon">&#128218;</div>
+        <div class="home-card-title">Study Materials</div>
+        <div class="home-card-sub">Reference guides, module notes, and training resources. Coming soon.</div>
+        <div class="home-card-arrow">&#8594;</div>
+      </div>
+    </div>
+
+    <!-- Quiz / test content (hidden until card clicked) -->
+    <div id="portal-content" style="display:none;">
+      <button class="back-home-btn" onclick="showPortalHome()">&#8592; Back to home</button>
+      <div id="quiz-section-container"></div>
+    </div>
+
+    <!-- Study materials (hidden until card clicked) -->
+    <div id="portal-study" style="display:none;">
+      <button class="back-home-btn" onclick="showPortalHome()">&#8592; Back to home</button>
+      <div class="study-coming-soon">
+        <div style="font-size:48px;margin-bottom:1rem;">&#128218;</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy);margin-bottom:.5rem;">Study Materials</div>
+        <div style="font-size:14px;color:var(--ink3);max-width:400px;margin:0 auto;">Reference guides, module notes, and training resources will be available here. Check back soon.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet import modal -->
+<div id="modal-sheet-import" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;max-width:520px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#0B1F3A;margin-bottom:.4rem;">Load scores from Google Sheets</div>
+    <div style="font-size:13px;color:#6B6A64;margin-bottom:1.25rem;line-height:1.5;">
+      <strong>Step 1:</strong> Click the button below to open your results in a new tab.<br>
+      <strong>Step 2:</strong> Press <strong>Ctrl+A</strong> then <strong>Ctrl+C</strong> to select and copy all the text.<br>
+      <strong>Step 3:</strong> Paste it below and click Import.
+    </div>
+    <button onclick="window.open(SHEET_URL,'_blank')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#0B1F3A;color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:1rem;">&#8599; Open results in new tab</button>
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A64;margin-bottom:5px;">Paste results here</label>
+      <textarea id="sheet-paste" rows="5" style="width:100%;padding:8px 11px;border:1.5px solid #E8E6DC;border-radius:8px;font-size:12px;font-family:monospace;resize:vertical;pointer-events:all;outline:none;" placeholder='Paste the JSON from the results tab here…'></textarea>
+    </div>
+    <div id="sheet-import-msg" style="font-size:12px;margin-bottom:10px;min-height:18px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeSheetImport()" style="padding:8px 16px;border:1.5px solid #E8E6DC;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;">Cancel</button>
+      <button onclick="runSheetImport()" style="padding:8px 16px;background:#0B1F3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;">Import scores</button>
+    </div>
+  </div>
+</div>
+<div class="screen" id="screen-admin">
+  <header class="admin-header">
+    <div class="portal-brand">
+      <span class="portal-logo">BZ</span>
+      <span class="portal-title">Dispatch Training Portal</span>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div class="portal-user">
+      <button class="gs-pull-btn" onclick="openSheetImport()">&#8635; Load from Sheets</button>
+      <span class="gs-status" id="gs-pull-status"></span>
+      <button class="logout-btn" onclick="exportAdminCSV()" style="margin-left:8px;">&#8595; CSV</button>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+  <div class="admin-wrap">
+    <div class="admin-summary" id="admin-summary"></div>
+    <div class="admin-section-title">Student completion</div>
+    <div class="admin-filter-row">
+      <input type="text" id="admin-search" placeholder="Search Employee ID…" oninput="renderAdmin()">
+      <select id="admin-filter-quiz" onchange="renderAdmin()">
+        <option value="all">All quizzes</option>
+      </select>
+      <select id="admin-filter-status" onchange="renderAdmin()">
+        <option value="all">All statuses</option>
+        <option value="pass">Pass</option>
+        <option value="fail">Fail</option>
+        <option value="completed">Completed</option>
+        <option value="incomplete">Not started</option>
+      </select>
+    </div>
+    <div class="admin-table-wrap">
+      <table>
+        <thead id="admin-thead"></thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+    <div class="admin-section-title">Quiz pass rates</div>
+    <div class="admin-table-wrap">
+      <table>
+        <thead><tr><th>Quiz</th><th>Attempted</th><th>Passed</th><th>Failed</th><th>Pass rate</th><th>Avg score</th></tr></thead>
+        <tbody id="admin-quiz-summary"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXAM SCREEN ════════════════════════════════════════════════ -->
+<div class="screen" id="screen-exam">
+  <div class="exam-topbar">
+    <button class="back-to-portal" onclick="backToPortal()">&#8592; Portal</button>
+    <span class="exam-topbar-title" id="exam-topbar-title"></span>
+    <div class="exam-prog-wrap">
+      <div class="exam-prog-track"><div class="exam-prog-fill" id="exam-prog-fill" style="width:0%"></div></div>
+      <span class="exam-prog-count" id="exam-prog-count">0 / 0</span>
+    </div>
+  </div>
+  <div id="exam-content"></div>
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyUUsqzrhWoNbUeQDCcDz6CtYBN0Z2K0HgYhv1ivkhVDbS4SWu-Nsmn2Ha08R9ugFeZCg/exec';
+const PASS_THRESHOLD = 80;
+
+// ── Quiz catalog ────────────────────────────────────────────────────────────
+const QUIZZES = [
+  {id:'mod1',mod:'Module 1',name:'Company Introduction & Orientation',sub:'BreezeWay · IOCC · Company history · Key contacts',section:'Basic Indoctrination',type:'kc',totalQuestions:7,questions:[
+  {n:1,pts:15,text:"Where is Breeze Airways' Salt Lake City headquarters located?",cite:'Module 1 — Slide 21',correct:2,options:['Downtown Salt Lake City','Sugar House, Salt Lake City','Cottonwood Heights','Murray, Utah']},
+  {n:2,pts:14,text:"What is BreezeWay primarily used for?",cite:'Module 1 — Slide 4',correct:3,options:['Flight planning and dispatch releases','ATC updates and routing','Crew scheduling and pairing','Company news, benefits, payroll, and company discounts']},
+  {n:3,pts:14,text:"When did Breeze Airways begin its first commercial operation?",cite:'Module 1 — Slide 18',correct:1,options:['January 1, 2021','May 27, 2021','March 15, 2020','June 1, 2022']},
+  {n:4,pts:14,text:"What was the keypad code used to access the IOCC front door before 0700L?",cite:'Module 1 — Slide 31',correct:0,options:['12162','54321','00700','11111']},
+  {n:5,pts:14,text:"Where can dispatchers find emergency contacts for all IOCC personnel?",cite:'Module 1 — Slide 36',correct:2,options:['BreezeWay employee portal','Posted on the dispatch floor bulletin board','The Dispatch Team SharePoint site','The GOM Appendix']},
+  {n:6,pts:14,text:"What is the IOCC dress code Monday through Thursday on flying days?",cite:'Module 1 — Slide 35',correct:1,options:['Full uniform required','Business casual','Business formal','Casual — no dress code']},
+  {n:7,pts:15,text:"Who is the Dispatch Trainer at Breeze Airways?",cite:'Module 1 — Slide 36',correct:3,options:['Garrett Urry','Brian Spencer','Matt Wiser','Drew Urry']},
+]},
+  {id:'mod2kc',mod:'Module 2',name:'Company Manuals Knowledge Check',sub:'IOCM · GOM · OpSpecs · Dispatch procedures',section:'Basic Indoctrination',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The troposphere is the layer of the atmosphere where most weather occurs, and temperature generally decreases with altitude within it.',options:['True','False'],correct:0,cite:'The troposphere extends from the surface to approximately 36,000 ft and temperature decreases with a'},{n:2,pts:10,text:'\'Forecast shopping\' — selecting a RAMTAF over an NWS TAF simply because it shows better conditions — is an acceptable dispatch practice at Breeze when it keeps a flight legal.',options:['True','False'],correct:1,cite:'EWINS 6.3 / Module 11-12 slide 183'},{n:3,pts:10,text:'Per the IOCM, which chapter is the governing document for meteorology requirements for the dispatch of all Breeze aircraft?',options:['Chapter 4','Chapter 9','Chapter 18','Chapter 24'],correct:2,cite:'IOCM Chapter 18'},{n:4,pts:10,text:'What is a RAMTAF and who is Breeze\'s primary provider for requesting one?',options:['A revised area meteorological forecast; provided by the NWS directly','A Replaced Aerodrome Meteorological TAF; requested from DTN via email at aviationteam@dtn.com','An automated TAF revision issued by WSI Fusion','A pilot-requested alternate weather forecast filed with ATC'],correct:1,cite:'EWINS / Module 11-12 slide 167'},{n:5,pts:10,text:'What does the AWC TFM Convective Forecast (TCF) provide and how often is it refreshed?',options:['A 12-hour icing forecast; refreshed every 6 hours','A 4/6/8-hour wide-area convective forecast refreshed every 2 hours, useful for traffic flow and general convective weather planning','A real-time thunderstorm tracking feed refreshed every 15 minutes','A pilot briefing tool refreshed daily'],correct:1,cite:'The TCF provides 4, 6, and 8-hour convective forecasts refreshed every 2 hours, useful for wide-area'},{n:6,pts:10,text:'What is EDR turbulence as displayed in N-Tracking, and what does a high EDR value indicate?',options:['Engine Data Recording — high EDR means engine performance is reduced','Eddy Dissipation Rate — an aircraft-independent measure of turbulence; high EDR indicates more turbulent air is likely','Estimated Deviation Route — high EDR means more reroutes are expected','Emergency Dispatch Readiness — unrelated to weather'],correct:1,cite:'EDR (Eddy Dissipation Rate) is an aircraft-independent turbulence metric. High EDR = higher likeliho'},{n:7,pts:10,text:'When a RAMTAF is issued and used as the controlling forecast, what must the dispatcher add to the dispatch release?',options:['Nothing — the RAMTAF replaces the TAF automatically in N-FP','A remark on the release stating the reason for using the RAMTAF','A written request to the Director of IOCC','A safety report in Ideagen'],correct:1,cite:'EWINS / Module 11-12 slide 183'},{n:8,pts:10,text:'You are dispatching a flight to BUF. The current NWS TAF shows BUF below minimums at ETA, but a DTN RAMTAF shows conditions above minimums. Can you use the RAMTAF, and what must you document?',options:['Yes — use the RAMTAF freely with no additional requirements','Yes — but you must remark the release, record the supporting data (METARs 3 hours before and after ETA, evidence the NWS TAF is inaccurate), and retain the record for at least 3 months','No — RAMTAFs cannot be used when the NWS TAF is below minimums','Yes — but only with supervisor approval and no documentation required'],correct:1,cite:'EWINS 6.3 / Module 11-12 slides 183-185'},{n:9,pts:10,text:'A standard ISA (International Standard Atmosphere) defines sea level conditions as which of the following?',options:['0°C and 1013 hPa','+15°C and 1013 hPa (29.92 inHg)','+15°C and 29.65 inHg','+20°C and 1013 hPa'],correct:1,cite:'ISA standard conditions at MSL are +15°C and 1013 hPa / 29.92 inHg'},{n:10,pts:10,text:'The AWC Aviation Forecast Discussion (AFD) is a useful tool for dispatchers because it:',options:['Provides real-time radar overlays for route planning','Is a written forecaster narrative that helps interpret TAF information and supports better go/no-go and alternate decisions','Replaces the TAF for IFR alternate planning purposes','Provides gate-by-gate TFM impact forecasts'],correct:1,cite:'The AFD is a written forecaster discussion that provides context for interpreting TAFs and making so'}]},
+  {id:'mod3',mod:'Module 3',name:'Dispatch CFRs',sub:'14 CFR Parts 1, 65, 91, 117, 121 · 49 CFR',section:'Basic Indoctrination',type:'kc',totalQuestions:8,questions:[
+  {n:1,pts:13,text:"Under 14 CFR 121.533, what are the three core responsibilities of the aircraft dispatcher? (Remember M-I-C)",cite:'14 CFR §121.533 / Module 3 — Slide 9',correct:1,options:['File flight plans, coordinate with maintenance, and sign the dispatch release','Monitor flight progress, issue safety information, and cancel or redispatch unsafe flights','Approve fuel loads, issue weather briefings, and file ATC strips','Coordinate with crew scheduling, file NOTAMs, and approve MEL items']},
+  {n:2,pts:12,text:"Under 14 CFR 121.557, if an aircraft dispatcher cannot communicate with the pilot during an emergency, what must the dispatcher do?",cite:'14 CFR §121.557 / Module 3 — Slide 10',correct:2,options:['Wait for the pilot to make contact before taking any action','Notify the FAA and stand by','Declare an emergency and take any action considered necessary under the circumstances','Contact crew scheduling and defer to their decision'],},
+  {n:3,pts:13,text:"Under 14 CFR 121.619 — the 1-2-3 Rule — no alternate is required if for 1 hour before and after ETA the forecast shows:",cite:'14 CFR §121.619 / Module 3 — Slide 15',correct:3,options:['Ceiling at least 1,000 ft AGL and visibility at least 1 SM','Ceiling at least 3,000 ft AGL and visibility at least 5 SM','Ceiling at least 1,500 ft and visibility at least 2 SM','Ceiling at least 2,000 ft above airport elevation and visibility at least 3 SM']},
+  {n:4,pts:12,text:"Under 14 CFR 121.639, what is the minimum fuel required for a domestic dispatch?",cite:'14 CFR §121.639 / Module 3 — Slide 17',correct:0,options:['Fuel to destination + fuel to most distant alternate + 45 minutes at normal cruise','Fuel to destination + 30 minutes reserve','Fuel to destination + fuel to nearest alternate only','Fuel to destination + 1 hour reserve at holding speed']},
+  {n:5,pts:13,text:"Per 14 CFR 121.687, the mnemonic D-A-M-I-T helps remember the required content of a dispatch release. What does it stand for?",cite:'14 CFR §121.687 / Module 3 — Slide 18',correct:1,options:['Departure, Altitude, Minimums, IFR, Takeoff weight','Departure, Alternates, Minimum fuel, Identification (aircraft), Type of operation','Destination, Alternate, MEL items, IFR routing, Trip number','Dispatch date, Aircraft type, Minimums, Instruments, Type of operation']},
+  {n:6,pts:12,text:"Under 14 CFR 121.617, when is a takeoff alternate required?",cite:'14 CFR §121.617 / Module 3 — Slide 14',correct:2,options:['Any time the departure airport is reporting IFR conditions','Whenever the destination airport requires an alternate','When weather at the departure airport is below landing minimums, and the alternate must be within 1 hour single-engine at normal cruise','When winds exceed 15 knots crosswind at departure']},
+  {n:7,pts:13,text:"Breeze Airways operates certain flights under Part 91. Which of the following is an example of a Part 91 operation at Breeze?",cite:'14 CFR Part 91 / Module 3 — Slide 4',correct:3,options:['All scheduled passenger revenue flights','International charter operations','ETOPS flights over water','Training, repositioning, functional check, or special ferry permit flights']},
+  {n:8,pts:12,text:"Under 14 CFR 121.593, when is a specific dispatcher authorization NOT required before a flight may start?",cite:'14 CFR §121.593 / Module 3 — Slide 11',correct:1,options:['When the flight is a repositioning flight with no passengers','When an airplane lands at an intermediate airport specified in the original dispatch release and remains for not more than one hour','When the weather at departure is above minimums','When the PIC has already accepted the dispatch release']},
+]},
+  {id:'mod3kc',mod:'Module 3',name:'Dispatch CFRs Knowledge Check',sub:'§121.533 · §121.557 · §121.619 · §121.639',section:'Basic Indoctrination',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'Per § 121.663, the pilot in command and the aircraft dispatcher shall sign the dispatch release only if they both believe the flight can be made safely. A dispatcher may delegate authority to sign a release, but may NOT delegate authority to dispatch.',options:['True','False'],correct:0,cite:'§ 121.663 establishes joint signing responsibility and prohibits delegation of dispatch authority'},{n:2,pts:10,text:'\'P.P.D.\' is the memory aid used at Breeze for the dispatcher\'s three joint responsibilities under § 121.533(b).',options:['True','False'],correct:0,cite:'P.P.D. stands for Preflight planning, delay, and Dispatch release — the three joint responsibilities'},{n:3,pts:10,text:'Under § 121.533, what are the dispatcher\'s three SOLE (not joint) responsibilities?',options:['Fuel planning, weather briefing, and NOTAMs','Monitor flight progress, issue necessary safety information, and cancel or redispatch if the flight cannot operate safely (M-I-C)','Preflight planning, delay, and dispatch release','Route building, alternate selection, and performance planning'],correct:1,cite:'M-I-C: Monitor, Issue information, Cancel/redispatch — the three sole responsibilities under § 121.5'},{n:4,pts:10,text:'Per GOM 7.12.3-4, if the Captain and the Dispatcher cannot agree on required fuel, what happens?',options:['The dispatcher\'s fuel figure always takes precedence','The captain\'s fuel figure always takes precedence','The larger of the two computed fuel requirements is used and entered on the dispatch release','The duty manager makes the final decision'],correct:2,cite:'GOM 7.12.3-4'},{n:5,pts:10,text:'Per IOCM 2.4.2, what must both the PIC and the controlling dispatcher agree upon before any flight may be released?',options:['The flight plan route only','That the flight as planned can be accomplished safely and in accordance with all applicable company policies and procedures','The fuel load and alternate airport only','The crew\'s duty time availability'],correct:1,cite:'IOCM 2.4.2'},{n:6,pts:10,text:'The \'Top 10 Things Pilots Want Dispatch to Know\' emphasizes which communication practice as the most important item?',options:['Sending ATIS information during diversions','Communicate — keep crews in the loop, share plans and information that impacts their flight in a timely fashion','Filtering PIREPs to only relevant locations','Adding remarks explaining fuel adjustments'],correct:1,cite:'#1 on the list is Communicate: keep crews informed and included in decisions that affect their fligh'},{n:7,pts:10,text:'Per § 121.601(b), what must the dispatcher provide to the pilot in command before beginning a flight?',options:['The flight\'s fuel burn history from previous legs','All available weather reports and forecasts for each route to be flown and airport to be used, including adverse phenomena such as CAT, thunderstorms, and wind shear','A copy of the MEL log','Crew rest documentation'],correct:1,cite:'§ 121.601(b) requires the dispatcher to provide all available weather reports and forecasts for the '},{n:8,pts:10,text:'A captain calls 5 minutes before pushback requesting 2,000 lbs of additional fuel. Your planned fuel already meets all minimums and company policy. How should you handle this per the GOM and best practices?',options:['Deny the request — the planned fuel meets all requirements','Add the fuel, code it as PIC Request, remark the release explaining the addition, and if significant, document in the DET','Add the fuel with no documentation required','Refer the captain to the Duty Manager'],correct:1,cite:'GOM 7.12 / Module 14 slide 30'},{n:9,pts:10,text:'You are reviewing two dispatch releases for a case study comparison. Release A has thorough remarks explaining routing, turbulence avoidance, weather reasoning, and notable NOTAMs. Release B has minimal remarks. From the pilot\'s perspective, which is preferable and why?',options:['Release B — shorter remarks reduce cockpit workload','Release A — thorough remarks create a shared mental model, answer questions before they arise, and give the crew confidence in the plan','They are equally acceptable','Release B — pilots prefer to assess the weather themselves'],correct:1,cite:'Release A is preferred. Thorough remarks create a shared mental model, answer questions proactively,'},{n:10,pts:10,text:'The DECIDE model is taught as an ADM framework. What does the second \'E\' in DECIDE stand for, and why is it important for dispatchers?',options:['Execute — take immediate action','Evaluate the effect of the action — assess the consequences of your decision to enable continuous improvement','Eliminate — remove non-viable options','Escalate — involve supervisors when needed'],correct:1,cite:'The final E is Evaluate: assess the consequences of your decision. This closes the loop and drives c'}]},
+  {id:'mod4kc',mod:'Module 4',name:'OpSpecs Knowledge Check',sub:'Operations Specifications · FAA authorizations',section:'Basic Indoctrination',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'Class A airspace begins at 18,000 ft MSL throughout the United States and requires all aircraft to be operating on an IFR flight plan.',options:['True','False'],correct:0,cite:'Class A airspace starts at FL180 and requires IFR operations'},{n:2,pts:10,text:'In a Ground Delay Program (GDP), all aircraft filed to the affected airport receive an Expect Departure Clearance Time (EDCT) — including flights not in the original FSM list when the program was implemented.',options:['True','False'],correct:0,cite:'Aircraft not in the original list receive a delay equal to the average delay assigned to flights in '},{n:3,pts:10,text:'What does the Airport Acceptance Rate (AAR) represent?',options:['The number of aircraft an airport can depart in one hour','The number of aircraft an airport can accept (arrive) in a one-hour time frame based on runways in use, weather, and NAVAID limitations','The maximum number of gates available at an airport','The rate at which ATC clears aircraft through Class B airspace'],correct:1,cite:'AAR is the number of arrivals an airport can accept per hour, determined by runway configuration, we'},{n:4,pts:10,text:'What is a Severe Weather Avoidance Plan (SWAP)?',options:['A program that automatically cancels all flights in a weather-affected region','A coordinated ATC plan that provides pre-validated reroutes around severe convective weather affecting the NAS','An FAA directive requiring dispatchers to file alternate routes for all IFR flights','An airport-specific plan for handling thunderstorm operations'],correct:1,cite:'SWAP provides coordinated, pre-validated reroutes around severe convective weather impacting the NAS'},{n:5,pts:10,text:'What is an NRS Waypoint and what does the first letter of an NRS fix always indicate?',options:['A military waypoint; the first letter indicates the controlling ARTCC','An RNAV waypoint in a national grid; the first letter \'K\' indicates the fix is in the 48 contiguous states','A GPS waypoint; the first letter indicates the type of navaid','A STAR fix; the first letter indicates the arrival airport'],correct:1,cite:'NRS (Navigation Reference System) waypoints form a grid across the U.S.; the first letter is always '},{n:6,pts:10,text:'Who at Breeze is the point of contact (POC) for submitting EDCT change requests to ATC?',options:['The controlling dispatcher','The station manager at the departure airport','Dispatch Supervisors','The pilot in command'],correct:2,cite:'Dispatch Supervisors are the POC for all EDCT change requests and must have justification to submit'},{n:7,pts:10,text:'What website is the primary ATC interface for dispatchers to monitor flow programs, delays, airport closures, and reroutes at Breeze?',options:['tfr.faa.gov','nasstatus.faa.gov (NAS STATUS)','fly.faa.gov/ois','aviationweather.gov'],correct:1,cite:'NASStatus.faa.gov is the primary ATC interface for flow program details, delays, closures, and rerou'},{n:8,pts:10,text:'Your flight to PHL has been assigned an EDCT that is 90 minutes above the average program delay. The crew is approaching their FDP limits. What is the appropriate next step?',options:['Cancel the flight immediately','Have the Dispatch Supervisor submit an EDCT change request to ATC, citing crew FDP considerations as justification','Notify the crew and wait for the EDCT to expire naturally','File a new flight plan with a later departure time'],correct:1,cite:'When EDCT is well above average delay and crew FDP is a concern, the Dispatch Supervisor submits a c'},{n:9,pts:10,text:'A Ground Stop is issued for LGA due to thunderstorms. Your flight is currently airborne and 45 minutes out. What should the dispatcher do?',options:['Nothing — the ground stop only applies to departures','Monitor the situation, communicate with the crew about the ground stop and current conditions, and assess divert options if the stop does not lift before arrival','Immediately declare a divert to an alternate','Contact ATC directly and request an exemption'],correct:1,cite:'The dispatcher should monitor, communicate with the crew, and have divert options ready. Ground stop'},{n:10,pts:10,text:'You need to understand what tier of ARTCC centers would be affected by a major ground delay program centered on ZNY (New York Center). Which centers are considered Tier 1?',options:['ZID, ZJX, and ZBW','ZOB (Cleveland), ZDC (Washington), and ZBW (Boston) — the centers directly touching ZNY','All centers in the eastern United States','Only ZNY internal'],correct:1,cite:'Tier 1 refers to ARTCCs directly touching the affected center. ZNY Tier 1 = ZOB, ZDC, and ZBW'}]},
+  {id:'mod5',mod:'Module 5',name:'Dispatcher Duties & Responsibilities',sub:'Preparation for duty · M-I-C · Turnover',section:'Basic Indoctrination',type:'kc',totalQuestions:8,questions:[
+  {n:1,pts:13,text:"When the company becomes aware of hazardous airport or runway conditions, what must happen?",cite:'Module 5 — Slide 6: Adequate Airports — Suspension of Operations',correct:2,options:['Issue a company NOTAM and continue with reduced operations','Notify the FAA and allow crew to decide','Restrict or suspend operations until the conditions are corrected','Divert all flights and ground all departures indefinitely']},
+  {n:2,pts:12,text:"Which IOCM chapter covers Preparation for Duty procedures?",cite:'Module 5 — Slide 4',correct:0,options:['Chapter 3','Chapter 7','Chapter 14','Chapter 22']},
+  {n:3,pts:13,text:"What does a dispatcher review during General Company Flight Planning Procedures before releasing a flight? (IOCM 4.4)",cite:'Module 5 — Slide 48',correct:1,options:['Gate assignments, catering orders, and passenger count only','Weather, NOTAMs/TFRs, crew limitations, MEL/CDL, alternate selection, RAIM check, and fuel','Maintenance logs, aircraft age, and route profitability','ATC strips, fuel receipts, and baggage weight only']},
+  {n:4,pts:12,text:"What is a Ground Delay Program (GDP) designed to do?",cite:'Module 5 — Slides 15 & 16: Air Traffic Control',correct:3,options:['Speed up departures during peak hours','Reroute flights around weather systems','Increase runway capacity at busy airports','Balance arrival demand with airport capacity by controlling departure times']},
+  {n:5,pts:13,text:"What is RVSM and why does it matter for dispatchers?",cite:'Module 5 — Slides 18–21',correct:2,options:['Runway Visual Surface Measurement — used to assess braking action','Remote VHF Station Monitoring — used for ACARS backup communications','Reduced Vertical Separation Minima — allows 1,000 ft separation between FL290–FL410, requiring aircraft and crew authorization','Real-time Velocity and Speed Monitoring — used to track aircraft position']},
+  {n:6,pts:12,text:"During a dispatch turnover, what information must be relayed to the incoming dispatcher?",cite:'Module 5 — Slides 34 & 36',correct:0,options:['Active flights, irregularities, crew duty status, MEL/CDL items, weather concerns, and ATC delays','Only flights that have been delayed or diverted','Gate assignments and catering status for upcoming departures','Fuel receipts and maintenance squawks only']},
+  {n:7,pts:13,text:"Under Breeze policy, what happens when a dispatcher receives a dispatch release?",cite:'Module 5 — Slide 37: Dispatch Release Content',correct:1,options:['The dispatcher signs it without review if the PIC has already accepted','The dispatcher reviews and ensures it contains all required content before the flight departs','The dispatcher files it with the FAA immediately','The dispatcher sends it to crew scheduling for final approval']},
+  {n:8,pts:12,text:"Breeze Airways will conduct 121 Supplemental (charter) flights. Under 121.125, what is a key requirement for the flight following system?",cite:'14 CFR §121.125 / Module 5 — Slide 53',correct:3,options:['A dedicated dispatcher must be assigned to each supplemental flight at all times','Supplemental flights are exempt from flight following requirements','The PIC is solely responsible for monitoring supplemental flight progress','The certificate holder must have an approved flight following system adequate for monitoring each flight, with centers ensuring progress is tracked from origin to destination']},
+]},
+  {id:'mod5kc',mod:'Module 5',name:'Dispatcher Duties Knowledge Check',sub:'Shift duties · Turnover · M-I-C · Supplemental ops',section:'Basic Indoctrination',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The D.E.C.I.D.E. model teaches dispatchers that \'choosing not to decide\' is still a decision with consequences.',options:['True','False'],correct:0,cite:'The \'D — Do the necessary action\' step notes that choosing not to decide is still a decision'},{n:2,pts:10,text:'Confirmation bias in dispatch occurs when a dispatcher favors information that confirms their existing beliefs while disregarding contradictory evidence.',options:['True','False'],correct:0,cite:'Confirmation bias is one of the common ADM pitfalls covered in Module 15'},{n:3,pts:10,text:'Which of the following is NOT listed as one of the common ADM pitfalls for dispatchers?',options:['Over-reliance on automation','Time pressure and task saturation','Excessive fuel planning','Pressure to maintain schedules'],correct:2,cite:'Excessive fuel planning is not a listed ADM pitfall. The pitfalls are: confirmation bias, over-relia'},{n:4,pts:10,text:'What are Breeze Airways\' core company values, represented by the acronym SKIIE?',options:['Safety, Knowledge, Integrity, Innovation, Excellence','Safety, Kindness, Integrity, Ingenuity, Excellence','Safety, Kindness, Initiative, Integrity, Excellence','Service, Kindness, Integrity, Ingenuity, Excellence'],correct:1,cite:'SKIIE: Safety, Kindness, Integrity, Ingenuity, Excellence'},{n:5,pts:10,text:'What are the \'7 C\'s\' of effective dispatch/pilot communication?',options:['Clear, Concise, Correct, Consistent, Complete, Careful, Courteous','Clear, Concise, Concrete, Correct, Consideration, Complete, Courteous','Clear, Confident, Concise, Correct, Complete, Considerate, Calm','Communicate, Confirm, Clarify, Check, Correct, Complete, Close'],correct:1,cite:'The 7 C\'s: Clear, Concise, Concrete, Correct, Consideration, Complete, Courteous'},{n:6,pts:10,text:'An ASAP report may be REJECTED for which of the following reasons?',options:['The dispatcher was fatigued when the event occurred','The event involved an inadvertent regulatory deviation that was self-reported','The event involved intentional disregard for safety, deliberate violations, or reckless behavior','The report was submitted more than 24 hours after the event'],correct:2,cite:'ASAP reports are rejected for intentional violations, criminal activity, substance abuse, falsificat'},{n:7,pts:10,text:'DRM teaches that \'fuel is not a plan.\' What does this mean operationally?',options:['Fuel should never be added beyond minimums','Adding fuel without a specific tactical reason (e.g., contingency for a forecast reroute) is not effective planning; fuel should be paired with a specific operational strategy','The captain is solely responsible for fuel planning','Fuel minimums are set by the FAA and cannot be exceeded'],correct:1,cite:'\'Fuel is not a plan\' means adding contingency fuel must be tied to a specific tactical purpose — lik'},{n:8,pts:10,text:'Using the DECIDE model, a dispatcher notices convective weather developing along the route 2 hours before departure. Which step does this represent and what should happen next?',options:['C — Choose a desirable outcome. The dispatcher should file an alternate route immediately.','D — Detect a change needing attention. The dispatcher should next Estimate the significance of the weather on the flight.','I — Identify actions. The dispatcher should notify SYSOPS immediately.','E — Evaluate the effect. The dispatcher should assess whether the flight was affected.'],correct:1,cite:'Noticing the weather is the \'D — Detect\' step. Next is \'E — Estimate\' the significance of the change'},{n:9,pts:10,text:'A dispatcher is managing 12 active flights during a major convective event. They begin making rushed decisions without fully assessing all available information. Which ADM pitfall is most likely occurring?',options:['Confirmation bias','Over-reliance on automation','Time pressure / task saturation','Schedule pressure'],correct:2,cite:'Making rushed or incomplete decisions due to workload or perceived urgency is the definition of time'},{n:10,pts:10,text:'What is the primary obligation of the aircraft dispatcher as described in the DRM conclusion?',options:['Ensuring on-time performance and schedule integrity','Ensuring the safety of flight operations, safeguarding flight crews, and providing security and confidence to guests','Minimizing fuel costs and maximizing aircraft utilization','Maintaining positive relationships with ATC facilities'],correct:1,cite:'The dispatcher\'s primary obligation is ensuring safety of flight operations, safeguarding crews, and'}]},
+  {id:'mod2',mod:'Module 2',name:'Company Manuals Examination',sub:'IOCM · GOM · OpSpecs · Full 27-question exam',section:'Basic Indoctrination',type:'test',totalQuestions:27,questions:[
+  {
+    n:1, pts:3,
+    text:"A Captain is flagged as a High Minimums Captain. Which document must you cross-reference to determine the actual required RVR?",
+    cite:"IOCM Ch 17.4.11 / OpSpecs C054",
+    correct:1,
+    options:[
+      "IOCM Chapter 8 — Alternate Requirements",
+      "Operations Specifications C054 — Table 1",
+      "IOCM Chapter 18 — Meteorology",
+      "GOM Chapter 4 — Pilot Qualifications"
+    ]
+  },
+  {
+    n:2, pts:4,
+    text:"When is a takeoff alternate required, and what is the distance limitation?",
+    cite:"IOCM Ch 8.2.2",
+    correct:2,
+    options:[
+      "When destination weather is below minimums; within 2 hours single-engine",
+      "When departure airport weather is below Cat I minimums; within 1 hour single-engine or 280 NM",
+      "Always required for night operations; within 150 NM",
+      "When visibility is below 1 SM; within 3 hours normal cruise"
+    ]
+  },
+  {
+    n:3, pts:4,
+    text:"To verify an RNAV(GPS) approach is authorized for Breeze operations, which document do you reference?",
+    cite:"Operations Specifications C052",
+    correct:0,
+    options:[
+      "Operations Specifications C052 — Straight-In Approach Authorization",
+      "IOCM Chapter 18 — Meteorological Minimums",
+      "GOM Chapter 6 — Navigation Policy",
+      "Operations Specifications C070 — Authorized Airports"
+    ]
+  },
+  {
+    n:4, pts:3,
+    text:"Can a dispatcher declare an emergency?",
+    cite:"IOCM Ch 14.3.4",
+    correct:1,
+    options:[
+      "No — only the PIC may declare an emergency",
+      "Yes — any time the safety of the flight is in question",
+      "Yes — but only with supervisor approval",
+      "No — the dispatcher must contact ATC who then declares"
+    ]
+  },
+  {
+    n:5, pts:4,
+    text:"What is Breeze's standard landing fuel and minimum landing fuel for domestic flights?",
+    cite:"IOCM Ch 9.4.1 / 9.5.1 / 9.5.3",
+    correct:3,
+    options:[
+      "Standard: 60 min / Minimum: 45 min",
+      "Standard: 90 min / Minimum: 60 min",
+      "Standard: 45 min / Minimum: 30 min",
+      "Standard: 70 min / Minimum: 60 min"
+    ]
+  },
+  {
+    n:6, pts:4,
+    text:"What must a dispatcher review at the start of each shift before dispatching the first flight? (IOCM Table 3-2)",
+    cite:"IOCM Ch 3.5 / 3.6",
+    correct:2,
+    options:[
+      "Only weather and ATC delays",
+      "ATIS for all departure airports only",
+      "Weather, ATC, crew situations, FMM, aircraft airworthiness, MELs, GPS outages",
+      "Flight manifests and gate assignments"
+    ]
+  },
+  {
+    n:7, pts:4,
+    text:"Per Breeze policy, icing conditions exist when visible moisture is present AND SAT on the ground is at or below what temperature?",
+    cite:"IOCM Ch 18.12.3",
+    correct:1,
+    options:[
+      "0°C (freezing)",
+      "10°C",
+      "−10°C",
+      "5°C"
+    ]
+  },
+  {
+    n:8, pts:3,
+    text:"Where can you find Breeze's list of airports authorized for scheduled operations?",
+    cite:"Operations Specifications C070",
+    correct:3,
+    options:[
+      "IOCM Chapter 7 — Airport Analysis",
+      "GOM Appendix B",
+      "EWINS Airport Database",
+      "Operations Specifications C070"
+    ]
+  },
+  {
+    n:9, pts:4,
+    text:"Which of the following requires a NEW dispatch release (not an amendment)?",
+    cite:"IOCM Ch 5.3.1",
+    correct:0,
+    options:[
+      "Change of aircraft or Pilot-in-Command",
+      "MEL/CDL with no performance restriction",
+      "Alternate change in flight",
+      "Actual takeoff weight exceeds planned by 1,000 lbs"
+    ]
+  },
+  {
+    n:10, pts:4,
+    text:"Does a diversion automatically trigger the company emergency notification list?",
+    cite:"IOCM Ch 14.12",
+    correct:1,
+    options:[
+      "No — only emergencies trigger the notification list",
+      "Yes — a diversion IS on the notification list and triggers required notifications",
+      "Only if the diversion is weather-related",
+      "Only if fuel is below minimum"
+    ]
+  },
+  {
+    n:11, pts:4,
+    text:"Braking action POOR corresponds to what Runway Condition Code (RCC), and what is the maximum crosswind?",
+    cite:"IOCM Ch 7.3.4",
+    correct:2,
+    options:[
+      "RCC 2 — max crosswind 15 kts",
+      "RCC 3 — max crosswind 10 kts",
+      "RCC 1 — max crosswind 8 kts",
+      "RCC 0 — operations suspended"
+    ]
+  },
+  {
+    n:12, pts:4,
+    text:"Under what procedure can a Captain apply an MEL item without a maintenance tech on site?",
+    cite:"GOM Ch 5.10 / IOCM Ch 21.3",
+    correct:0,
+    options:[
+      "Crew Applied MEL (CA-MEL) — item must be designated CA-MEL and Captain must coordinate with MOC",
+      "Any MEL item may be Captain-applied with Dispatcher approval",
+      "Only CDL items may be Captain-applied; MEL always requires maintenance",
+      "Emergency MEL Override — no coordination required"
+    ]
+  },
+  {
+    n:13, pts:4,
+    text:"Which of the following must be included in a dispatch turnover?",
+    cite:"IOCM Ch 3.3 / 22.3",
+    correct:3,
+    options:[
+      "Only active flights and their fuel status",
+      "Gate assignments and catering updates",
+      "The previous dispatcher's personal notes",
+      "Weather, ATC delays, MEL/CDL status, crew duty limitations, and any irregularities"
+    ]
+  },
+  {
+    n:14, pts:3,
+    text:"How long are standard SIGMETs valid?",
+    cite:"IOCM Ch 18.11.2 / 18.11.3",
+    correct:1,
+    options:[
+      "2 hours (6 hours for hurricanes)",
+      "4 hours (6 hours for hurricanes)",
+      "6 hours (12 hours for hurricanes)",
+      "Until conditions improve"
+    ]
+  },
+  {
+    n:15, pts:3,
+    text:"What does Exemption 22897 allow?",
+    cite:"IOCM Ch 8.3",
+    correct:2,
+    options:[
+      "Dispatching without an alternate when destination is forecast VFR",
+      "Reducing fuel reserves by 10% on short sectors",
+      "Releasing a flight when TAF conditional statements indicate possible below-mins weather at ETA, provided the main forecast body is at or above minimums",
+      "Operating with an expired MEL item for up to 24 hours"
+    ]
+  },
+  {
+    n:16, pts:4,
+    text:"Regarding joint responsibility for flight safety, which statement is correct?",
+    cite:"IOCM Ch 2.4",
+    correct:3,
+    options:[
+      "The PIC has final authority; the dispatcher is advisory only",
+      "The dispatcher has authority over the PIC once airborne",
+      "Joint responsibility applies only during the dispatch phase",
+      "The dispatcher and PIC share joint responsibility; neither may dispatch or accept a flight they believe is unsafe"
+    ]
+  },
+  {
+    n:17, pts:3,
+    text:"Which of the following is an approved Breeze weather source?",
+    cite:"EWINS Ch 6.2 / OpSpecs A010",
+    correct:1,
+    options:[
+      "Weather Underground (wunderground.com)",
+      "The Weather Company (TWC) as an approved EWINS source",
+      "ForeFlight METARs (direct pilot app data)",
+      "Aviation Weather Center (aviationweather.gov) direct feeds only"
+    ]
+  },
+  {
+    n:18, pts:4,
+    text:"How far in advance is a dispatch release generated for domestic flights?",
+    cite:"IOCM Ch 4.2.1",
+    correct:0,
+    options:[
+      "2 hours (120 minutes) prior to scheduled departure",
+      "1 hour (60 minutes) prior to scheduled departure",
+      "30 minutes prior to scheduled departure",
+      "3 hours prior to scheduled departure"
+    ]
+  },
+  {
+    n:19, pts:4,
+    text:"A High Minimums Captain is operating under 14 CFR 121.652. How are landing minimums affected?",
+    cite:"IOCM Ch 17.4.11 / OpSpecs C054",
+    correct:2,
+    options:[
+      "MDA/DH increased by 200 ft and visibility by 1 mile",
+      "No change — minimums are the same as any other Captain",
+      "MDA/DH increased by 100 ft and visibility by ½ mile (or RVR equivalent from C054 table)",
+      "MDA/DH increased by 50 ft only"
+    ]
+  },
+  {
+    n:20, pts:4,
+    text:"Your ACARS system has failed completely. Where do you find the procedure?",
+    cite:"IOCM Ch 13.3.1",
+    correct:1,
+    options:[
+      "GOM Chapter 15 — Communication Failures",
+      "IOCM Chapter 13.3.1 — ARINC VHF Voice is the backup",
+      "Operations Specifications D085",
+      "IOCM Chapter 3.5 — Shift Duties"
+    ]
+  },
+  {
+    n:21, pts:4,
+    text:"Destination weather at ETA is forecast: ceiling 800 OVC, visibility 3 SM. Is an alternate required?",
+    cite:"IOCM Ch 8.2.4 / OpSpecs C055",
+    correct:0,
+    options:[
+      "Yes — 800 ft ceiling is below the 2,000 ft threshold; alternate required",
+      "No — visibility at 3 SM meets the minimum; no alternate needed",
+      "No — ceiling 800 OVC is above Cat I minimums",
+      "Only required if both ceiling AND visibility are below minimums simultaneously"
+    ]
+  },
+  {
+    n:22, pts:3,
+    text:"A High Minimums Captain operates a flight where the approach chart shows RVR 2400. What is the actual required RVR?",
+    cite:"Operations Specifications C054",
+    correct:3,
+    options:[
+      "RVR 2400 — no change required",
+      "RVR 3000",
+      "RVR 4000",
+      "RVR 5000 — per conversion table in OpSpecs C054"
+    ]
+  },
+  {
+    n:23, pts:4,
+    text:"Which of the following is NOT a required verification when selecting a diversion airport?",
+    cite:"IOCM Ch 7.4.4",
+    correct:2,
+    options:[
+      "Weather at or above landing minimums for the aircraft and crew pairing",
+      "Runway length suitable for the aircraft",
+      "Availability of a Breeze ground crew agent",
+      "Airport authorized for Breeze operations"
+    ]
+  },
+  {
+    n:24, pts:4,
+    text:"Where are Method 1 and Method 2 Driftdown definitions and criteria found?",
+    cite:"IOCM Ch 8.2.3",
+    correct:1,
+    options:[
+      "Performance Dispatch Manual — Appendix D",
+      "IOCM Chapter 8.2.3",
+      "Operations Specifications B036",
+      "GOM Chapter 10 — Engine Inoperative Procedures"
+    ]
+  },
+  {
+    n:25, pts:4,
+    text:"Your crew sends a Microsoft Teams message requesting an inflight fuel calculation. How do you respond?",
+    cite:"IOCM Ch 15.2.1",
+    correct:2,
+    options:[
+      "Reply via Teams — it is an approved backup communication channel",
+      "Reply via Teams only if ACARS is down",
+      "Do not use Teams — it is not approved. Use ACARS, ARINC VHF Voice, or other approved systems",
+      "Escalate to supervisor before responding through any channel"
+    ]
+  },
+  {
+    n:26, pts:4,
+    text:"At what point must a dispatcher initiate overdue aircraft procedures?",
+    cite:"IOCM Ch 14.4",
+    correct:0,
+    options:[
+      "20 minutes past ETA with no contact — notify station operations and ATC",
+      "30 minutes past ETA — notify only the Duty Manager",
+      "15 minutes past ETA — notify crew scheduling",
+      "Only after ATC declares the aircraft overdue"
+    ]
+  },
+  {
+    n:27, pts:3,
+    text:"Where can you find dispatch duty time limitations?",
+    cite:"IOCM Ch 25.5",
+    correct:3,
+    options:[
+      "14 CFR Part 121, Subpart S",
+      "GOM Chapter 12 — Employee Scheduling",
+      "IOCM Chapter 3.1 — General Duties",
+      "IOCM Chapter 25.5"
+    ]
+  }
+]},
+  {id:'basic_final',externalUrl:'breeze_test_basic_indoc_final.html',mod:'Section Final',name:'Basic Indoctrination Section Final',sub:'Modules 1–5 · All basic indoc content',section:'Basic Indoctrination',type:'test',totalQuestions:10,questions:[{n:1,pts:10,text:'Per the IOCM, a dispatch turnover (passdown) may be completed in written form and does not always require a face-to-face verbal exchange.',options:['True','False'],correct:0,cite:'The IOCM allows written turnovers; verbal is done only when necessary'},{n:2,pts:10,text:'When the company becomes aware of hazardous airport or runway conditions, the dispatcher has discretion to continue operations as long as the flight crew is notified.',options:['True','False'],correct:1,cite:'Per IOCM policy on Suspension of Operations, when hazardous conditions exist the company shall restr'},{n:3,pts:10,text:'Per § 121.533 and the IOCM, what are the three core dispatcher responsibilities recalled with the acronym \'M-I-C\'?',options:['Meteorology, Instruments, Communication','Monitor flights, Issue safety information, Cancel or redispatch if flight cannot operate safely','Monitor, Inspect, Coordinate','Manage, Inform, Control'],correct:1,cite:'M-I-C: Monitor flight progress, Issue necessary safety information, Cancel or redispatch if flight c'},{n:4,pts:10,text:'According to the IOCM, what does the dispatcher review at the start of each shift during the program log-in sequence (Step 3.4.2)?',options:['The previous day\'s flight statistics only','Open company email, then log into ASM (WSI Fusion), CMM (NOC), FMM (NOC), and FPM (NFP)','The MEL log and maintenance discrepancy reports','The crew rest records for all active crews'],correct:1,cite:'The log-in sequence includes open email, then ASM/WSI Fusion, CMM/NOC, FMM/NOC, and FPM/NFP'},{n:5,pts:10,text:'During a Supplemental (charter) operation, which regulation specifically requires an approved flight following system adequate for monitoring each flight?',options:['§ 121.533','§ 121.601','§ 121.125','§ 121.593'],correct:2,cite:'§ 121.125 requires certificate holders conducting supplemental operations to have an approved flight'},{n:6,pts:10,text:'When a Breeze aircraft is dispatched and operates under Part 91 (e.g., repositioning or training flights), how are those flights planned and monitored?',options:['Under relaxed VFR standards — no dispatch release required','Consistently with Part 121 domestic flight rules, even though the operation is technically Part 91','Under Part 91 only — Part 121 rules do not apply','At the captain\'s discretion with no dispatcher involvement'],correct:1,cite:'Per Module 3 and company policy, Breeze Part 91 flights are planned and monitored consistent with Pa'},{n:7,pts:10,text:'Which IOCM chapter covers the procedures for amending versus revising a dispatch release?',options:['Chapter 4 — Dispatch Release','Chapter 5 — Amendments','Chapter 7 — Adequate Airports','Chapter 9 — Fuel Supply'],correct:1,cite:'IOCM Chapter 5 covers when to revise (issue a new release) versus when to amend an existing release'},{n:8,pts:10,text:'You are the controlling dispatcher and receive a PIREP reporting severe turbulence on your flight\'s route. Per § 121.601 and M-I-C, what is your immediate responsibility?',options:['Log the report and wait to see if the crew contacts you','Issue the information to the pilot in command immediately and assess whether the route should be amended','Notify crew scheduling and let them handle it','File an ASAP report and continue monitoring'],correct:1,cite:'Your M-I-C responsibility requires you to issue necessary safety information to the crew immediately'},{n:9,pts:10,text:'You are handing off your shift to the oncoming dispatcher. Per the IOCM, what is the preferred method of turnover at Breeze?',options:['Always verbal face-to-face','Written turnover, with verbal used only when necessary','Email only','ACARS message to all active flights'],correct:1,cite:'The IOCM specifies written turnovers as the standard; verbal is done only when necessary'},{n:10,pts:10,text:'A flight you dispatched has just taken off when you receive a NOTAM indicating the destination runway is closed for the next 3 hours — the only available runway at that airport. What should you do?',options:['Wait to see if the crew notices the NOTAM','Immediately notify the pilot in command of the NOTAM, assess divert options, and coordinate an amendment or redispatch to a suitable alternate','Notify the station manager at the destination and take no further action','Issue an ASAP report and continue monitoring'],correct:1,cite:'Your M-I-C duty requires immediate notification to the crew, assessment of the situation, and redisp'}]},
+  {id:'mod7kc',mod:'Module 7',name:'NOTAMs Knowledge Check',sub:'FDC · NOTAM D · Pointer · SNOWTAM · GPS NOTAMs',section:'General Subjects',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'On the E190, a single air conditioning pack is capable of maintaining adequate pressurization and temperature if the other pack fails.',options:['True','False'],correct:0,cite:'Module 16/18/19 E190 slide 19'},{n:2,pts:10,text:'Ballast fuel of 5,000 lbs is required on the E190/195 whenever there are 15 or fewer passengers onboard, and must be remarked on the dispatch release.',options:['True','False'],correct:0,cite:'Module 20 slide 5'},{n:3,pts:10,text:'Several E190 MEL items in Chapter 36 (Pneumatics) share a common dispatch restriction. What is it?',options:['Flight is conducted in VMC only','Flight is conducted at or below FL310','Flight is conducted at or below FL250','No icing operations permitted'],correct:1,cite:'Module 16/18/19 E190 slide 17'},{n:4,pts:10,text:'What is the maximum planned fuel quantity used in N-FP when planning an E190, and why is it set below the AFM limit?',options:['25,000 lbs — to maintain structural limits','28,000 lbs — due to conservative planning and variations in fuel specific gravity and fuel truck delivery','30,000 lbs — the AFM maximum usable fuel','22,000 lbs — to maintain required minimum zero fuel weight'],correct:1,cite:'Module 2 / E190 AFM'},{n:5,pts:10,text:'What is the maximum tailwind component for both takeoff AND landing on the E190?',options:['5 knots','15 knots','10 knots','No published tailwind limit'],correct:2,cite:'E190 AFM / Module 2'},{n:6,pts:10,text:'Which of the following E190 Chapter 21 MEL items restricts the cabin to be unpressurized and limits the flight to FL100 or below?',options:['21-31-01 — CPCS Controller Channels','21-31-02 — Outflow Valve','21-51-00 — Air Conditioning Packs','21-32-01 — Positive Pressure Relief Valve'],correct:1,cite:'Module 16/18/19 E190 slide 28'},{n:7,pts:10,text:'The E190 Overheat Detection System (ODS) uses a dual loop system. An overheat condition is indicated when:',options:['Either loop indicates an overheat','Both loops indicate an overheat condition','The captain manually activates the warning','The AMS controller detects a single sensor fault'],correct:1,cite:'Module 16/18/19 E190 slide 15'},{n:8,pts:10,text:'You are dispatching an E190 with 12 passengers. What fuel planning action is required, and what must appear on the release?',options:['No special action — normal fuel planning applies','Add 5,000 lbs of ballast fuel (considered unusable), and remark the release accordingly','Reduce planned fuel by 5,000 lbs to compensate for low passenger weight','Contact MOC to verify weight and balance before fueling'],correct:1,cite:'Module 20 slide 5'},{n:9,pts:10,text:'An E190 has MEL 36-21-00 applied (Bleed 1 Leak Caution EICAS). What are the two operational restrictions?',options:['No night operations and FL290 max','No operations in known or forecast icing, and flight conducted at or below FL310','VMC only and FL250 max','Single pack only and FL310 max'],correct:1,cite:'Module 16/18/19 E190 slide 17'},{n:10,pts:10,text:'Per Breeze planning policy, what minimum buffer is maintained between the actual Takeoff Gross Weight (TOGW) and the aircraft\'s Maximum Takeoff Weight (MTOW)?',options:['500 lbs','1,000 lbs','2,000 lbs','No minimum buffer — MTOW is the limit'],correct:2,cite:'Module 16/18/19 A220 / W&B policy'}]},
+  {id:'mod9kc',mod:'Module 9',name:'Nav Aids & Publications Knowledge Check',sub:'VOR · ILS · GPS · RAIM · Jeppesen · ADS-B',section:'General Subjects',type:'kc',totalQuestions:32,questions:[{n:1,pts:4,text:'Under § 121.533(b), the aircraft dispatcher and the pilot in command share joint responsibility for preflight planning, delay, and the dispatch release of each flight.',options:['True','False'],correct:0,cite:'§ 121.533(b)'},{n:2,pts:4,text:'Printed manuals downloaded from Orlando TechPubs are controlled documents and may be used for operational reference during a shift.',options:['True','False'],correct:1,cite:'IOCM / Module 2'},{n:3,pts:4,text:'Breeze\'s E190 aircraft are classified as Extended Overwater (EOW) and may operate in all geographic areas without overwater restriction.',options:['True','False'],correct:1,cite:'OpSpecs A013'},{n:4,pts:4,text:'FDC NOTAMs are regulatory in nature and cover changes to instrument flight procedures, TFRs, and airspace.',options:['True','False'],correct:0,cite:'IOCM 24.4.1'},{n:5,pts:3,text:'Per the IOCM, Breeze is authorized to use GPS-based Instrument Approach Procedures (IAPs) at both the destination and the alternate airport simultaneously.',options:['True','False'],correct:1,cite:'IOCM 8.2.1(5)(A)'},{n:6,pts:3,text:'\'Forecast shopping\' — using a RAMTAF over an NWS TAF simply because it shows better conditions — is an acceptable dispatch practice when it keeps a flight legal.',options:['True','False'],correct:1,cite:'EWINS 6.3'},{n:7,pts:3,text:'Per § 121.663, a dispatcher may delegate authority to sign a dispatch release for a specific flight, but may NOT delegate their authority to dispatch.',options:['True','False'],correct:0,cite:'§ 121.663'},{n:8,pts:3,text:'A MEL amendment is considered complete when the dispatcher sends the revised release via ACARS to the crew.',options:['True','False'],correct:1,cite:'Module 6 slide 34'},{n:9,pts:3,text:'The fuselage is considered a critical surface and must always be deiced before every winter departure.',options:['True','False'],correct:1,cite:'Module 17 / GDAP'},{n:10,pts:3,text:'When performing inflight fuel calculations for a reroute or diversion in N-FP, the dispatcher should change the MLF/MLT to 45 minutes.',options:['True','False'],correct:0,cite:'Module 20'},{n:11,pts:3,text:'Where is Breeze Airways\' IOCC (Salt Lake City headquarters) located?',options:['123 Airport Blvd, Nashville, TN','6340 S 3000 E, Cottonwood Heights, UT 84121','Islip Long Island, NY — the original launch hangar','1 Breeze Way, Salt Lake City, UT'],correct:1,cite:'6340 S 3000 E, Cottonwood Heights, UT 84121'},{n:12,pts:3,text:'What is Breeze Airways\' company minimum planned landing fuel per the IOCM?',options:['45 minutes — the FAR minimum','30 minutes','60 minutes','90 minutes'],correct:2,cite:'IOCM Chapter 9'},{n:13,pts:3,text:'The memory aid \'D-A-M-I-T\' represents the required contents of a dispatch release per § 121.687. What does each letter stand for?',options:['Departure, Alternates, Minimums, Identification, Type of operation','Destination, Alternates, Minimum fuel, Identification (aircraft/trip number), Type of operation','Departure, Aircraft, MEL items, IFR type, Time of release','Destination, Alternates, METAR, IFR clearance, Trip number'],correct:1,cite:'§ 121.687'},{n:14,pts:3,text:'OpSpec C054 is one of the most important OpSpecs for dispatchers to know by number and location. What does it contain?',options:['The list of airports authorized for scheduled operations','The High Minimums Captain RVR conversion chart','Alternate airport IFR weather minimums','Authorization for RVSM operations'],correct:1,cite:'OpSpecs C054'},{n:15,pts:3,text:'What are the dispatcher\'s three SOLE responsibilities under § 121.533(c), recalled with the acronym M-I-C?',options:['Meteorology, Instruments, Communications','Monitor flight progress, Issue necessary safety information, Cancel or redispatch if the flight cannot operate safely','Preflight planning, Delay, Dispatch release','Manage resources, Inspect MELs, Coordinate with ATC'],correct:1,cite:'§ 121.533(c)'},{n:16,pts:3,text:'A Pointer NOTAM is issued to:',options:['Notify pilots of military airspace restrictions','Highlight or cross-reference another NOTAM such as an FDC NOTAM, assisting users in finding important information not listed under an airport/NAVAID identifier','Announce GPS outages affecting a specific area','Issue company-specific operational notices'],correct:1,cite:'IOCM 24.5'},{n:17,pts:3,text:'What does the Airport Acceptance Rate (AAR) represent?',options:['The maximum number of departures per hour at an airport','The number of arrivals an airport can accept per hour, based on runways, weather, and NAVAID status','The maximum number of gates available at an airport','The FAA-approved IFR landing capacity'],correct:1,cite:'AAR is the number of arrivals an airport can accept per hour.'},{n:18,pts:3,text:'Who at Breeze is the point of contact for submitting EDCT change requests to ATC?',options:['The controlling dispatcher','The pilot in command','Dispatch Supervisors','The station manager at the departure airport'],correct:2,cite:'Dispatch Supervisors are the POC for all EDCT change requests and must provide justification.'},{n:19,pts:3,text:'Per the IOCM, which chapter is the governing document for meteorology requirements for the dispatch of all Breeze aircraft?',options:['Chapter 4','Chapter 9','Chapter 18','Chapter 24'],correct:2,cite:'IOCM Chapter 18'},{n:20,pts:3,text:'ACARS is Breeze\'s primary means of crew communication. In which situation is ARINC voice most appropriate?',options:['For all routine pre-departure communications','When an issue is complicated, requires quick decision-making, or the crew is in a high-workload situation where ACARS messaging is difficult','Only when the aircraft is below 10,000 ft','ARINC should never be used; ACARS is always preferred'],correct:1,cite:'ARINC voice is most appropriate for complex issues, quick decisions, or high-workload situations (e.'},{n:21,pts:3,text:'Per GOM 7.12.3-4, if the Captain and Dispatcher cannot agree on required fuel, what happens?',options:['The dispatcher\'s fuel figure always takes precedence','The captain\'s fuel figure always takes precedence','The larger of the two computed fuel requirements is used and entered on the release','The duty manager makes the final call'],correct:2,cite:'GOM 7.12.3-4'},{n:22,pts:3,text:'Which of the following is NOT one of the common ADM pitfalls for dispatchers covered in Module 15?',options:['Confirmation bias','Over-reliance on automation','Excessive fuel planning','Pressure to maintain schedules'],correct:2,cite:'Excessive fuel planning is not a listed ADM pitfall. The listed pitfalls are: confirmation bias, aut'},{n:23,pts:3,text:'What color in N-OC indicates an aircraft is Out of Service (OOS) and not airworthy?',options:['Purple','Yellow','Orange','Red'],correct:3,cite:'Module 6'},{n:24,pts:3,text:'Ballast fuel is required on the E190/195 when there are 15 or fewer passengers onboard. How much is required, and does this apply to the A220?',options:['3,000 lbs; applies to both aircraft','5,000 lbs on E190/195 only; ballast fuel is not required on the A220','5,000 lbs; applies to both aircraft','Ballast fuel is never required — it is optional'],correct:1,cite:'Module 20 slide 5'},{n:25,pts:3,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from pushback to takeoff; begins at gate departure','The estimated time anti-icing fluid remains effective; begins when the FINAL application of fluid commences','The maximum time permitted between deicing and gate departure','The time limit for completing the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},{n:26,pts:3,text:'What is BINGO fuel?',options:['The fuel remaining at landing; equal to company minimum landing fuel','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel; 30 minutes or less remaining','The total fuel planned including all contingency'],correct:1,cite:'Module 20 slide 17'},{n:27,pts:3,text:'Per § 121.557(c), within how many days must a dispatcher submit a written report after exercising emergency authority?',options:['5 days','10 days','24 hours','30 days'],correct:1,cite:'§ 121.557(c)'},{n:28,pts:3,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','An alternate must always be added regardless of forecast'],correct:1,cite:'OpSpec C054 / § 121.195'},{n:36,pts:3,text:'What is the difference between a MEL, a CDL, an ACI, and a NEF? Give a one-sentence description of each.',options:['Yes — an alternate is always required for IFR flights','No — the 1-2-3 Rule is satisfied: ceiling ≥ 2,000 ft and visibility ≥ 3 SM for ±1 hour of ETA','Yes — the ceiling must be at least 3,000 ft to waive the alternate requirement','No — alternates are only required at night'],correct:1,cite:'§ 121.619'},{n:42,pts:3,text:'A colleague says your planned landing fuel of 55 minutes is fine because the FAR only requires 45. How do you respond and where do you cite the correct standard?',options:['Agree — 55 minutes exceeds the FAR minimum and is sufficient','Disagree — Breeze company policy requires 60 minutes minimum planned landing fuel; the release must be revised','Disagree — Breeze requires 90 minutes minimum planned landing fuel','Agree, but only if the destination has no alternate requirement'],correct:1,cite:'IOCM Chapter 9 / § 121.639'},{n:43,pts:3,text:'While reviewing NOTAMs for a BNA-SLC flight, you find an FDC NOTAM indicating the RNAV (GPS) RWY 16R approach at SLC has been amended with a higher DA. You had planned to use this approach for alternate minimums at a backup airport. What must you do?',options:['Nothing — FDC NOTAMs only affect VFR operations','Apply the new DA from the FDC NOTAM, reassess whether the backup airport still qualifies as a legal alternate under the updated minimums, and revise the release if needed','Cancel the flight until the NOTAM is resolved','Notify the crew and release without changes'],correct:1,cite:'IOCM 24.4.1'},{n:44,pts:3,text:'Your flight to LGA has an EDCT that is 2 hours above the average program delay. The crew is approaching their FDP limits, and the captain is a High Minimums Captain with deteriorating conditions at LGA. What is the correct course of action?',options:['The controlling dispatcher submits the EDCT change request directly to ATC','The Dispatch Supervisor submits an EDCT change request to ATC, citing crew FDP limits and the HM CA with deteriorating destination conditions as justification','Wait for the EDCT to expire naturally','Cancel the flight and rebook passengers'],correct:1,cite:'Dispatch Supervisors are the POC for EDCT change requests. FDP limits and HM CA with deteriorating c'}]},
+  {id:'mod10kc',mod:'Module 10',name:'ATC & Communications Knowledge Check',sub:'ACARS · ARINC · SATCOM · ZFW error · Turnover',section:'General Subjects',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'ACARS is Breeze Airways\' primary means of communication with flight crews. ARINC VHF voice may be used when needed but is secondary.',options:['True','False'],correct:0,cite:'ACARS is primary; ARINC is available as secondary when needed'},{n:2,pts:10,text:'SATCOM is currently an approved means of crew-to-dispatch communication at Breeze Airways for all equipped aircraft.',options:['True','False'],correct:1,cite:'SATCOM is not yet an approved means of communication at Breeze, though some aircraft are equipped wi'},{n:3,pts:10,text:'What is the general procedure for a dispatcher to reach a flight crew via ARINC?',options:['Call the crew\'s cell phone directly','Contact ARINC with the flight number, location, and SELCAL code; ARINC alerts the crew via radio; once the crew acknowledges, ARINC calls dispatch back to connect the patch','Send an uplink message via ACARS requesting a voice callback','Contact the destination station to relay the message'],correct:1,cite:'The dispatcher provides flight number, location, and SELCAL to ARINC; ARINC alerts the crew; once ac'},{n:4,pts:10,text:'A ZFW Error message appears on the crew\'s ACARS during takeoff performance calculations. What does this mean and what should the dispatcher do?',options:['The fuel load is incorrect — send revised fuel figures','The actual payload does not match the planned payload. Confirm the correct passenger count via NS2; if correct, send a new release with the updated actual ZFW','The aircraft gross weight exceeds MTOW — cancel the flight','The ACARS system is offline — switch to ARINC'],correct:1,cite:'A ZFW Error means actual payload differs from planned. Verify pax count via NS2; if correct, issue a'},{n:5,pts:10,text:'What is the SATCOM access number and when would a dispatcher use priority code \'3\'?',options:['(602) 239-3627; code 3 is for non-operational calls','(480) 730-3900; code 3 is for Operational Low — Safety of Flight calls','(480) 730-3900; code 3 is for Non-Operational / Non-safety calls','(602) 239-3627; code 3 is for medical emergencies only'],correct:1,cite:'SATCOM access: (480) 730-3900. Priority 3 = Operational Low (Safety of Flight). Priority 4 = Non-Ope'},{n:6,pts:10,text:'During a medical event onboard, how should a dispatcher use SATCOM to connect MedLink to the call?',options:['Transfer the call to MedLink and hang up','Press Conference from the active call, dial MedLink at (602) 239-3627, then press Conference again to merge the calls','Have the crew contact MedLink directly via ACARS','Contact the station manager to relay medical information to MedLink'],correct:1,cite:'From the active SATCOM call, press Conference, dial MedLink at (602) 239-3627, then press Conference'},{n:7,pts:10,text:'When is it appropriate to use ARINC rather than ACARS for crew communication?',options:['Only when the aircraft is below 10,000 ft','When the issue is complicated, requires quick decision-making, or when ACARS is not the most effective means for the situation','ARINC should never be used — ACARS is always preferred','Only when the captain requests a voice call'],correct:1,cite:'ARINC is appropriate for complicated issues, quick decisions, or when voice communication is more ef'},{n:8,pts:10,text:'You need to communicate a significant weather deviation and route amendment to a crew that is currently enroute in turbulence. Which communication method is most appropriate and why?',options:['ACARS only — it creates an automatic record','ARINC voice — turbulence and high workload make ACARS messaging difficult; voice allows for faster, clearer two-way communication','Wait until the crew lands to discuss','Contact the station at the destination to relay the information'],correct:1,cite:'Module 14 notes that ACARS is difficult in turbulence or high-workload situations. ARINC voice is mo'},{n:9,pts:10,text:'A crew sends an ACARS downlink with a free-text message stating they have a maintenance issue and want to continue to destination. What information should the dispatcher gather and communicate before making a joint decision?',options:['Fuel state only — maintenance is not a dispatch concern','The specific MEL item, its operational and performance implications, current and forecast weather at destination and alternates, and fuel state','Contact crew scheduling for a relief crew','Notify the station manager and take no further action'],correct:1,cite:'The dispatcher must assess the MEL item, its implications, weather at destination and alternates, an'},{n:10,pts:10,text:'Per the IOCM, what is the Breeze policy on turnover/passdown communication method, and when is verbal communication used?',options:['Always verbal face-to-face','Written turnover is standard; verbal is used only when necessary','Email only via company inbox','Either method is equally acceptable at dispatcher discretion'],correct:1,cite:'IOCM Chapter 3, Section 3.3'}]},
+  {id:'mod1112kc',mod:'Module 11/12',name:'Meteorology & Weather Knowledge Check',sub:'TAF · RAMTAF · METAR · EDR · AWC · EWINS',section:'General Subjects',type:'kc',totalQuestions:15,questions:[{n:1,pts:7,text:'A NOTAM must state the abnormal status of a component of the NAS. The only exception is for published data being replaced, such as \'RWY 9/27 OPEN.\'',options:['True','False'],correct:0,cite:'IOCM 24.8'},{n:2,pts:7,text:'SATCOM is currently an approved means of crew-to-dispatch communication at Breeze Airways for all SATCOM-equipped aircraft.',options:['True','False'],correct:1,cite:'SATCOM is not yet an approved means of communication at Breeze, though some aircraft are equipped wi'},{n:3,pts:7,text:'Class A airspace exists from 18,000 ft MSL throughout the U.S. and requires all aircraft operating within it to be on an IFR flight plan.',options:['True','False'],correct:0,cite:'Class A begins at FL180 and requires IFR operations.'},{n:4,pts:7,text:'\'Forecast shopping\' — selecting a RAMTAF over an NWS TAF simply because it shows better conditions — is an acceptable dispatch practice at Breeze when it keeps a flight legal.',options:['True','False'],correct:1,cite:'EWINS 6.3'},{n:5,pts:7,text:'Per the IOCM, Breeze Airways is authorized to use GPS-based Instrument Approach Procedures (IAPs) at both the destination and the alternate airport simultaneously.',options:['True','False'],correct:1,cite:'IOCM 8.2.1(5)(A)'},{n:6,pts:7,text:'Which of the following correctly identifies all ground-based NAVAIDs from the list?',options:['GPS, VOR, ILS','DME, VOR, VORTAC, NDB','WAAS, DME, Waypoint','RNAV, VOR, GPS'],correct:1,cite:'DME, VOR, VORTAC, and NDB are ground-based NAVAIDs. GPS and WAAS are space-based.'},{n:7,pts:7,text:'What are the two main components of an ILS, and what does each provide?',options:['VOR and DME — lateral and distance','Localizer and Glideslope — lateral and vertical guidance respectively','Glideslope and Marker Beacon — vertical and range guidance','Localizer and NDB — lateral and bearing guidance'],correct:1,cite:'The ILS consists of the Localizer (lateral guidance) and Glideslope (vertical guidance).'},{n:8,pts:7,text:'Which OpSpec contains Breeze Airways\' list of approved straight-in instrument approach procedures?',options:['C054','C055','C052','C070'],correct:2,cite:'OpSpec C052 is the list of authorized straight-in Non-Precision, APV, and Category I Precision appro'},{n:9,pts:7,text:'What type of NOTAM is regulatory in nature and covers changes to instrument flight procedures, TFRs, and airspace?',options:['NOTAM D','Pointer NOTAM','FDC NOTAM','Company NOTAM'],correct:2,cite:'FDC NOTAMs are regulatory in nature and include IFR procedure changes, TFRs, and airspace changes.'},{n:10,pts:7,text:'What does the Airport Acceptance Rate (AAR) represent?',options:['The maximum number of departures per hour at an airport','The number of aircraft an airport can accept (arrive) per hour based on runways, weather, and NAVAID limitations','The maximum number of gates available at an airport','The FAA-certified landing capacity for IFR operations'],correct:1,cite:'AAR is the number of arrivals per hour an airport can accept, determined by runway configuration, we'},{n:11,pts:6,text:'When a Ground Delay Program (GDP) is issued, aircraft not in the original FSM list receive:',options:['No delay — only pre-scheduled flights are affected','A delay equal to the average Delay Assignment (DA) for flights in their 15-minute arrival interval','An automatic cancellation','A delay equal to the longest assigned EDCT in the program'],correct:1,cite:'Aircraft not in the original GDP list receive a delay equal to the average DA for their 15-minute ar'},{n:12,pts:6,text:'Which IOCM chapter is the governing document for meteorology requirements for the dispatch of all Breeze aircraft?',options:['Chapter 4','Chapter 9','Chapter 18','Chapter 24'],correct:2,cite:'IOCM Chapter 18 governs meteorology requirements for dispatch.'},{n:13,pts:6,text:'What are the 7 C\'s of effective dispatch/pilot communication?',options:['Clear, Confident, Concise, Correct, Complete, Considerate, Calm','Clear, Concise, Concrete, Correct, Consideration, Complete, Courteous','Communicate, Confirm, Clarify, Check, Correct, Complete, Close','Clear, Concise, Correct, Consistent, Complete, Careful, Courteous'],correct:1,cite:'The 7 C\'s: Clear, Concise, Concrete, Correct, Consideration, Complete, Courteous.'},{n:21,pts:6,text:'You are dispatching Breeze Flight 312, an A220, from BNA to PVD. While reviewing NOTAMs, you find an FDC NOTAM indicating the RNAV (GPS) RWY 05 approach at PVD has been amended with a higher DA and revised missed approach procedure. You had planned to use this approach for alternate minimums. What must you do before releasing the flight?',options:['Proceed — FDC NOTAMs only affect VFR operations','Apply the new minimums from the FDC NOTAM to the release, and reassess whether PVD still qualifies as a legal alternate under the updated approach minimums','Cancel the flight until the NOTAM is resolved','Notify the crew via ACARS and release without changes'],correct:1,cite:'FDC NOTAMs amending IAPs are regulatory and must be applied. The updated minimums must be used when '},{n:22,pts:6,text:'Your flight to LGA has been assigned an EDCT that is 2 hours above the average program delay. The crew is approaching their FDP limits and a high-minimums captain is on the aircraft with deteriorating conditions at LGA. What is your recommended course of action and who handles the EDCT change request?',options:['The controlling dispatcher submits the EDCT change request directly to ATC','The Dispatch Supervisor submits an EDCT change request to ATC, citing crew FDP limits and the high-minimums CA with deteriorating conditions as justification','Wait for the EDCT to expire naturally and reassess','Cancel the flight and rebook passengers'],correct:1,cite:'Dispatch Supervisors are the POC for all EDCT change requests. FDP limits and HM CA with deteriorati'}]},
+  {id:'mod14kc',mod:'Module 14',name:'Joint Responsibility Knowledge Check',sub:'§121.533 · §121.663 · PPD · Fuel disagreement',section:'General Subjects',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'Per the IOCM, dispatch will ensure communication and navigation facilities at the departure, arrival, alternate airport, and along the route of flight are in satisfactory operating condition via NOTAMs at the time of operation.',options:['True','False'],correct:0,cite:'IOCM 7.2.2(5) and IOCM 20.2.4'},{n:2,pts:10,text:'Breeze Airways is authorized to use GPS-based Instrument Approach Procedures at both the destination and the alternate airport simultaneously when planning a flight.',options:['True','False'],correct:1,cite:'IOCM 8.2.1(5)(A)'},{n:3,pts:10,text:'Which OpSpec governs how Breeze achieves RNAV Class 1 Navigation Performance using FMS systems for terminal and en route operations?',options:['B031','B032','B034','B050'],correct:2,cite:'OpSpecs B034'},{n:4,pts:10,text:'What is the key operational difference between a VOR and an ILS in terms of approach guidance?',options:['A VOR provides both lateral and vertical guidance; an ILS provides only lateral','An ILS provides both lateral guidance (localizer) and vertical guidance (glideslope); a VOR provides only lateral guidance','They are functionally identical for instrument approaches','A VOR is space-based; an ILS is ground-based'],correct:1,cite:'The ILS provides both lateral (localizer) and vertical (glideslope) guidance. A VOR provides only la'},{n:5,pts:10,text:'What is the significance of RAIM in GPS navigation?',options:['It boosts GPS signal strength in mountainous areas','Receiver Autonomous Integrity Monitoring — it requires a 5th satellite to verify GPS position integrity and is auto-checked by N-FP','It is a backup navigation system that operates independently of GPS','It is required only for ETOPS operations'],correct:1,cite:'RAIM (Receiver Autonomous Integrity Monitoring) uses a 5th satellite to verify GPS position accuracy'},{n:6,pts:10,text:'Where are Jeppesen charts accessed at Breeze for dispatch use?',options:['FAA.gov digital products page','Ground Controls, accessed via the Breeze Team Member portal','Printed binders stored at each workstation','NavBlue Academy only'],correct:1,cite:'Jeppesen charts for dispatch are accessed via Ground Controls through the Breeze Team Member Portal'},{n:7,pts:10,text:'If ADS-B equipment is deferred on an aircraft, what action is required?',options:['No action — ADS-B is optional','ATC must be contacted for authorization before the flight can operate','The flight must be cancelled','The flight must remain below 18,000 ft MSL'],correct:1,cite:'If ADS-B or associated equipment is deferred, ATC must be contacted for authorization'},{n:8,pts:10,text:'You are planning a flight and a NOTAM indicates a VOR along your planned route is out of service (OTS). Per the IOCM, what must you do before releasing the flight?',options:['Nothing — GPS makes VOR NOTAMs irrelevant','Verify that navigation facilities along the route are in satisfactory operating condition and, if not, assess whether an alternate route or navigation method is available','Notify the crew via ACARS and proceed with the release','File a NOTAM report and continue planning'],correct:1,cite:'IOCM 20.2.4'},{n:9,pts:10,text:'You are planning a flight where both the destination (PVD) and the alternate (BOS) require GPS approaches for legal minimums. Is this dispatch legal?',options:['Yes — GPS is an approved navigation system for all operations','No — Breeze is only authorized to use GPS-based IAPs at either the destination or the alternate, not both','Yes — as long as both airports have WAAS approaches','No — GPS approaches are never authorized at alternates'],correct:1,cite:'IOCM 8.2.1(5)(A)'},{n:10,pts:10,text:'What is the Route Manager Tool in N-FP used for, and how is it accessed?',options:['It is used to track OOOI times and is accessed from the ACARS menu','It is used to build and modify flight routes, accessed via CTRL+R or the toolbar','It is used to calculate alternate minimums and is accessed from the weather overlay','It is used to submit EDCT change requests to ATC'],correct:1,cite:'The Route Manager Tool (CTRL+R) is used to build and modify routes, including forcing STARs, SIDs, a'}]},
+  {id:'mod15kc',mod:'Module 15',name:'DRM Knowledge Check',sub:'DECIDE · ADM pitfalls · SKIIE · 7 Cs · ASAP',section:'General Subjects',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The Digital Chart Supplement (formerly the Airport/Facility Directory or \'Green Book\') is the primary source for airport facility and operational information.',options:['True','False'],correct:0,cite:'The Digital Chart Supplement contains airport characteristics, frequencies, services, and operationa'},{n:2,pts:10,text:'When a control tower closes at a Class D airport, the airspace automatically reverts to Class B.',options:['True','False'],correct:1,cite:'When a tower closes, Class D airspace reverts to Class G or Class E. Check the Chart Supplement for '},{n:3,pts:10,text:'Where would a dispatcher look to find information on tower closure hours at a specific airport?',options:['The GOM','The Digital Chart Supplement (Chart Supplement)','The IOCM Chapter 7','The airport\'s published SID'],correct:1,cite:'Tower closure hours and associated airspace procedures are found in the Digital Chart Supplement'},{n:4,pts:10,text:'Which of the following airport characteristics is most critical for a dispatcher to verify before dispatching a flight to an unfamiliar destination?',options:['The airport\'s restaurant hours','Runway length, available instrument approaches, and NAVAID status','Parking gate assignments','Ground crew staffing levels'],correct:1,cite:'Runway length, instrument approaches, and NAVAID availability are critical dispatch planning factors'},{n:5,pts:10,text:'Per the IOCM, which chapter covers Adequate Airports and what makes an airport \'suitable\' versus merely \'adequate\'?',options:['Chapter 4 — adequate airports have a control tower; suitable ones do not','Chapter 7 — adequate airports have proper facilities; suitable airports are adequate airports that also meet weather criteria','Chapter 9 — adequate airports have fuel; suitable airports have maintenance','Chapter 3 — adequate and suitable are interchangeable terms'],correct:1,cite:'IOCM Chapter 7'},{n:6,pts:10,text:'A dispatcher notices a NOTAM indicating runway 18/36 is closed at the destination airport. Only runway 09/27 remains available. What should the dispatcher assess?',options:['Nothing — any open runway is acceptable','Whether the remaining runway meets aircraft performance requirements, including length, approach availability, and wind components','Whether the airport can still be used as a takeoff alternate','Whether crew scheduling needs to be notified'],correct:1,cite:'The dispatcher must assess whether the remaining runway meets performance, approach, and wind requir'},{n:7,pts:10,text:'The 10-7 Jeppesen chart pages for an airport contain which type of company-specific information useful to dispatchers?',options:['Weather minimums and fuel burn data','Gate assignments, deice locations, and company frequencies','Crew rest facility locations','MEL open item tracking'],correct:1,cite:'Jeppesen 10-7 company pages contain gate assignments, deice locations, and company-specific frequenc'},{n:8,pts:10,text:'You are dispatching a Breeze A220 to a destination that has only one runway, no precision approach, and the current METAR shows visibility at 1/2 SM in fog. The TAF does not improve above minimums until 2 hours after ETA. What actions should you take?',options:['Dispatch the flight — the crew can hold and wait for improvement','Delay the flight until forecast conditions meet minimums at ETA, or reroute to a suitable alternate as the destination','Dispatch with extra fuel and notify the crew','Cancel without further assessment'],correct:1,cite:'Conditions must be at or above minimums at ETA. Dispatch should be delayed or the destination recons'},{n:9,pts:10,text:'While reviewing a destination airport in the Chart Supplement, you notice the airport is listed as having no fuel available overnight. Your flight arrives at 0200L. What is the operational concern?',options:['No concern — fuel is always the crew\'s responsibility','If the return flight requires fuel that is unavailable, the aircraft may be unable to depart, creating an operational disruption','Fuel availability has no impact on dispatch planning','The airport cannot be used as an alternate only'],correct:1,cite:'Fuel availability is a key airport characteristic. If fuel is unavailable at the destination for the'},{n:10,pts:10,text:'OpSpec C080 authorizes Breeze to fly to airports without operating control towers. However, what must a dispatcher verify before dispatching to such an airport?',options:['That the flight will arrive during daylight hours only','That the required airport information (weather, NOTAMs, services) specified in C080 is available to the PIC','That the airport has published ILS approaches','That the destination is within 500 NM of a Breeze hub'],correct:1,cite:'OpSpecs C080'}]},
+  {id:'general_final',externalUrl:'breeze_test_general_subjects_final.html',mod:'Section Final',name:'General Subjects Section Final',sub:'Modules 7–15 · All general subjects content',section:'General Subjects',type:'test',totalQuestions:10,questions:[{n:1,pts:10,text:'A NOTAM must state the abnormal status of a component of the NAS. The only exception is for published data being replaced (e.g., RWY 9/27 OPEN).',options:['True','False'],correct:0,cite:'Per IOCM 24.8, NOTAMs must state abnormal status; restoring to normal is the only exception'},{n:2,pts:10,text:'A GPS NOTAM is issued to alert pilots and dispatchers about GPS service problems or outages affecting a specific area.',options:['True','False'],correct:0,cite:''},{n:3,pts:10,text:'Which type of NOTAM is regulatory in nature and covers items such as instrument flight procedure changes, TFRs, and airspace changes?',options:['NOTAM D','Military NOTAM','FDC NOTAM','Company NOTAM'],correct:2,cite:'IOCM 24.4.1'},{n:4,pts:10,text:'What is a Pointer NOTAM?',options:['A NOTAM issued by the military for classified areas','A NOTAM issued by a flight service station to highlight or cross-reference another NOTAM, such as an FDC NOTAM','A NOTAM issued when a NAVAID is decommissioned','A company-issued NOTAM for internal IOCC operations'],correct:1,cite:'IOCM 24.5'},{n:5,pts:10,text:'Where will NOTAMs appear on the N-FP planning screen?',options:['Upper right corner under weather overlays','Lower left of the PLAN screen','In the remarks section of the dispatch release only','They must be retrieved manually from notams.aim.faa.gov'],correct:1,cite:'NOTAMs are displayed on the lower left of the N-FP PLAN screen'},{n:6,pts:10,text:'A SNOWTAM has a maximum validity period of how long?',options:['6 hours','12 hours','24 hours','48 hours'],correct:2,cite:'A SNOWTAM\'s maximum validity period is 24 hours'},{n:7,pts:10,text:'What does the keyword \'AIRSPACE\' in a Pointer NOTAM indicate?',options:['The NOTAM pertains to a restricted military area','The Pointer NOTAM is related to a Temporary Flight Restriction (TFR)','The NOTAM covers Class B airspace operations','The NOTAM involves GPS signal outages'],correct:1,cite:'IOCM 24.5'},{n:8,pts:10,text:'While reviewing NOTAMs for a flight to AVL, you notice an FDC NOTAM indicating that the RNAV (GPS) RWY 35 approach has been amended with higher minimums. What type of NOTAM is this and what does it mean operationally?',options:['NOTAM D — the runway is closed','FDC NOTAM — the instrument approach procedure has changed and you must use the new minimums on the release','Company NOTAM — an internal dispatch advisory','Military NOTAM — no impact to civilian operations'],correct:1,cite:'IOCM 24.4.1'},{n:9,pts:10,text:'You are planning a departure from BDL when you discover a NOTAM indicating the ILS glideslope for RWY 06 is out of service (OTS). What is the operational impact?',options:['No impact — the localizer still provides full approach guidance','The ILS approach to RWY 06 has increased minimums due to the glideslope being OTS, but the localizer approach may still be usable','The entire airport is closed','No impact — glideslope outages do not affect IFR minimums'],correct:1,cite:'When the glideslope is OTS, vertical guidance is lost and minimums increase to localizer-only; the l'},{n:10,pts:10,text:'You find a NOTAM issued under location identifier \'ZZZ.\' What does this indicate?',options:['The NOTAM covers a prohibited area','The NOTAM was issued by the U.S. NOTAM Office for special data when time did not permit publishing under a specific location','The NOTAM applies to all airports in the NAS simultaneously','The NOTAM is a military designation for classified airspace'],correct:1,cite:'IOCM 24.4.1(I)'}]},
+  {id:'mod161819kc',mod:'Module 16/18/19',name:'E190 Systems, Perf & W&B Knowledge Check',sub:'E190 systems · MEL · Fuel · TOGW · Ballast fuel',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'Breeze Airways\' Standard Planned Landing Fuel (SLF) is 70 minutes, which is 25 minutes above the FAR minimum reserve of 45 minutes.',options:['True','False'],correct:0,cite:'Module 20 slide 3'},{n:2,pts:10,text:'When performing an inflight fuel calculation for a reroute or diversion, the dispatcher should change the Minimum Landing Fuel/Time (MLF/MLT) setting in N-FP to 45 minutes to ensure accurate BINGO fuel calculations.',options:['True','False'],correct:0,cite:'Module 20 slides 18, 21'},{n:3,pts:10,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The fuel remaining at landing; equal to the minimum landing fuel','Minimum fuel for a given point — calculated as: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less remaining','Total fuel required for the flight including all reserves'],correct:1,cite:'Module 20 slide 17'},{n:4,pts:10,text:'Under the A012 OpSpec authorization, Breeze may use domestic fueling requirements for flights to airports outside the 48 contiguous states if the destination is within how many nautical miles of U.S. territorial limits?',options:['500 NM','750 NM','950 NM','1,200 NM'],correct:2,cite:'IOCM 27.10.8.1 / OpSpec A012'},{n:5,pts:10,text:'What are the two driftdown methods available in N-FP, and when does N-FP use Method 1 (Weight Reduce)?',options:['Method 1: Escape Routes; Method 2: Weight Reduce. Weight Reduce is used when escape routes are available.','Method 1: Weight Reduce (penalizes aircraft weight to meet MORA); Method 2: Escape Routes. Weight Reduce is used when escape routes cannot be generated.','Both methods always run simultaneously','Method 1 is for mountainous terrain; Method 2 is for oceanic routes'],correct:1,cite:'Module 20 slide 33'},{n:6,pts:10,text:'For international supplemental operations outside the 48 contiguous U.S., what fuel requirement replaces the standard 45-minute reserve?',options:['60 minutes at holding speed','10% of total trip time (departure to destination) plus 30 minutes holding at alternate','90 minutes at normal cruise','45 minutes plus an additional 15 minutes international buffer'],correct:1,cite:'Module 20 slide 11 / § 121.645'},{n:7,pts:10,text:'What does MORA stand for and how does it relate to driftdown planning?',options:['Minimum Off-Route Altitude — provides minimum obstacle clearance (2,000 ft over high terrain) and is the benchmark for driftdown escape route validation','Maximum Operating Route Altitude — the upper limit for cruise altitude filing','Minimum Obstacle Route Altitude — the lowest IFR altitude on a given airway','Maximum Off-Route Airspace — defines the boundary of controlled airspace'],correct:0,cite:'Module 20 slide 36'},{n:8,pts:10,text:'Your flight sends an ACARS: \'Holding over CLMNT FOB 9.5.\' CLMNT is on the planned route. Burn from CLMNT to destination is 800 lbs. Alternate fuel is 1,800 lbs. Reserve is 3,000 lbs. What is BINGO fuel and how much hold fuel remains?',options:['BINGO = 5,600 lbs; 3,900 lbs of hold fuel remaining','BINGO = 5,600 lbs; 3,900 lbs of hold fuel remaining — crew has about 3,900 lbs to hold before needing to act','BINGO = 4,800 lbs; 4,700 lbs remaining','BINGO = 5,600 lbs; confirm with crew and recommend immediate divert'],correct:1,cite:'Module 20 slide 17'},{n:9,pts:10,text:'You are planning a Breeze supplemental (charter) flight. What required remark must appear on every supplemental dispatch release?',options:['\'Charter Operation\'','\'Supplemental Operation\'','\'Part 91 Flight\'','No special remark is required for supplemental flights'],correct:1,cite:'Module 20 slide 31'},{n:10,pts:10,text:'What is the primary purpose of the § 121.647 fuel factors, and name two conditions dispatchers must consider when computing fuel requirements?',options:['To determine alternate fuel; consider only wind and weather','To ensure required fuel accounts for all realistic conditions; consider wind/weather, anticipated traffic delays, one instrument approach and possible missed approach, and any other delay factors','To calculate ballast fuel; consider passenger count and MEL items','To set the minimum fuel quantity; consider only the FAR 45-minute reserve'],correct:1,cite:'Module 20 slide 10 / § 121.647'}]},
+  {id:'mod17kc',mod:'Module 17',name:'Winter Ops & GDAP Knowledge Check',sub:'A220 systems · Fuel tanks · Pack ops · Tailwind',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The A220 has three fuel tanks: a left main tank, a right main tank, and a center tank.',options:['True','False'],correct:0,cite:'Module 16/18/19 A220'},{n:2,pts:10,text:'On the A220, single pack operations are authorized at any altitude up to the aircraft\'s maximum certified ceiling.',options:['True','False'],correct:1,cite:'Module 16/18/19 A220 slide 27'},{n:3,pts:10,text:'The A220 cabin can be configured in how many seating arrangements, and what is the maximum single-class seat count?',options:['One configuration — up to 130 seats','Two configurations — 2-class (126-137 seats) or 1-class (up to 160 seats)','Two configurations — 2-class (108 seats) or 1-class (up to 137 seats)','Three configurations depending on route type'],correct:1,cite:'Module 16/18/19 A220 slide 6'},{n:4,pts:10,text:'What is the maximum altitude for slat/flap extension on the A220, and why is this relevant to dispatch?',options:['10,000 ft — relevant for emergency descent planning','20,000 ft — relevant when planning driftdown or engine-out scenarios where flaps may be needed','FL310 — relevant for single pack operations','FL410 — the APU generator limit'],correct:1,cite:'Module 2 / A220 AFM'},{n:5,pts:10,text:'If an A220 thrust reverser system is inoperative, what is the dispatch implication?',options:['No impact — thrust reversers are not required for dispatch','Performance penalties are applied to landing calculations','The flight is restricted to dry runway operations only','The aircraft is immediately placed OOS'],correct:1,cite:'Module 16/18/19 A220'},{n:6,pts:10,text:'The A220 maximum tailwind component for both takeoff and landing is:',options:['5 knots','10 knots','15 knots','There is no published tailwind limit'],correct:1,cite:'A220 AFM / Module 2'},{n:7,pts:10,text:'What does Breeze require as a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW?',options:['500 lbs','1,000 lbs','2,000 lbs','No buffer — operations to MTOW are permitted'],correct:2,cite:'Module 16/18/19 A220 W&B section'},{n:8,pts:10,text:'An A220 has an engine anti-ice MEL applied. The route passes through an area with forecast icing conditions at cruise altitude. Can this flight be dispatched as planned?',options:['Yes — engine anti-ice MELs have no routing restrictions','No — common MEL restrictions for engine sensor/anti-ice items prohibit flight into known or forecast icing conditions','Yes — as long as the crew is aware of the icing forecast','No — any MEL on the A220 automatically grounds the aircraft'],correct:1,cite:'Module 16/18/19 A220'},{n:9,pts:10,text:'An A220\'s right main fuel tank shows a 1,200 lb imbalance compared to the left main. What does the A220 fuel system do automatically?',options:['Nothing — the crew must manually transfer fuel','The AC boost pump in the heavier tank feeds both engines until the imbalance is corrected, then shuts off','The center tank automatically transfers fuel to the lighter main tank','A fuel imbalance warning is issued and the flight must return to the gate'],correct:1,cite:'Module 16/18/19 A220'},{n:10,pts:10,text:'What is the maximum unpressurized operating altitude for the A220?',options:['FL250','FL310','10,000 ft','14,000 ft'],correct:2,cite:'Module 16/18/19 A220'}]},
+  {id:'mod20kc',mod:'Module 20',name:'Flight Planning Knowledge Check',sub:'Emergency procedures · ERM · §121.557 · MedLink',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The Emergency Response Manual (ERM) and the IOCM are the two primary reference documents for dispatcher emergency procedures at Breeze Airways.',options:['True','False'],correct:0,cite:'Module 21 slides 4-5'},{n:2,pts:10,text:'Per § 121.557, a dispatcher who cannot communicate with the pilot during an in-flight emergency must wait for the pilot to declare the emergency before taking any independent action.',options:['True','False'],correct:1,cite:'§ 121.557(b)'},{n:3,pts:10,text:'Per the IOCM, which of the following events requires an emergency notification from the dispatcher?',options:['A minor gate delay due to catering','A diversion, engine shutdown, or declared emergency','A crew scheduling change','A fuel uplift above planned ramp fuel'],correct:1,cite:'IOCM Chapter 14'},{n:4,pts:10,text:'After a dispatcher or pilot exercises emergency authority and deviates from regulations, when must the dispatcher submit a written report?',options:['Within 24 hours','Within 5 days','Within 10 days of the emergency','Within 30 days'],correct:2,cite:'§ 121.557(c)'},{n:5,pts:10,text:'Per the IOCM, what is the dispatcher\'s role when a flight declares a medical emergency involving a passenger?',options:['Contact crew scheduling and wait for updates','Coordinate with MOC, notify relevant parties per IOCM emergency procedures, and assist in coordinating MedLink if needed via the SATCOM/phone conference procedure','Immediately divert the aircraft to the nearest airport','File a safety report and continue monitoring'],correct:1,cite:'IOCM Chapter 14 / Module 21'},{n:6,pts:10,text:'Which of the following is the correct definition of \'Minimum Fuel\' in the context of an inflight fuel emergency?',options:['Fuel equal to the planned alternate fuel','45 minutes of reserve fuel remaining — the point at which the crew must notify ATC and prioritize landing','30 minutes or less of fuel remaining — declared as an emergency','60 minutes of fuel remaining — Breeze company minimum landing fuel'],correct:1,cite:'Module 20 slide 16'},{n:7,pts:10,text:'In the event of an engine failure inflight, what N-FP speed profile should the dispatcher select to run an accurate fuel burn calculation?',options:['Normal cruise speed — no change needed','1EO (One Engine Out) burn calculation in the speed profile on the N-FP Plan screen','Emergency descent speed profile','Holding speed at 1,500 ft AGL'],correct:1,cite:'Module 20 slide 34'},{n:8,pts:10,text:'A flight you are dispatching sends an ACARS message: \'Smoke in cabin. Descending. Advise.\' What are your immediate responsibilities?',options:['Wait for the crew to land before taking action','Immediately advise the crew of the nearest suitable airport, coordinate with MOC and relevant emergency services per IOCM procedures, and monitor the flight','Contact crew scheduling for a relief crew','File an ASAP report and notify the duty manager'],correct:1,cite:'IOCM Chapter 14 / Module 21'},{n:9,pts:10,text:'You are dispatching a flight over a mountainous area when the crew reports a rapid decompression and requests to divert. Using the DECIDE model, what is your first action as the dispatcher?',options:['Immediately reroute the aircraft in N-FP','Detect and acknowledge the emergency situation, then Estimate the significance — assess divert options, nearest suitable airport, fuel state, and oxygen limitations — before communicating a recommendation to the crew','Declare an emergency with ATC on behalf of the crew','Contact MOC and wait for guidance'],correct:1,cite:'Module 21 / DECIDE model / Module 20'},{n:10,pts:10,text:'Which Breeze manual serves as the primary reference for company emergency response procedures, escalation chains, and notification requirements beyond what is in the IOCM?',options:['The DTM — Dispatch Training Manual','The GOM — General Operations Manual','The ERM — Emergency Response Manual','The AAG — Airline Administrative Guide'],correct:2,cite:'Module 21 slide 4'}]},
+  {id:'mod21kc',mod:'Module 21',name:'Emergency Procedures Knowledge Check',sub:'MEL · CDL · NEF · ACI · N-OC · Aerodata · SFP',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the procedures and conditions listed in the MEL are followed.',options:['True','False'],correct:0,cite:'IOCM / Module 6 MEL/CDL Dispatch Procedures'},{n:2,pts:10,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it is essentially the same as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural external parts of the aircraft (e.g., fairings, '},{n:3,pts:10,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s immediate first step in Aerodata?',options:['Revise the dispatch release immediately','Block the FDP so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL implications','Notify crew scheduling of a potential delay'],correct:1,cite:'Module 6 slide 26 / IOCC-INFO-05'},{n:4,pts:10,text:'An MEL amendment is considered complete only when:',options:['The dispatcher sends it via ACARS','The PIC replies via ACARS acknowledging the amendment with time and initials','MOC confirms the MEL has been applied in the maintenance log','The supervisor approves the amendment in N-FP'],correct:1,cite:'Module 6 slide 34'},{n:5,pts:10,text:'What is a NEF (Non-Essential Furnishing)?',options:['A missing structural part that requires a CDL','An item that, if inoperative or missing, has no effect on safe aircraft operation; does not need to appear on the release but is tracked in the maintenance log','An FAA-required item that must be listed on every dispatch release','A type of MEL that requires dispatch concurrence before flight'],correct:1,cite:'Module 6 slide 22'},{n:6,pts:10,text:'What color designation in N-OC indicates an aircraft is Out of Service (OOS) and not airworthy?',options:['Purple','Yellow','Red','Orange'],correct:2,cite:'Module 6 slide 5'},{n:7,pts:10,text:'A Special Flight Permit (SFP) requires a signature. Per the updated IOCM procedure, who must sign the SFP?',options:['The Captain only','The Manager of Flight Dispatch, or their designee (typically the dispatcher)','The Director of Maintenance','Both the Captain and the Dispatcher'],correct:1,cite:'IOCM / Module 6 slide 38'},{n:8,pts:10,text:'MOC calls to inform you that an E190 has an MEL applied that restricts the flight to FL310 or below. The current release is planned at FL350. What must you do?',options:['Nothing — the crew will manage the altitude restriction on their own','Block the FDP, revise the release with the MEL applied and a cruise altitude at or below FL310, then unblock FDP once the crew acknowledges','Amend the release only — no FDP block needed for an altitude restriction','Cancel the flight until the MEL is resolved'],correct:1,cite:'IOCM / Module 6 MEL procedures'},{n:9,pts:10,text:'A crew sends an ACARS message mid-flight reporting an EICAS caution message. Who should the dispatcher coordinate with first, alongside communicating with the crew?',options:['Crew scheduling','The station manager at the destination','Maintenance Operations Control (MOC)','The FAA Flight Standards office'],correct:2,cite:'Module 6 slide 8'},{n:10,pts:10,text:'What is the key difference between an ACI (Administrative Control Item) and a standard MEL item?',options:['An ACI allows the aircraft to fly with reduced performance; an MEL does not','An ACI is listed for tracking and informational purposes only — no operational relief is granted. A MEL item grants specific operational relief.','An ACI applies only to cabin items; a MEL applies to flight-critical systems','They are functionally identical'],correct:1,cite:'Module 6 slide 20'}]},
+  {id:'group2_final',externalUrl:'breeze_test_group2_final.html',mod:'Section Final',name:'Group II Aircraft Section Final',sub:'Modules 6, 16–21 · All Group II content',section:'Group II Aircraft',type:'test',totalQuestions:10,questions:[{n:1,pts:10,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:2,pts:10,text:'The fuselage is considered a critical surface and must always be deiced before flight in winter conditions.',options:['True','False'],correct:1,cite:'Module 17 slide 9'},{n:3,pts:10,text:'Which of the following are the critical surfaces that must be free of contamination before takeoff under the Clean Aircraft Concept?',options:['Fuselage, wings, and nose','Wings, horizontal stabilizers, vertical stabilizers, control surfaces, and engine inlets','Wings, cockpit windows, and landing gear','Wings, control surfaces, and antennas'],correct:1,cite:'Module 17 slide 8 / GDAP'},{n:4,pts:10,text:'What is the key difference between deicing and anti-icing fluids?',options:['Deicing prevents ice formation; anti-icing removes existing ice','Deicing removes existing frost, ice, or snow; anti-icing prevents formation or accumulation after application','They are the same fluid applied at different temperatures','Anti-icing is only used on critical surfaces; deicing is for the fuselage'],correct:1,cite:'Module 17 slide 12 / GDAP 4.1.3'},{n:5,pts:10,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from gate departure to takeoff; begins at pushback','The estimated time anti-icing fluid will prevent frost or ice formation; begins when the final application of fluid commences','The maximum time an aircraft can hold on the taxiway in winter conditions','The time limit for completing the deicing process before the fluid must be reapplied'],correct:1,cite:'Module 17 / GDAP'},{n:6,pts:10,text:'Per 14 CFR 121.629 (the Clean Aircraft Concept), when may a dispatcher release or an aircraft take off?',options:['Only when conditions are below 0°C and precipitation has stopped','Only when the approved deicing/anti-icing program is followed if frost, ice, or snow may reasonably be expected to adhere to critical surfaces','Whenever the crew performs a visual inspection and finds no contamination','At the captain\'s discretion during winter operations'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:7,pts:10,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement must dispatch verify and how?',options:['No additional requirement — standard landing field length applies','The effective runway length must be at least 115% of the required landing field length; verified using the RWA section in N-FP','The crew must conduct a visual inspection of the runway before landing','An alternate must be added regardless of existing alternate requirements'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17 slide 57'},{n:8,pts:10,text:'Your flight to BDL is departing in 90 minutes. OAT is -5°C and light snow is falling. The crew will be deiced with Type IV anti-icing fluid. What is the dispatcher\'s primary responsibility regarding holdover time?',options:['Nothing — holdover time is the crew\'s responsibility','Ensure the crew is aware of the HOT for the conditions and fluid type, and that they understand HOT begins at the final fluid application — not at takeoff','Ensure the aircraft is deiced no more than 10 minutes before pushback','Add 30 minutes of hold fuel for winter operations'],correct:1,cite:'Module 17 / GDAP'},{n:9,pts:10,text:'You are planning a flight to SBN in January. The destination TAF shows -8°C and moderate snow at ETA with reported braking action POOR. What must dispatch assess before releasing the flight?',options:['Only whether fuel minimums are met','Whether the destination runway meets landing performance requirements under contaminated runway conditions, including the 115% field length check if visibility is also below ¾ SM','Whether the crew has been trained for winter operations','Whether the station has a deice truck available'],correct:1,cite:'Module 17 / OpSpec C054 / § 121.195'},{n:10,pts:10,text:'The Air Florida Flight 90 case study in Module 17 is used to illustrate which core dispatch lesson?',options:['The importance of fuel planning in winter operations','The catastrophic consequences of failing to properly deice and the critical importance of the Clean Aircraft Concept','How dispatchers should calculate holdover times','The danger of tailwind operations in cold weather'],correct:1,cite:'Module 17 slide 11'}]},
+  {id:'comp_final',externalUrl:'breeze_test_comprehensive_final.html',mod:'Comprehensive Final',name:'Comprehensive Final Exam',sub:'All sections · 80% to pass · Closed book',section:'All Sections',type:'test',totalQuestions:15,questions:[{n:1,pts:7,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the conditions and procedures in the MEL are followed.',options:['True','False'],correct:0,cite:'Module 6 / IOCM MEL/CDL procedures'},{n:2,pts:7,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it functions the same way as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural EXTERNAL parts of the aircraft (e.g., fairings, '},{n:3,pts:7,text:'On both the A220 and E190, the maximum tailwind component for takeoff and landing is 10 knots.',options:['True','False'],correct:0,cite:'Both the A220 and E190 AFMs limit tailwind operations to 10 knots for takeoff and landing.'},{n:4,pts:7,text:'Ballast fuel on the E190/195 is considered usable fuel and does not need to be remarked on the dispatch release.',options:['True','False'],correct:1,cite:'Module 20 slide 5'},{n:5,pts:7,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:6,pts:7,text:'Breeze plans for a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW of:',options:['1,000 lbs','2,000 lbs','3,000 lbs','4,000 lbs'],correct:1,cite:'Module 16/18/19 W&B policy'},{n:7,pts:7,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s FIRST action in Aerodata?',options:['Revise the dispatch release with the MEL applied','Block the FDP immediately so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL','File a safety report in Ideagen'],correct:1,cite:'Module 6 / IOCC-INFO-05'},{n:8,pts:7,text:'When is ballast fuel required on the E190/195, and how much?',options:['Always required — 3,000 lbs minimum','When there are 15 or fewer passengers onboard — 5,000 lbs','When the aircraft is below MZFW — amount determined by W&B','Ballast fuel is not required on the E190'],correct:1,cite:'Module 20 slide 5'},{n:9,pts:7,text:'Which of the following correctly describes the Clean Aircraft Concept under 14 CFR 121.629?',options:['The dispatcher must confirm the aircraft has been washed before winter operations','Dispatch, release, or takeoff is prohibited when frost, ice, or snow may reasonably adhere to critical surfaces unless the approved deicing/anti-icing program is followed','The crew must perform a visual inspection of the aircraft before every winter departure','Anti-icing fluid must be applied at all temperatures below 10°C'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:10,pts:7,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The minimum fuel for landing; equal to company landing fuel minimums','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less of fuel remaining','Total fuel planned for the flight including all reserves and contingency'],correct:1,cite:'Module 20 slide 17'},{n:11,pts:6,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of the required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','A destination alternate must always be added regardless of the 1-2-3 rule'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17'},{n:12,pts:6,text:'A MEL amendment is considered complete only when:',options:['The dispatcher sends the revised release via ACARS','MOC confirms the MEL has been entered in the maintenance log','The PIC replies via ACARS acknowledging the amendment with time and initials','The supervisor approves the amendment in N-FP'],correct:2,cite:'Module 6 slide 34'},{n:13,pts:6,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from deicing completion to takeoff; begins at wheels-up','The estimated time anti-icing fluid prevents contamination formation; begins when the FINAL application of fluid commences','The maximum allowed taxi time in winter conditions; begins at pushback','The time limit to complete the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},{n:16,pts:6,text:'Briefly describe what the GDAP (Ground Deice/Anti-Icing Program) contains and why it matters to dispatch. Cite the applicable regulation. Answer + Citation:',options:['Yes — drizzle and mist are not icing conditions','No — OAT is 09°C which is above freezing; icing is not a factor','No — temperature/dewpoint spread of 0°C with visible moisture (BR/mist) at 9°C meets the definition of icing conditions (≤10°C with visible moisture), and drizzle is a form of precipitation that can freeze on cold-soaked surfaces','Yes — the MEL only restricts known icing, and this METAR does not show ice pellets or freezing drizzle'],correct:2,cite:'OAT 9°C with visible moisture (mist/drizzle) meets Breeze icing conditions criteria (≤10°C with visi'},{n:22,pts:6,text:'You are dispatching an E190 with 13 passengers from BNA to PVD. What fuel planning action is required and what must appear on the release?',options:['No special action — normal fuel planning applies for any passenger count','Add 5,000 lbs of ballast fuel (considered unusable) and remark the release — required for 15 or fewer passengers on the E190/195','Reduce planned fuel by 5,000 lbs to compensate for the light load','Contact MOC to confirm weight and balance before releasing'],correct:1,cite:'Module 20 slide 5'}]}
+];;
+
+
+// ── State ────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentUserFirst = '';
+let currentUserLast = '';
+let currentQuiz = null;
+let examSelected = {};
+let examResults  = null;
+
+// ── Local score storage ───────────────────────────────────────────────────────
+function getName(uid) {
+  try {
+    const key = 'bz_name_' + uid;
+    return localStorage.getItem(key) || '';
+  } catch(e) { return ''; }
+}
+
+function setName(uid, first, last) {
+  try { localStorage.setItem('bz_name_' + uid, first + ' ' + last); } catch(e) {}
+}
+
+function getScores(uid) {
+  try { return JSON.parse(localStorage.getItem('bz_scores_' + uid) || '{}'); } catch(e) { return {}; }
+}
+function setScore(uid, quizId, score, pass) {
+  const s = getScores(uid);
+  s[quizId] = { score, pass, date: new Date().toISOString().slice(0,10) };
+  localStorage.setItem('bz_scores_' + uid, JSON.stringify(s));
+}
+
+// ── Login ────────────────────────────────────────────────────────────────────
+// Admin password — change this to something only you know
+const ADMIN_PASSWORD = 'breeze2024dispatch';
+const ADMIN_IDS = ['ADMIN', 'DISPATCH-ADMIN', 'BRIAN.SPENCER'];
+
+function doLogin() {
+  const val = document.getElementById('login-id').value.trim().toUpperCase();
+  const first = document.getElementById('login-first').value.trim();
+  const last  = document.getElementById('login-last').value.trim();
+  if (!first || !last || !val || val.length < 2) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('login-error').style.display = 'none';
+  currentUserFirst = first;
+  currentUserLast  = last;
+
+  // Check for admin access
+  if (ADMIN_IDS.includes(val) || val === 'ADMIN') {
+    const pw = prompt('Enter admin password:');
+    if (pw !== ADMIN_PASSWORD) {
+      document.getElementById('login-error').textContent = 'Incorrect admin password.';
+      document.getElementById('login-error').style.display = 'block';
+      return;
+    }
+    currentUser = val;
+    renderAdmin();
+    showScreen('screen-admin');
+    return;
+  }
+
+  currentUser = val;
+  document.getElementById('portal-id-display').innerHTML = first + ' ' + last + '<br><span style="font-size:10px;opacity:.7;">' + val + '</span>';
+  document.getElementById('portal-welcome-msg').textContent = 'Welcome, ' + first + '!';
+  setName(val, first, last);
+  renderPortal();
+  showScreen('screen-portal');
+}
+
+function doLogout() {
+  currentUser = null; currentQuiz = null;
+  document.getElementById('login-id').value = '';
+  showScreen('screen-login');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Portal ────────────────────────────────────────────────────────────────────
+function renderPortal() {
+  const scores = getScores(currentUser);
+
+  // Tab state
+  if (!window._portalTab) window._portalTab = 'kc';
+  const activeTab = window._portalTab;
+
+  // Sections order
+  const sectionOrder = ['Basic Indoctrination','General Subjects','Group II Aircraft','All Sections'];
+  const quizzesBySection = {};
+  sectionOrder.forEach(s => { quizzesBySection[s] = {kc:[], test:[]}; });
+  QUIZZES.forEach(q => {
+    if (!quizzesBySection[q.section]) quizzesBySection[q.section] = {kc:[],test:[]};
+    quizzesBySection[q.section][q.type === 'test' ? 'test' : 'kc'].push(q);
+  });
+
+  // Count totals
+  let totalKC = 0, totalTests = 0;
+  QUIZZES.forEach(q => { if(q.type==='test') totalTests++; else totalKC++; });
+
+  const container = document.getElementById('quiz-grid');
+  const sectionContainer = document.getElementById('quiz-section-container');
+
+  // Build tab bar and section content
+  let html = `<div class="tab-bar">
+    <button class="tab-btn ${activeTab==='kc'?'active':''}" onclick="setPortalTab('kc')">
+      &#9642; Knowledge Checks <span class="tab-count">${totalKC}</span>
+    </button>
+    <button class="tab-btn ${activeTab==='test'?'active':''}" onclick="setPortalTab('test')">
+      &#9654; Tests &amp; Finals <span class="tab-count">${totalTests}</span>
+    </button>
+  </div>`;
+
+  sectionOrder.forEach(section => {
+    const items = quizzesBySection[section][activeTab];
+    if (!items || !items.length) return;
+    html += `<div class="quiz-section-group">
+      <div class="module-section-label">${section}</div>
+      <div class="quiz-grid">`;
+    items.forEach(q => {
+      const sc = scores[q.id];
+      const done = !!sc;
+      const passClass = done ? (sc.pass ? 'pass' : 'fail') : 'pending';
+      const scoreLabel = done ? sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') : 'Not attempted';
+      const typeBadge = q.type === 'test'
+        ? '<span class="type-badge type-test">&#9654; Test</span>'
+        : '<span class="type-badge type-kc">&#9642; Knowledge Check</span>';
+      html += `<div class="quiz-card ${done ? 'completed' : ''}" id="card-${q.id}">
+        <div class="qc-mod">${q.mod}</div>
+        <div class="qc-name">${q.name}</div>
+        <div class="qc-sub">${q.sub}</div>
+        <div class="qc-meta">
+          <span class="qc-badge">${q.totalQuestions} questions</span>
+          <span class="qc-badge">80% to pass</span>
+          <span class="qc-score ${passClass}">${scoreLabel}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;">
+          ${typeBadge}
+          <button class="start-btn ${done ? 'retake' : ''}" onclick="startQuiz('${q.id}')">
+            ${done ? '&#8635; Retake' : '&#9654; Start'}
+          </button>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  if (sectionContainer) {
+    sectionContainer.innerHTML = html;
+  } else {
+    const wrap = document.getElementById('quiz-grid');
+    if (wrap) wrap.innerHTML = html;
+  }
+}
+
+function showPortalSection(tab) {
+  document.getElementById('portal-home').style.display = 'none';
+  document.getElementById('portal-study').style.display = 'none';
+  if (tab === 'study') {
+    document.getElementById('portal-content').style.display = 'none';
+    document.getElementById('portal-study').style.display = 'block';
+  } else {
+    window._portalTab = tab;
+    renderPortal();
+    document.getElementById('portal-content').style.display = 'block';
+  }
+}
+
+function showPortalHome() {
+  document.getElementById('portal-home').style.display = 'grid';
+  document.getElementById('portal-content').style.display = 'none';
+  document.getElementById('portal-study').style.display = 'none';
+}
+
+function setPortalTab(tab) {
+  window._portalTab = tab;
+  renderPortal();
+}
+
+// ── Start quiz ────────────────────────────────────────────────────────────────
+function startQuiz(qid) {
+  const quiz = QUIZZES.find(q => q.id === qid);
+  // If this test has an external standalone file, open it in a new tab
+  if (quiz && quiz.externalUrl) {
+    window.open(quiz.externalUrl, '_blank');
+    return;
+  }
+  currentQuiz  = quiz;
+  examSelected = {};
+  examResults  = null;
+  document.getElementById('exam-topbar-title').textContent = currentQuiz.mod + ' — ' + currentQuiz.name;
+  updateExamProgress();
+  renderExam();
+  showScreen('screen-exam');
+}
+
+function backToPortal() {
+  if (examResults === null && Object.keys(examSelected).length > 0) {
+    if (!confirm('Leave this quiz? Your answers will be lost.')) return;
+  }
+  renderPortal();
+  showScreen('screen-portal');
+}
+
+// ── Render exam ───────────────────────────────────────────────────────────────
+function renderExam() {
+  const q = currentQuiz;
+  const content = document.getElementById('exam-content');
+
+  let html = `
+    <div class="hdr">
+      <div class="hdr-inner">
+        <div>
+          <div class="hdr-badge">Breeze Airways · Dispatch Training · Basic Indoctrination</div>
+          <div class="hdr-title">${q.name}</div>
+          <div class="hdr-sub">${q.sub}</div>
+        </div>
+        <div class="hdr-pills">
+          <div class="hdr-pill">Questions: <span>${q.totalQuestions}</span></div>
+          <div class="hdr-pill">Passing score: <span>80%</span></div>
+          <div class="hdr-pill">Score shown <span>immediately</span></div>
+        </div>
+      </div>
+      <div class="hdr-stripe"></div>
+    </div>
+    <div class="wrap">
+      <div class="info-card">
+        <div class="info-title">Student information</div>
+        <div class="info-prefilled">
+          <div class="info-field"><label>Employee ID</label><div class="info-val">${currentUser}</div></div>
+          <div class="info-field"><label>Date</label><div class="info-val">${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
+        </div>
+      </div>
+      <div id="exam-questions">`;
+
+  q.questions.forEach((qu, i) => {
+    html += `<div class="q-card" id="qcard-${qu.n}">
+      <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts</span></div>
+      <div class="q-text">${qu.text}</div>
+      <div class="options">
+        ${qu.options.map((o,oi) => `<label class="option" id="opt-${qu.n}-${oi}" onclick="selectOpt(${qu.n},${oi})">
+          <span class="opt-letter">${'ABCD'[oi]}</span>
+          <span class="opt-text">${o}</span>
+        </label>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>
+      <div class="submit-wrap">
+        <div class="submit-card">
+          <h3>Ready to submit?</h3>
+          <p>Your score will be shown immediately. Results are automatically recorded.</p>
+          <button class="submit-btn" id="submit-btn" onclick="submitExam()">Submit &rarr;</button>
+        </div>
+      </div>
+    </div>`;
+
+  content.innerHTML = html;
+}
+
+function selectOpt(qn, oi) {
+  examSelected[qn] = oi;
+  document.querySelectorAll(`[id^="opt-${qn}-"]`).forEach(e => e.classList.remove('selected'));
+  document.getElementById(`opt-${qn}-${oi}`).classList.add('selected');
+  document.getElementById('qcard-' + qn).classList.add('answered');
+  updateExamProgress();
+}
+
+function updateExamProgress() {
+  if (!currentQuiz) return;
+  const total = currentQuiz.totalQuestions;
+  const done  = Object.keys(examSelected).length;
+  const pct   = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('exam-prog-fill').style.width = pct + '%';
+  document.getElementById('exam-prog-count').textContent = done + ' / ' + total;
+}
+
+async function submitExam() {
+  const q = currentQuiz;
+  const ua = q.questions.length - Object.keys(examSelected).length;
+  if (ua > 0 && !confirm(ua + ' question' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+
+  let earned = 0;
+  const results = {};
+  q.questions.forEach(qu => {
+    const a = examSelected[qu.n];
+    const correct = a !== undefined && a === qu.correct;
+    if (correct) earned += qu.pts;
+    results[qu.n] = { selected: a, correct };
+  });
+
+  examResults = results;
+  const pass = earned >= PASS_THRESHOLD;
+  document.getElementById('submit-btn').disabled = true;
+
+  // Save locally
+  setScore(currentUser, q.id, earned, pass);
+
+  // Send to Google Sheets
+  try {
+    const payload = {
+      first: currentUserFirst, last: currentUserLast, id: currentUser,
+      date: new Date().toISOString().slice(0,10),
+      score: earned, pass: pass ? 'Pass' : 'Fail',
+      correct: q.questions.filter(qu => results[qu.n].correct).length,
+      total: q.questions.length,
+      exam: q.mod + ' — ' + q.name,
+      submittedAt: new Date().toISOString(),
+      answers: q.questions.map(qu => ({
+        q: qu.n,
+        selected: examSelected[qu.n] !== undefined ? qu.options[examSelected[qu.n]] : 'Not answered',
+        correct: qu.options[qu.correct],
+        isCorrect: results[qu.n].correct
+      }))
+    };
+    await new Promise(resolve => {
+      const form = document.createElement('form');
+      form.method='POST'; form.action=SHEET_URL; form.target='hf'; form.style.display='none';
+      const inp = document.createElement('input');
+      inp.type='hidden'; inp.name='data'; inp.value=JSON.stringify(payload);
+      form.appendChild(inp);
+      const ifr = document.createElement('iframe');
+      ifr.name='hf'; ifr.style.display='none';
+      ifr.onload = resolve; setTimeout(resolve,8000);
+      document.body.appendChild(ifr); document.body.appendChild(form); form.submit();
+    });
+  } catch(e) {}
+
+  showResults(earned, pass, results);
+}
+
+function showResults(score, pass, results) {
+  const q = currentQuiz;
+  const correct = q.questions.filter(qu => results[qu.n].correct).length;
+  const content = document.getElementById('exam-content');
+
+  let html = `<div class="wrap">
+    <div class="result-banner ${pass ? 'pass' : 'fail'}">
+      <div class="result-icon">${pass ? '✅' : '❌'}</div>
+      <div class="result-verdict">${pass ? 'PASS' : 'FAIL'}</div>
+      <div class="result-score">${score} / 100</div>
+      <div class="result-sub">${currentUser} &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</div>
+      <div class="result-meta">
+        <div class="rmeta"><div class="rmeta-val">${correct}</div><div class="rmeta-lbl">Correct</div></div>
+        <div class="rmeta"><div class="rmeta-val">${q.questions.length - correct}</div><div class="rmeta-lbl">Incorrect</div></div>
+        <div class="rmeta"><div class="rmeta-val">${score}%</div><div class="rmeta-lbl">Score</div></div>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="window.print()">&#128438; Print results</button>
+      <button class="btn btn-green" onclick="backToPortal()">&#8592; Back to portal</button>
+    </div>
+    <div class="review-title">Question review — with correct answers</div>`;
+
+  q.questions.forEach(qu => {
+    const r = results[qu.n];
+    html += `<div class="q-card ${r.correct ? 'correct' : 'incorrect'}" style="margin-bottom:.75rem;">
+      <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${r.correct ? '✓ +' + qu.pts + ' pts' : '✗ 0 pts'}</span></div>
+      <div class="q-text">${qu.text}</div>
+      <div class="options" style="margin-top:.75rem;">
+        ${qu.options.map((o,oi) => {
+          let cls = '';
+          if (oi === qu.correct) cls = 'correct-ans';
+          else if (oi === r.selected && !r.correct) cls = 'wrong-ans';
+          return `<div class="option ${cls}" style="cursor:default;">
+            <span class="opt-letter">${'ABCD'[oi]}</span>
+            <span class="opt-text">${o}${oi===qu.correct?' <strong>(correct)</strong>':''}${oi===r.selected&&!r.correct?' <em>(your answer)</em>':''}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${qu.cite ? '<div class="q-cite">📄 ' + qu.cite + '</div>' : ''}
+    </div>`;
+  });
+
+  html += `</div>`;
+  content.innerHTML = html;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+// Get all student scores across all users stored in this browser
+function getAllStudentScores() {
+  const students = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('bz_scores_')) {
+      const uid = key.replace('bz_scores_', '');
+      try {
+        students[uid] = JSON.parse(localStorage.getItem(key));
+      } catch(e) {}
+    }
+  }
+  return students;
+}
+
+function renderAdmin() {
+  const allStudents = getAllStudentScores();
+  const search   = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const filterQ  = document.getElementById('admin-filter-quiz')?.value || 'all';
+  const filterS  = document.getElementById('admin-filter-status')?.value || 'all';
+
+  // Populate quiz filter if empty
+  const qSel = document.getElementById('admin-filter-quiz');
+  if (qSel && qSel.options.length === 1) {
+    QUIZZES.forEach(q => {
+      const o = document.createElement('option');
+      o.value = q.id; o.textContent = q.mod + ' — ' + q.name;
+      qSel.appendChild(o);
+    });
+  }
+
+  // Summary metrics
+  const totalStudents = Object.keys(allStudents).length;
+  const allAttempts   = Object.values(allStudents).flatMap(s => Object.values(s));
+  const totalPassed   = allAttempts.filter(a => a.pass).length;
+  const avgScore      = allAttempts.length ? Math.round(allAttempts.reduce((a,b) => a + (b.score||0), 0) / allAttempts.length) : 0;
+  const fullyComplete = Object.values(allStudents).filter(s => QUIZZES.every(q => s[q.id])).length;
+
+  document.getElementById('admin-summary').innerHTML = [
+    ['Students', totalStudents, 'have logged in'],
+    ['Attempts', allAttempts.length, 'total submissions'],
+    ['Passed', totalPassed, 'of ' + allAttempts.length + ' attempts'],
+    ['Avg score', avgScore + '%', 'across all quizzes'],
+    ['Fully complete', fullyComplete, 'all quizzes done'],
+  ].map(([lbl, val, sub]) => `<div class="admin-metric">
+    <div class="admin-metric-label">${lbl}</div>
+    <div class="admin-metric-val">${val}</div>
+    <div class="admin-metric-sub">${sub}</div>
+  </div>`).join('');
+
+  // Build thead
+  document.getElementById('admin-thead').innerHTML = `<tr>
+    <th>Employee ID</th>
+    ${QUIZZES.map(q => `<th>${q.mod}</th>`).join('')}
+    <th>Completed</th>
+    <th>Overall avg</th>
+  </tr>`;
+
+  // Filter and build rows
+  let rows = Object.entries(allStudents);
+  if (search) rows = rows.filter(([uid]) => uid.toLowerCase().includes(search));
+  if (filterQ !== 'all') {
+    rows = rows.filter(([, scores]) => {
+      if (filterS === 'completed') return scores[filterQ];
+      if (filterS === 'incomplete') return !scores[filterQ];
+      if (filterS === 'pass')  return scores[filterQ]?.pass;
+      if (filterS === 'fail')  return scores[filterQ] && !scores[filterQ].pass;
+      return true;
+    });
+  } else if (filterS !== 'all') {
+    rows = rows.filter(([, scores]) => {
+      const attempts = Object.values(scores);
+      if (filterS === 'completed') return attempts.length > 0;
+      if (filterS === 'incomplete') return attempts.length === 0;
+      if (filterS === 'pass')  return attempts.some(a => a.pass);
+      if (filterS === 'fail')  return attempts.some(a => !a.pass);
+      return true;
+    });
+  }
+  rows.sort((a,b) => a[0].localeCompare(b[0]));
+
+  if (!rows.length) {
+    document.getElementById('admin-tbody').innerHTML = `<tr><td colspan="${QUIZZES.length + 3}" style="text-align:center;padding:2rem;color:var(--ink3);">No students found${search ? ' matching "' + search + '"' : '. Students appear here after they log in and complete a quiz on this device.'}.</td></tr>`;
+  } else {
+    document.getElementById('admin-tbody').innerHTML = rows.map(([uid, scores]) => {
+      const attempts = Object.values(scores);
+      const completed = QUIZZES.filter(q => scores[q.id]).length;
+      const allScores = attempts.map(a => a.score||0);
+      const avg = allScores.length ? Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length) : null;
+      const quizCells = QUIZZES.map(q => {
+        const sc = scores[q.id];
+        if (!sc) return `<td><span class="badge badge-pending">—</span></td>`;
+        const isSATest = SA_TESTS[q.id] && SA_TESTS[q.id].questions && SA_TESTS[q.id].questions.length > 0;
+        const needsGrading = isSATest && !sc.graded;
+        const gradeBtn = isSATest ? `<button onclick="openGrading('${uid}','${q.id}')" style="margin-left:4px;font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid ${needsGrading?'var(--amber)':'var(--gray)'};background:${needsGrading?'var(--amber-lt)':'var(--gray)'};color:${needsGrading?'var(--amber)':'var(--ink3)'};cursor:pointer;font-weight:600;">${needsGrading?'⏳ Grade':'✎ Re-grade'}</button>` : '';
+        return `<td><span class="badge ${sc.pass ? 'badge-pass' : 'badge-fail'}">${sc.score}%</span>${gradeBtn}<div style="font-size:10px;color:var(--ink3);">${sc.date||''}</div></td>`;
+      }).join('');
+      return `<tr>
+        <td style="font-weight:600;font-family:'Syne',sans-serif;">${uid}<div style='font-size:11px;color:var(--ink3);font-weight:400;font-family:var(--font);'>${getName(uid)}</div></td>
+        ${quizCells}
+        <td>
+          <div class="progress-mini">
+            <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${Math.round(completed/QUIZZES.length*100)}%;background:${completed===QUIZZES.length?'var(--green)':'var(--blue)'};"></div></div>
+            <span style="font-size:12px;font-weight:600;color:var(--ink2);">${completed}/${QUIZZES.length}</span>
+          </div>
+        </td>
+        <td style="font-weight:600;">${avg !== null ? avg + '%' : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Quiz summary table
+  document.getElementById('admin-quiz-summary').innerHTML = QUIZZES.map(q => {
+    const attempts = Object.values(allStudents).map(s => s[q.id]).filter(Boolean);
+    const passed   = attempts.filter(a => a.pass).length;
+    const failed   = attempts.length - passed;
+    const avg      = attempts.length ? Math.round(attempts.reduce((a,b)=>a+(b.score||0),0)/attempts.length) : null;
+    const rate     = attempts.length ? Math.round(passed/attempts.length*100) : null;
+    return `<tr>
+      <td style="font-weight:600;">${q.mod} — ${q.name}</td>
+      <td>${attempts.length}</td>
+      <td><span class="badge badge-pass">${passed}</span></td>
+      <td><span class="badge badge-fail">${failed}</span></td>
+      <td>${rate !== null ? `<span style="font-weight:700;color:${rate>=80?'var(--green)':'var(--red)'}">${rate}%</span>` : '—'}</td>
+      <td>${avg !== null ? avg + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportAdminCSV() {
+  const allStudents = getAllStudentScores();
+  let csv = 'Employee ID,' + QUIZZES.map(q => q.mod + ' Score,' + q.mod + ' Result,' + q.mod + ' Date').join(',') + ',Quizzes Completed,Overall Avg\n';
+  Object.entries(allStudents).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([uid, scores]) => {
+    const quizCols = QUIZZES.map(q => {
+      const sc = scores[q.id];
+      return sc ? [sc.score + '%', sc.pass ? 'Pass' : 'Fail', sc.date||''].join(',') : '--,--,--';
+    }).join(',');
+    const attempts = Object.values(scores);
+    const completed = QUIZZES.filter(q => scores[q.id]).length;
+    const avg = attempts.length ? Math.round(attempts.reduce((a,b)=>a+(b.score||0),0)/attempts.length) : 0;
+    csv += uid + ',' + quizCols + ',' + completed + '/' + QUIZZES.length + ',' + avg + '%\n';
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'dispatch_training_results.csv'; a.click();
+}
+
+// ── Pull scores from Google Sheets into admin view ─────────────────────────
+function openSheetImport() {
+  document.getElementById('sheet-paste').value = '';
+  document.getElementById('sheet-import-msg').textContent = '';
+  document.getElementById('modal-sheet-import').style.display = 'flex';
+}
+
+function closeSheetImport() {
+  document.getElementById('modal-sheet-import').style.display = 'none';
+}
+
+function runSheetImport() {
+  const raw = document.getElementById('sheet-paste').value.trim();
+  const msgEl = document.getElementById('sheet-import-msg');
+  if (!raw) { msgEl.style.color='#B91C1C'; msgEl.textContent = 'Nothing pasted yet — open the results tab, select all, copy, then paste here.'; return; }
+
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { msgEl.style.color='#B91C1C'; msgEl.textContent = 'Could not read the pasted text. Make sure you selected and copied everything from the results tab.'; return; }
+
+  if (data.status !== 'ok' || !data.results) { msgEl.style.color='#B91C1C'; msgEl.textContent = 'Unexpected response format.'; return; }
+
+  const results = data.results;
+
+  // Build exam name → quiz ID mapping
+  const examNameToQuizId = {};
+  QUIZZES.forEach(q => {
+    examNameToQuizId[q.mod + ' — ' + q.name] = q.id;
+    examNameToQuizId[q.mod + ' - ' + q.name] = q.id;
+    examNameToQuizId[q.name] = q.id;
+    examNameToQuizId[q.mod] = q.id;
+    const modNum = q.id.replace('mod','');
+    examNameToQuizId['Module ' + modNum + ' Knowledge Check'] = q.id;
+    examNameToQuizId['Module ' + modNum + ' Exam'] = q.id;
+    examNameToQuizId[q.mod + ' Knowledge Check'] = q.id;
+    examNameToQuizId[q.mod + ' — ' + q.sub] = q.id;
+    q.sub.split(' · ').forEach(part => { if(part.trim().length > 3) examNameToQuizId[part.trim()] = q.id; });
+  });
+
+  function findQuizId(examName) {
+    if (!examName) return null;
+    if (examNameToQuizId[examName]) return examNameToQuizId[examName];
+    const lower = examName.toLowerCase();
+    for (const [key, val] of Object.entries(examNameToQuizId)) {
+      if (key.toLowerCase() === lower) return val;
+    }
+    for (const q of QUIZZES) {
+      const modNum = q.id.replace('mod','');
+      if (lower.includes('module ' + modNum) || lower.includes('mod' + modNum)) return q.id;
+    }
+    return null;
+  }
+
+  let imported = 0, skipped = 0, unmatched = 0;
+  results.forEach(r => {
+    if (!r.id || r.score === undefined) return;
+    const existing = getScores(r.id);
+    const examName = (r.exam && r.exam.length > 2) ? r.exam : (r.missed || '');
+    const qid = findQuizId(examName);
+    if (!qid) { unmatched++; return; }
+    if (existing[qid]) { skipped++; return; }
+    existing[qid] = { score: r.score, pass: r.pass === 'Pass', date: r.date };
+    localStorage.setItem('bz_scores_' + r.id, JSON.stringify(existing));
+    imported++;
+  });
+
+  msgEl.style.color = '#1A7A3C';
+  msgEl.textContent = imported + ' imported · ' + skipped + ' already logged · ' + unmatched + ' unmatched';
+  renderAdmin();
+
+  // If there are unmatched records, show manual assignment UI
+  if (unmatched > 0) {
+    const unmatchedResults = results.filter(r => {
+      if (!r.id || r.score === undefined) return false;
+      const examName = (r.exam && r.exam.length > 2) ? r.exam : (r.missed || '');
+      return !findQuizId(examName);
+    });
+    if (unmatchedResults.length) {
+      showManualAssign(unmatchedResults);
+      return;
+    }
+  }
+
+  if (imported > 0) setTimeout(closeSheetImport, 1500);
+}
+
+async function pullFromSheets() { openSheetImport(); }
+
+function showManualAssign(unmatchedResults) {
+  // Group by student ID
+  const byStudent = {};
+  unmatchedResults.forEach(r => {
+    if (!byStudent[r.id]) byStudent[r.id] = [];
+    byStudent[r.id].push(r);
+  });
+
+  const quizOptions = QUIZZES.map(q => `<option value="${q.id}">${q.mod} — ${q.name}</option>`).join('');
+
+  let html = `<div style="margin-top:1rem;border-top:1px solid #E8E6DC;padding-top:1rem;">
+    <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#B45309;margin-bottom:.75rem;">
+      ⚠ ${unmatchedResults.length} record${unmatchedResults.length>1?'s':''} couldn't be matched automatically. Assign them below:
+    </div>`;
+
+  Object.entries(byStudent).forEach(([uid, scores]) => {
+    scores.forEach((r, i) => {
+      html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
+        <span style="font-weight:600;min-width:80px;">${uid}</span>
+        <span style="background:#E8E6DC;padding:2px 8px;border-radius:4px;font-weight:600;">${r.score}%</span>
+        <span style="color:#6B6A64;">${r.date}</span>
+        <select id="manual-${uid}-${i}" style="flex:1;padding:5px 8px;border:1.5px solid #E8E6DC;border-radius:6px;font-size:12px;background:#fff;">
+          <option value="">— select quiz —</option>
+          ${quizOptions}
+        </select>
+      </div>`;
+    });
+  });
+
+  html += `<button onclick="saveManualAssign(${JSON.stringify(Object.entries(byStudent)).replace(/"/g,'&quot;')})" 
+    style="margin-top:.5rem;padding:8px 16px;background:#0B1F3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;">
+    Save assignments
+  </button></div>`;
+
+  document.getElementById('sheet-import-msg').innerHTML = '';
+  const modal = document.getElementById('modal-sheet-import').querySelector('div');
+  const existing = modal.querySelector('.manual-assign');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = 'manual-assign';
+  div.innerHTML = html;
+  modal.appendChild(div);
+}
+
+function saveManualAssign(entries) {
+  let saved = 0;
+  entries.forEach(([uid, scores]) => {
+    const existing = getScores(uid);
+    scores.forEach((r, i) => {
+      const sel = document.getElementById('manual-' + uid + '-' + i);
+      if (!sel || !sel.value) return;
+      if (!existing[sel.value]) {
+        existing[sel.value] = { score: r.score, pass: r.pass === 'Pass', date: r.date };
+        saved++;
+      }
+    });
+    if (saved > 0) localStorage.setItem('bz_scores_' + uid, JSON.stringify(existing));
+  });
+  renderAdmin();
+  closeSheetImport();
+  document.getElementById('gs-pull-status').style.color = 'var(--green)';
+  document.getElementById('gs-pull-status').textContent = saved + ' records assigned';
+  setTimeout(() => { document.getElementById('gs-pull-status').textContent = ''; }, 3000);
+}
+
+// ── Grading system ─────────────────────────────────────────────────────────────
+
+// SA tests that need instructor grading
+const SA_TESTS = {
+  'basic_final': {name:'Basic Indoctrination Section Final', mcPts:100, saCount:0},
+  'general_final': {name:'General Subjects Section Final', mcPts:100, saCount:0},
+  'group2_final': {name:'Group II Aircraft Section Final', mcPts:52, saCount:12, questions:[
+    {n:14,pts:4,text:'What are the critical surfaces that must be free of contamination before takeoff under the Clean Aircraft Concept? List all of them.',model:'Wings, horizontal stabilizers, vertical stabilizers, control surfaces, and engine inlets.',cite:'Module 17 slide 8 / GDAP'},
+    {n:15,pts:4,text:'What is the difference between deicing and anti-icing? When does a dispatcher need to understand this difference operationally?',model:'Deicing REMOVES existing frost, ice, or snow. Anti-icing PREVENTS formation or accumulation for a limited holdover period. Dispatchers must understand this to assess whether a departure is safe relative to holdover time.',cite:'Module 17 / GDAP'},
+    {n:16,pts:4,text:'Briefly describe what the GDAP contains and why it matters to dispatch. Cite the applicable regulation.',model:'The GDAP contains company cold weather procedures including: fluid types and application, holdover time tables, crew and dispatcher responsibilities, the Clean Aircraft Concept, and winter operational guidance.',cite:'14 CFR 121.629 / GDAP'},
+    {n:17,pts:4,text:'What is the dispatcher\'s responsibility during any in-flight emergency? Cite the regulation and identify the two primary reference manuals.',model:'Per § 121.557, the dispatcher advises the PIC, ascertains their decision, and records it. If unable to communicate, the dispatcher declares the emergency and takes necessary action. References: IOCM Chapter 14 and ERM.',cite:'§ 121.557 / IOCM Chapter 14 / ERM'},
+    {n:18,pts:4,text:'When should the Aerodata FDP Block procedure be used, and when does the dispatcher unblock it?',model:'Block immediately when MOC notifies of an incoming MEL/CDL. Unblock after receiving PIC ACARS acknowledgment with time and initials.',cite:'Module 6 / IOCC-INFO-05'},
+    {n:19,pts:4,text:'Where can SFP dispatch procedures be found, and who must sign the SFP per the current IOCM?',model:'SFP procedures are in the IOCM. Per the updated IOCM Step 4, the Manager of Flight Dispatch or their designee (typically the dispatcher) must sign.',cite:'IOCM / Module 6 slide 38'},
+    {n:20,pts:4,text:'What are the two driftdown methods in N-FP, and when does N-FP use Method 1 instead of Method 2?',model:'Method 1 (Weight Reduce): penalizes weight to meet MORA. Method 2 (Escape Routes): generates specific escape routes. Method 1 is used when Method 2 cannot be generated safely.',cite:'Module 20 slide 33'},
+    {n:23,pts:4,text:'FOB 11.2. Burn to destination 900 lbs. Alternate fuel 2,100 lbs. Reserve 3,200 lbs. What is BINGO and how much hold fuel remains? What do you do next?',model:'BINGO = 900+2,100+3,200 = 6,200 lbs. FOB 11,200 lbs. Hold fuel = 5,000 lbs. Concur BINGO with crew, continue monitoring.',cite:'Module 20 slides 17-20'},
+    {n:24,pts:4,text:'MEL 36-11-01 restricts to FL310. Release filed at FL380. Crew has run performance. What must you do in order?',model:'1) Block FDP immediately. 2) Revise release with MEL and FL310 max. 3) Send revised release. 4) PIC ACARS ack with time/initials. 5) Unblock FDP. 6) Confirm crew re-runs performance.',cite:'Module 6 / IOCC-INFO-05'},
+    {n:25,pts:4,text:'A220 at BDL, -4°C, light snow, deiced with Type IV 35 min ago. Crew ready to push. What must you assess?',model:'1) Has HOT been exceeded for Type IV at -4°C in light snow? 2) If expired/close, pre-takeoff contamination check required. 3) Critical surfaces free of contamination? 4) If contamination present and HOT expired, aircraft must be re-deiced before departure.',cite:'Module 17 / GDAP / 14 CFR 121.629'},
+  ]},
+  'comp_final': {name:'Comprehensive Final Exam', mcPts:56, saCount:24, questions:[
+    {n:29,pts:2,text:'State the 1-2-3 Rule and identify the regulation that establishes it.',model:'§ 121.619: No alternate required if, for 1 hr before and 1 hr after ETA, forecast shows ceiling ≥ 2,000 ft AGL and visibility ≥ 3 SM.',cite:'§ 121.619'},
+    {n:30,pts:2,text:'What is the difference between an adequate airport and a suitable airport? Cite the IOCM chapter.',model:'Adequate = proper facilities. Suitable = adequate + meets weather criteria. Dispatchers make adequate airports suitable.',cite:'IOCM Chapter 7'},
+    {n:31,pts:2,text:'List the 5 main types of NOTAMs and cite the IOCM chapter.',model:'NOTAM D, FDC NOTAM, Pointer NOTAM, Military NOTAM, Company NOTAM.',cite:'IOCM Chapter 24'},
+    {n:32,pts:2,text:'Explain what a GDP is and what an EDCT represents operationally.',model:'GDP assigns EDCTs to flights bound for constrained airports. EDCT is the runway release time. Dispatchers monitor and coordinate change requests via Dispatch Supervisors.',cite:'Module 10'},
+    {n:33,pts:2,text:'What three things must a dispatcher do to comply with EWINS policy when using a RAMTAF as controlling forecast?',model:'1) Remark the release. 2) Record supporting METARs and evidence. 3) Retain records 3 months minimum.',cite:'EWINS 6.3'},
+    {n:34,pts:2,text:'List the 5 Breeze Airways core company values (SKIIE).',model:'Safety, Kindness, Integrity, Ingenuity, Excellence.',cite:'Module 15'},
+    {n:35,pts:2,text:'Describe the MEL/CDL FDP Block procedure: when blocked, when unblocked, what crew sees.',model:'Block immediately on MEL notification. Unblock after PIC ACARS ack. Crew sees a message that dispatch has blocked their FDP.',cite:'Module 6 / IOCC-INFO-05'},
+    {n:36,pts:2,text:'What is the difference between a MEL, CDL, ACI, and NEF?',model:'MEL: operates with inoperative equipment. CDL: missing/deviated external part. ACI: tracking only, no relief. NEF: non-essential furnishing, no effect on ops, tracked in AML.',cite:'Module 6'},
+    {n:37,pts:2,text:'List all critical surfaces under the Clean Aircraft Concept and cite the regulation.',model:'Wings, horizontal stabilizers, vertical stabilizers, control surfaces, engine inlets.',cite:'14 CFR 121.629 / Module 17'},
+    {n:38,pts:2,text:'Two driftdown methods in N-FP and when Method 1 is used.',model:'Method 1 (Weight Reduce) and Method 2 (Escape Routes). Method 1 used when escape routes cannot be generated safely.',cite:'Module 20 slide 33'},
+    {n:39,pts:2,text:'Dispatcher responsibilities under § 121.557 when unable to communicate with pilot during emergency.',model:'Declare the emergency and take any action necessary. Submit written report within 10 days.',cite:'§ 121.557(b)(c)'},
+    {n:40,pts:2,text:'What communication methods can dispatchers use to reach a crew enroute, in order?',model:'1) ACARS (primary). 2) ARINC VHF voice (secondary). 3) SATCOM (equipped aircraft, not yet officially approved).',cite:'Module 13'},
+    {n:45,pts:2,text:'Captain requests 2,500 lbs extra fuel 8 min before push. Your fuel meets all minimums. What do you do per GOM?',model:'Add fuel coded as PIC request, remark the release, document in DET. Per GOM 7.12.3-4, larger requirement governs.',cite:'GOM 7.12.3-4 / Module 14'},
+    {n:46,pts:2,text:'MEL 36-00-00 restricts E190 to FL310. Release at FL370. Crew has run performance. Walk through each step.',model:'1) Block FDP immediately. 2) Revise release with MEL at FL310 max. 3) Send to crew. 4) PIC ACARS ack. 5) Unblock FDP. 6) Confirm crew re-runs performance.',cite:'Module 6 / IOCC-INFO-05'},
+    {n:47,pts:2,text:'A220 at BDL, -6°C, light snow, deiced with Type IV 40 min ago. What must you assess before clearing push?',model:'1) Has HOT been exceeded? 2) Pre-takeoff contamination check if HOT expired. 3) Critical surfaces free of contamination? 4) Re-deice if contamination present.',cite:'Module 17 / GDAP / 14 CFR 121.629'},
+    {n:48,pts:2,text:'FOB 10.5. Burn 1,100. Alt fuel 2,200. Reserve 3,400. Calculate BINGO and hold fuel. What is your next action?',model:'BINGO = 1,100+2,200+3,400 = 6,700 lbs. Hold fuel = 10,500-6,700 = 3,800 lbs. Concur BINGO with crew.',cite:'Module 20 slides 17-20'},
+    {n:49,pts:2,text:'Smoke in cabin, emergency declared. Walk through DECIDE model as dispatcher.',model:'D-Detect emergency. E-Estimate: life safety, immediate action. C-Choose: safety of all aboard. I-Identify: nearest airports, fuel, MOC, IOCM Ch 14 notifications. D-Do: advise crew, coordinate. E-Evaluate: monitor, document.',cite:'Module 21 / IOCM Chapter 14'},
+    {n:50,pts:2,text:'A220 30 min from PVD: ILS OTS, vis ½ SM, alternate BOS deteriorating, FOB 9,200 lbs. Full assessment.',model:'1) ILS OTS: reassess approaches. 2) Vis ½ SM: below minimums, 115% field length rule applies. 3) BOS degrading: find new alternate. 4) Calculate BINGO, assess fuel for alternate. 5) Advise PIC immediately, recommend divert, coordinate with MOC/SYSOPS.',cite:'§ 121.557 / § 121.619 / IOCM / OpSpec C052/C054'},
+  ]}
+};
+
+function getSAGrades(uid) {
+  try { return JSON.parse(localStorage.getItem('bz_sa_grades_' + uid) || '{}'); } catch(e) { return {}; }
+}
+function saveSAGrades(uid, grades) {
+  localStorage.setItem('bz_sa_grades_' + uid, JSON.stringify(grades));
+}
+function getSAAnswers(uid, quizId) {
+  try { return JSON.parse(localStorage.getItem('bz_sa_answers_' + uid + '_' + quizId) || '{}'); } catch(e) { return {}; }
+}
+
+function openGrading(uid, quizId) {
+  const testInfo = SA_TESTS[quizId];
+  if (!testInfo || !testInfo.questions || !testInfo.questions.length) {
+    alert('No short answer questions to grade for this test.');
+    return;
+  }
+
+  const grades = getSAGrades(uid);
+  const quizGrades = grades[quizId] || {};
+  const saAnswers = getSAAnswers(uid, quizId);
+  const scores = getScores(uid);
+  const mcScore = scores[quizId] ? scores[quizId].mcScore || 0 : 0;
+
+  document.getElementById('grading-title').textContent = uid + ' — ' + testInfo.name;
+
+  let html = `<div style="background:var(--blue-lt);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--ink2);">
+    <strong>Auto-scored (MC/TF):</strong> ${mcScore} pts &nbsp;·&nbsp; 
+    <strong>Short answer:</strong> ${testInfo.questions.length} questions &nbsp;·&nbsp;
+    <strong>Max SA points:</strong> ${testInfo.questions.reduce((a,q)=>a+q.pts,0)} pts
+  </div>`;
+
+  testInfo.questions.forEach(q => {
+    const savedGrade = quizGrades[q.n] !== undefined ? quizGrades[q.n] : '';
+    const studentAns = saAnswers[q.n] || '';
+    const hasGrade = savedGrade !== '';
+    html += `<div class="grade-q">
+      <div class="grade-q-num">Q${q.n} — Short Answer &nbsp; ${hasGrade ? '<span class="grade-done-badge">✓ Graded: '+savedGrade+'/'+q.pts+' pts</span>' : '<span class="grade-pending-badge">⏳ Pending</span>'}</div>
+      <div class="grade-q-text">${q.text}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Student answer:</div>
+      <div class="grade-student-ans">${studentAns || '<em style="color:var(--ink3);">No answer provided</em>'}</div>
+      <div class="grade-model"><strong>Model answer:</strong> ${q.model}<br><em style="font-size:11px;color:var(--ink3);">📄 ${q.cite}</em></div>
+      <div class="grade-score-row">
+        <label>Points awarded:</label>
+        <input class="grade-score-input" type="number" min="0" max="${q.pts}" id="grade-input-${q.n}" value="${savedGrade}" placeholder="0">
+        <span class="grade-max">/ ${q.pts} pts</span>
+      </div>
+    </div>`;
+  });
+
+  html += `<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray);">
+    <button onclick="closeGrading()" style="padding:9px 20px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:13px;cursor:pointer;">Cancel</button>
+    <button class="grade-btn" onclick="saveGrades('${uid}','${quizId}')">&#10003; Save grades</button>
+  </div>`;
+
+  document.getElementById('grading-body').innerHTML = html;
+  document.getElementById('modal-grading').style.display = 'flex';
+}
+
+function saveGrades(uid, quizId) {
+  const testInfo = SA_TESTS[quizId];
+  const grades = getSAGrades(uid);
+  const quizGrades = {};
+  let saTotal = 0;
+
+  testInfo.questions.forEach(q => {
+    const input = document.getElementById('grade-input-' + q.n);
+    const val = input ? Math.min(q.pts, Math.max(0, parseInt(input.value) || 0)) : 0;
+    quizGrades[q.n] = val;
+    saTotal += val;
+  });
+
+  grades[quizId] = quizGrades;
+  saveSAGrades(uid, grades);
+
+  // Update the score to include SA points
+  const existing = getScores(uid);
+  const mcScore = existing[quizId] ? (existing[quizId].mcScore || 0) : 0;
+  const mcPts = testInfo.mcPts;
+  const saPts = testInfo.questions.reduce((a,q)=>a+q.pts,0);
+  const totalPts = mcPts + saPts;
+  const finalScore = Math.round((mcScore + saTotal) / totalPts * 100);
+  const pass = finalScore >= 80;
+
+  existing[quizId] = {
+    score: finalScore,
+    pass,
+    date: existing[quizId]?.date || new Date().toISOString().slice(0,10),
+    mcScore,
+    saScore: saTotal,
+    graded: true
+  };
+  localStorage.setItem('bz_scores_' + uid, JSON.stringify(existing));
+
+  closeGrading();
+  renderAdmin();
+  const status = document.getElementById('gs-pull-status');
+  status.style.color = 'var(--green)';
+  status.textContent = uid + ' — ' + testInfo.name + ' graded: ' + finalScore + '% (' + (pass?'Pass':'Fail') + ')';
+  setTimeout(() => { status.textContent = ''; }, 4000);
+}
+
+function closeGrading() {
+  document.getElementById('modal-grading').style.display = 'none';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('login-id').focus();
+</script>
+
+<!-- ══ GRADING MODAL ═════════════════════════════════════════════ -->
+<div id="modal-grading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:flex-start;justify-content:center;overflow-y:auto;padding:2rem 1rem;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:700px;box-shadow:0 24px 60px rgba(0,0,0,.4);margin:auto;">
+    <div style="background:var(--navy);border-radius:16px 16px 0 0;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;">Instructor Grading</div>
+        <div id="grading-title" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;"></div>
+      </div>
+      <button onclick="closeGrading()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Close</button>
+    </div>
+    <div id="grading-body" style="padding:1.5rem;"></div>
+  </div>
+</div>
+</body>
+</html>
