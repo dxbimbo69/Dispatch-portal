@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Breeze Airways — Study Materials</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#0B1F3A;--navy-mid:#1A3A6B;--blue:#1A5FB4;--blue-lt:#DDEEFF;
@@ -91,6 +91,21 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 .decode-value{font-family:monospace;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:.4rem;}
 .decode-steps{font-size:13px;color:var(--ink2);line-height:1.7;}
 
+
+/* ── Airport Study Tool ─────────────────────────────────────────── */
+.ap-tab{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:7px;border:1.5px solid var(--gray);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;}
+.ap-tab:hover{border-color:var(--blue);color:var(--blue);}
+.ap-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.ap-btn{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border-radius:7px;border:1.5px solid var(--gray);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;}
+.ap-btn:hover{border-color:var(--navy);color:var(--navy);}
+.ap-btn-primary{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border-radius:7px;border:none;background:var(--navy);color:#fff;cursor:pointer;transition:all .15s;}
+.ap-btn-primary:hover{background:var(--blue);}
+.ap-card{background:var(--white);border:1.5px solid var(--gray);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;transition:all .15s;}
+.ap-card:hover{border-color:var(--cyan);box-shadow:0 2px 8px rgba(14,165,196,.1);}
+.ap-card-code{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--navy);}
+.ap-card-city{font-size:12px;color:var(--ink3);margin-top:2px;}
+.ap-card-tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--blue-lt);color:var(--blue);padding:2px 7px;border-radius:4px;}
+
 @media(max-width:700px){.page{grid-template-columns:1fr;}.sidebar{position:static;}}
 </style>
 </head>
@@ -134,6 +149,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
       <button class="sidebar-link" onclick="showPanel('wind-decode')">Wind Decode Guide</button>
       <button class="sidebar-link" onclick="showPanel('exemption22897')">Exemption 22897</button>
       <button class="sidebar-link" onclick="window.open('breeze_flashcards.html','_blank')">&#9654; Flashcards</button>
+      <button class="sidebar-link" onclick="showPanel('airport-list')">&#9992; Airport Codes</button>
     </div>
   </nav>
 
@@ -987,6 +1003,96 @@ PLANNED WITHIN 2000LB BUFFER DUE TO [REASON]</div>
       </div>
     </div>
 
+
+    <!-- ── AIRPORT CODES ── -->
+    <div class="panel" id="panel-airport-list">
+      <div class="guide-card">
+        <div class="guide-card-header">
+          <span class="guide-card-icon">&#9992;</span>
+          <span class="guide-card-title">Breeze Airways — Airport Code Study Tool</span>
+        </div>
+        <div class="guide-card-body">
+
+          <!-- MODE TABS -->
+          <div style="display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;">
+            <button class="ap-tab active" onclick="apMode('browse')">&#128196; Browse All</button>
+            <button class="ap-tab" onclick="apMode('flash')">&#128256; Flashcards</button>
+            <button class="ap-tab" onclick="apMode('quiz')">&#9997; Quiz Me</button>
+          </div>
+
+          <!-- BROWSE MODE -->
+          <div id="ap-browse">
+            <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+              <input id="ap-search" type="text" placeholder="Search city or code..." oninput="apRender()" style="flex:1;min-width:180px;padding:8px 12px;border:1.5px solid var(--gray);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+              <select id="ap-filter" onchange="apRender()" style="padding:8px 12px;border:1.5px solid var(--gray);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);outline:none;">
+                <option value="">All States/Countries</option>
+              </select>
+            </div>
+            <div id="ap-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div>
+            <div id="ap-count" style="margin-top:1rem;font-size:12px;color:var(--ink3);text-align:center;"></div>
+          </div>
+
+          <!-- FLASHCARD MODE -->
+          <div id="ap-flash" style="display:none;text-align:center;">
+            <div id="ap-flash-progress" style="font-size:12px;color:var(--ink3);margin-bottom:1rem;"></div>
+            <div id="ap-flashcard" onclick="apFlipCard()" style="cursor:pointer;background:var(--navy);border-radius:14px;padding:2.5rem 1.5rem;margin:0 auto 1.5rem;width:100%;max-width:480px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s;user-select:none;">
+              <div id="ap-flash-hint" style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;"></div>
+              <div id="ap-flash-main" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2.2rem;font-weight:700;color:#fff;text-align:center;word-break:break-word;width:100%;line-height:1.2;letter-spacing:-0.02em;"></div>
+              <div id="ap-flash-sub" style="font-size:13px;color:rgba(255,255,255,.5);margin-top:.75rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+              <button class="ap-btn" onclick="apFlashPrev()">&#8592; Prev</button>
+              <button class="ap-btn" onclick="apFlipCard()">Flip Card</button>
+              <button class="ap-btn" onclick="apFlashNext()">Next &#8594;</button>
+              <button class="ap-btn" onclick="apShuffleFlash()">&#128256; Shuffle</button>
+            </div>
+            <div style="margin-top:1rem;font-size:12px;color:var(--ink3);">Click card or press Space to flip</div>
+          </div>
+
+          <!-- QUIZ MODE -->
+          <div id="ap-quiz" style="display:none;">
+            <div id="ap-quiz-setup">
+              <div style="background:var(--surface);border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+                <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-bottom:.75rem;">Quiz Settings</div>
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem;font-size:13px;cursor:pointer;">
+                  <input type="radio" name="ap-qtype" value="code" checked> Given the city, type the airport code
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                  <input type="radio" name="ap-qtype" value="city"> Given the code, type the city
+                </label>
+              </div>
+              <button class="ap-btn-primary" onclick="apStartQuiz()">Start Quiz &#8594;</button>
+            </div>
+            <div id="ap-quiz-active" style="display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <div id="ap-quiz-progress" style="font-size:12px;color:var(--ink3);"></div>
+                <div id="ap-quiz-score" style="font-family:Syne,sans-serif;font-weight:800;font-size:14px;color:var(--navy);"></div>
+              </div>
+              <div id="ap-quiz-q" style="background:var(--navy);border-radius:12px;padding:2rem;text-align:center;margin-bottom:1rem;">
+                <div id="ap-quiz-label" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan);margin-bottom:.75rem;font-family:Syne,sans-serif;font-weight:700;"></div>
+                <div id="ap-quiz-prompt" style="font-family:Syne,sans-serif;font-size:2rem;font-weight:800;color:#fff;"></div>
+              </div>
+              <input id="ap-quiz-input" type="text" placeholder="Type your answer..." onkeydown="if(event.key==='Enter')apCheckAnswer()" style="width:100%;padding:12px 16px;border:2px solid var(--gray);border-radius:8px;font-family:Syne,sans-serif;font-size:1.2rem;font-weight:700;text-transform:uppercase;outline:none;margin-bottom:.75rem;text-align:center;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="ap-btn-primary" onclick="apCheckAnswer()">Submit</button>
+                <button class="ap-btn" onclick="apSkipQuestion()">Skip</button>
+                <button class="ap-btn" onclick="apEndQuiz()">End Quiz</button>
+              </div>
+              <div id="ap-quiz-feedback" style="margin-top:.75rem;padding:.75rem 1rem;border-radius:8px;font-size:13px;font-weight:600;display:none;"></div>
+            </div>
+            <div id="ap-quiz-results" style="display:none;text-align:center;">
+              <div style="font-size:3rem;margin-bottom:.5rem;">&#127942;</div>
+              <div id="ap-quiz-final-score" style="font-family:Syne,sans-serif;font-size:2rem;font-weight:800;color:var(--navy);margin-bottom:.5rem;"></div>
+              <div id="ap-quiz-summary" style="font-size:13px;color:var(--ink3);margin-bottom:1.5rem;"></div>
+              <div id="ap-quiz-missed-list" style="text-align:left;margin-bottom:1.5rem;"></div>
+              <button class="ap-btn-primary" onclick="apStartQuiz()">Try Again</button>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
   </div><!-- /content -->
 </div><!-- /page -->
 
@@ -999,6 +1105,276 @@ function showPanel(id) {
   event.currentTarget.classList.add('active');
   window.scrollTo({top:0, behavior:'smooth'});
 }
+
+
+// ── Airport Study Tool ────────────────────────────────────────────────────────
+const AP_DEFAULT = [
+  {city:'Huntsville, AL',code:'HSV',region:'AL'},
+  {city:'Bentonville/Fayetteville, AR',code:'XNA',region:'AR'},
+  {city:'Phoenix, AZ',code:'PHX',region:'AZ'},
+  {city:'Arcata/Eureka, CA',code:'ACV',region:'CA'},
+  {city:'San Francisco, CA',code:'SFO',region:'CA'},
+  {city:'Burbank/Hollywood, CA',code:'BUR',region:'CA'},
+  {city:'Los Angeles, CA',code:'LAX',region:'CA'},
+  {city:'Santa Ana, CA',code:'SNA',region:'CA'},
+  {city:'San Diego, CA',code:'SAN',region:'CA'},
+  {city:'San Bernardino, CA',code:'SBD',region:'CA'},
+  {city:'Grand Junction, CO',code:'GJT',region:'CO'},
+  {city:'Montrose/Telluride, CO',code:'MTJ',region:'CO'},
+  {city:'Denver, CO',code:'DEN',region:'CO'},
+  {city:'Bradley Intl, CT',code:'BDL',region:'CT'},
+  {city:'Washington Dulles, DC',code:'IAD',region:'DC'},
+  {city:'Daytona Beach, FL',code:'DAB',region:'FL'},
+  {city:'Fort Lauderdale, FL',code:'FLL',region:'FL'},
+  {city:'Fort Myers, FL',code:'RSW',region:'FL'},
+  {city:'Jacksonville, FL',code:'JAX',region:'FL'},
+  {city:'Key West, FL',code:'EYW',region:'FL'},
+  {city:'Orlando, FL',code:'MCO',region:'FL'},
+  {city:'West Palm Beach, FL',code:'PBI',region:'FL'},
+  {city:'Pensacola, FL',code:'PNS',region:'FL'},
+  {city:'Sarasota, FL',code:'SRQ',region:'FL'},
+  {city:'Tampa, FL',code:'TPA',region:'FL'},
+  {city:'Vero Beach, FL',code:'VRB',region:'FL'},
+  {city:'Savannah, GA',code:'SAV',region:'GA'},
+  {city:'Evansville, IN',code:'EVV',region:'IN'},
+  {city:'South Bend, IN',code:'SBN',region:'IN'},
+  {city:'Covington, KY',code:'CVG',region:'KY'},
+  {city:'Louisville, KY',code:'SDF',region:'KY'},
+  {city:'New Orleans, LA',code:'MSY',region:'LA'},
+  {city:'Bangor, ME',code:'BGR',region:'ME'},
+  {city:'Portland, ME',code:'PWM',region:'ME'},
+  {city:'Salisbury, MD',code:'SBY',region:'MD'},
+  {city:'Lansing, MI',code:'LAN',region:'MI'},
+  {city:'Springfield, MO',code:'SGF',region:'MO'},
+  {city:'Gulfport, MS',code:'GPT',region:'MS'},
+  {city:'Greensboro, NC',code:'GSO',region:'NC'},
+  {city:'New Bern, NC',code:'EWN',region:'NC'},
+  {city:'Raleigh/Durham, NC',code:'RDU',region:'NC'},
+  {city:'Wilmington, NC',code:'ILM',region:'NC'},
+  {city:'Lincoln, NE',code:'LNK',region:'NE'},
+  {city:'Manchester, NH',code:'MHT',region:'NH'},
+  {city:'Newark, NJ',code:'EWR',region:'NJ'},
+  {city:'Las Vegas, NV',code:'LAS',region:'NV'},
+  {city:'Albany, NY',code:'ALB',region:'NY'},
+  {city:'Islip, NY',code:'ISP',region:'NY'},
+  {city:'Ogdensburg, NY',code:'OGS',region:'NY'},
+  {city:'Rochester, NY',code:'ROC',region:'NY'},
+  {city:'Syracuse, NY',code:'SYR',region:'NY'},
+  {city:'White Plains, NY',code:'HPN',region:'NY'},
+  {city:'Eugene, OR',code:'EUG',region:'OR'},
+  {city:'Redmond/Bend, OR',code:'RDM',region:'OR'},
+  {city:'Erie, PA',code:'ERI',region:'PA'},
+  {city:'Lancaster, PA',code:'LNS',region:'PA'},
+  {city:'Pittsburgh, PA',code:'PIT',region:'PA'},
+  {city:'Wilkes-Barre/Scranton, PA',code:'AVP',region:'PA'},
+  {city:'Providence, RI',code:'PVD',region:'RI'},
+  {city:'Charleston, SC',code:'CHS',region:'SC'},
+  {city:'Greenville/Spartanburg, SC',code:'GSP',region:'SC'},
+  {city:'Myrtle Beach, SC',code:'MYR',region:'SC'},
+  {city:'Memphis, TN',code:'MEM',region:'TN'},
+  {city:'Tri-Cities, TN',code:'TRI',region:'TN'},
+  {city:'Dallas Fort Worth, TX',code:'DFW',region:'TX'},
+  {city:'Ogden, UT',code:'OGD',region:'UT'},
+  {city:'Provo, UT',code:'PVU',region:'UT'},
+  {city:'Norfolk, VA',code:'ORF',region:'VA'},
+  {city:'Richmond, VA',code:'RIC',region:'VA'},
+  {city:'Burlington, VT',code:'BTV',region:'VT'},
+  {city:'Pasco, WA',code:'PSC',region:'WA'},
+  {city:'Madison, WI',code:'MSN',region:'WI'},
+  {city:'Charleston, WV',code:'CRW',region:'WV'},
+  {city:'Punta Cana, Dominican Republic',code:'MDPC',region:'International'},
+  {city:'Cancun, Mexico',code:'MMUN',region:'International'},
+  {city:'Montego Bay, Jamaica',code:'MKJS',region:'International'},
+  {city:'San Juan, Puerto Rico',code:'TJSJ',region:'International'},
+  {city:'Juan Santamaria, Costa Rica',code:'MROC',region:'International'},
+];
+
+let apAirports = JSON.parse(localStorage.getItem('bz_airports') || 'null') || AP_DEFAULT.map(a=>({...a}));
+let apCurrentMode = 'browse';
+let apFlashIdx = 0;
+let apFlashFlipped = false;
+let apFlashDeck = [];
+let apQuizQ = [];
+let apQuizIdx = 0;
+let apQuizCorrect = 0;
+let apQuizMissed = [];
+
+function apSave() { localStorage.setItem('bz_airports', JSON.stringify(apAirports)); }
+
+function apMode(mode) {
+  apCurrentMode = mode;
+  document.querySelectorAll('.ap-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('ap-browse').style.display = mode === 'browse' ? '' : 'none';
+  document.getElementById('ap-flash').style.display  = mode === 'flash'  ? '' : 'none';
+  document.getElementById('ap-quiz').style.display   = mode === 'quiz'   ? '' : 'none';
+
+  if (mode === 'browse') { apPopulateFilter(); apRender(); }
+  if (mode === 'flash')  { apInitFlash(); }
+
+}
+
+// ── BROWSE ──
+function apPopulateFilter() {
+  const regions = [...new Set(apAirports.map(a => a.region))].sort();
+  const sel = document.getElementById('ap-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All States/Countries</option>';
+  regions.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o); });
+  sel.value = cur;
+}
+
+function apRender() {
+  const q = (document.getElementById('ap-search').value || '').toLowerCase();
+  const region = document.getElementById('ap-filter').value;
+  const filtered = apAirports.filter(a =>
+    (!q || a.city.toLowerCase().includes(q) || a.code.toLowerCase().includes(q)) &&
+    (!region || a.region === region)
+  ).sort((a,b) => a.code.localeCompare(b.code));
+  const grid = document.getElementById('ap-grid');
+  grid.innerHTML = filtered.map(a => `
+    <div class="ap-card">
+      <div>
+        <div class="ap-card-code">${a.code}</div>
+        <div class="ap-card-city">${a.city}</div>
+      </div>
+      <div class="ap-card-tag">${a.region}</div>
+    </div>`).join('');
+  document.getElementById('ap-count').textContent = filtered.length + ' of ' + apAirports.length + ' airports';
+}
+
+// ── FLASHCARDS ──
+function apInitFlash() {
+  apFlashDeck = [...apAirports].sort(() => Math.random() - .5);
+  apFlashIdx = 0;
+  apFlashFlipped = false;
+  apShowFlash();
+}
+
+function apShuffleFlash() {
+  apFlashDeck = [...apAirports].sort(() => Math.random() - .5);
+  apFlashIdx = 0;
+  apFlashFlipped = false;
+  apShowFlash();
+}
+
+function apShowFlash() {
+  const a = apFlashDeck[apFlashIdx];
+  document.getElementById('ap-flash-progress').textContent = (apFlashIdx+1) + ' / ' + apFlashDeck.length;
+  if (!apFlashFlipped) {
+    // Front: city name
+    document.getElementById('ap-flash-hint').textContent = 'What is the code for...';
+    document.getElementById('ap-flash-main').textContent = a.city;
+    document.getElementById('ap-flash-main').style.fontSize = a.city.length > 25 ? '1.2rem' : a.city.length > 18 ? '1.6rem' : '2.5rem';
+    document.getElementById('ap-flash-sub').textContent = a.region;
+    document.getElementById('ap-flashcard').style.background = 'var(--navy)';
+  } else {
+    // Back: airport code revealed
+    document.getElementById('ap-flash-hint').textContent = 'Airport Code';
+    document.getElementById('ap-flash-main').textContent = a.code;
+    document.getElementById('ap-flash-main').style.fontSize = '2.5rem';
+    document.getElementById('ap-flash-sub').textContent = a.city;
+    document.getElementById('ap-flashcard').style.background = 'var(--blue)';
+  }
+}
+
+function apFlipCard() {
+  apFlashFlipped = !apFlashFlipped;
+  const card = document.getElementById('ap-flashcard');
+  card.style.transform = 'scale(0.96)';
+  setTimeout(() => { card.style.transform = ''; apShowFlash(); }, 120);
+}
+
+function apFlashNext() { apFlashFlipped=false; apFlashIdx=(apFlashIdx+1)%apFlashDeck.length; apShowFlash(); }
+function apFlashPrev() { apFlashFlipped=false; apFlashIdx=(apFlashIdx-1+apFlashDeck.length)%apFlashDeck.length; apShowFlash(); }
+
+document.addEventListener('keydown', e => {
+  if (apCurrentMode !== 'flash') return;
+  if (e.key === ' ') { e.preventDefault(); apFlipCard(); }
+  if (e.key === 'ArrowRight') apFlashNext();
+  if (e.key === 'ArrowLeft')  apFlashPrev();
+});
+
+// ── QUIZ ──
+function apStartQuiz() {
+  apQuizQ = [...apAirports].sort(() => Math.random() - .5);
+  apQuizIdx = 0; apQuizCorrect = 0; apQuizMissed = [];
+  document.getElementById('ap-quiz-setup').style.display = 'none';
+  document.getElementById('ap-quiz-active').style.display = '';
+  document.getElementById('ap-quiz-results').style.display = 'none';
+  apShowQuizQ();
+}
+
+function apShowQuizQ() {
+  const qtype = document.querySelector('input[name="ap-qtype"]:checked').value;
+  const a = apQuizQ[apQuizIdx];
+  document.getElementById('ap-quiz-progress').textContent = 'Question ' + (apQuizIdx+1) + ' of ' + apQuizQ.length;
+  document.getElementById('ap-quiz-score').textContent = 'Score: ' + apQuizCorrect + '/' + apQuizIdx;
+  document.getElementById('ap-quiz-feedback').style.display = 'none';
+  const input = document.getElementById('ap-quiz-input');
+  input.value = '';
+  input.style.borderColor = 'var(--gray)';
+  if (qtype === 'code') {
+    document.getElementById('ap-quiz-label').textContent = 'What is the airport code for...';
+    document.getElementById('ap-quiz-prompt').textContent = a.city;
+  } else {
+    document.getElementById('ap-quiz-label').textContent = 'What city/airport is this code?';
+    document.getElementById('ap-quiz-prompt').textContent = a.code;
+  }
+  setTimeout(() => input.focus(), 100);
+}
+
+function apCheckAnswer() {
+  const qtype = document.querySelector('input[name="ap-qtype"]:checked').value;
+  const a = apQuizQ[apQuizIdx];
+  const input = document.getElementById('ap-quiz-input');
+  const answer = input.value.trim().toUpperCase();
+  const correct = qtype === 'code' ? a.code.toUpperCase() : a.city.toUpperCase();
+  const isCorrect = answer === correct;
+  const fb = document.getElementById('ap-quiz-feedback');
+  fb.style.display = '';
+  if (isCorrect) {
+    apQuizCorrect++;
+    input.style.borderColor = 'var(--green)';
+    fb.style.background = 'var(--green-lt)';
+    fb.style.color = 'var(--green)';
+    fb.textContent = '✓ Correct!';
+  } else {
+    input.style.borderColor = 'var(--red, #c0392b)';
+    fb.style.background = '#fef2f2';
+    fb.style.color = '#c0392b';
+    fb.textContent = '✗ Correct answer: ' + (qtype === 'code' ? a.code : a.city);
+    apQuizMissed.push(a);
+  }
+  apQuizIdx++;
+  if (apQuizIdx >= apQuizQ.length) {
+    setTimeout(apShowResults, 900);
+  } else {
+    setTimeout(apShowQuizQ, 900);
+  }
+}
+
+function apSkipQuestion() { apQuizMissed.push(apQuizQ[apQuizIdx]); apQuizIdx++; if(apQuizIdx>=apQuizQ.length) apShowResults(); else apShowQuizQ(); }
+function apEndQuiz() { apShowResults(); }
+
+function apShowResults() {
+  document.getElementById('ap-quiz-active').style.display = 'none';
+  document.getElementById('ap-quiz-results').style.display = '';
+  const pct = Math.round(apQuizCorrect / apQuizQ.length * 100);
+  document.getElementById('ap-quiz-final-score').textContent = pct + '% — ' + apQuizCorrect + '/' + apQuizQ.length + ' correct';
+  document.getElementById('ap-quiz-summary').textContent = apQuizMissed.length ? 'Review these ' + apQuizMissed.length + ' missed airports:' : 'Perfect score! You know them all!';
+  const ml = document.getElementById('ap-quiz-missed-list');
+  ml.innerHTML = apQuizMissed.map(a => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border-radius:7px;margin-bottom:5px;font-size:13px;">
+      <span style="color:var(--ink2)">${a.city}</span>
+      <span style="font-family:Syne,sans-serif;font-weight:800;color:var(--navy)">${a.code}</span>
+    </div>`).join('');
+}
+
+
+// Init browse on load
+apPopulateFilter();
+apRender();
 
 // ── Checklist ────────────────────────────────────────────────────────────────
 const CHECKLIST = [
