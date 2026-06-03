@@ -38,6 +38,14 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 .qlist-item .qi-name{font-weight:600;}
 .qlist-item .qi-meta{font-size:11px;color:var(--ink3);margin-top:1px;}
 .qlist-item.active .qi-meta{color:rgba(255,255,255,.6);}
+.qlist-item.dragging{opacity:.4;}
+.qlist-item.drag-over{border-top:2px solid var(--cyan);}
+.qlist-item .qi-grip{display:inline-block;color:var(--gray-dk);font-size:13px;cursor:grab;margin-right:6px;vertical-align:middle;}
+.qlist-item.active .qi-grip{color:rgba(255,255,255,.5);}
+.qlist-item:active .qi-grip{cursor:grabbing;}
+.order-bar{background:var(--cyan-lt);border:1.5px solid var(--cyan);border-radius:0;padding:.6rem .8rem;margin:0;font-size:11px;color:var(--navy);display:none;align-items:center;justify-content:space-between;gap:8px;}
+.order-bar.show{display:flex;}
+.order-bar button{font-family:'Syne',sans-serif;font-weight:700;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:5px 10px;border-radius:6px;border:none;background:var(--cyan);color:#fff;cursor:pointer;}
 
 .btn{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;border-radius:8px;border:1.5px solid var(--gray);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;}
 .btn:hover{border-color:var(--navy);color:var(--navy);}
@@ -115,6 +123,13 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
     <div class="qlist-head">
       <span>Quizzes</span>
       <button class="btn-add" title="New quiz" onclick="newQuiz()">+</button>
+    </div>
+    <div class="order-bar" id="order-bar">
+      <span>Order changed</span>
+      <span style="display:flex;gap:6px;">
+        <button onclick="revertOrder()" style="background:transparent;border:1px solid var(--cyan);color:var(--navy);">Undo</button>
+        <button onclick="saveOrder()">Save order</button>
+      </span>
     </div>
     <div class="qlist-body" id="qlist-body">
       <div style="padding:1.5rem;text-align:center;color:var(--ink3);font-size:13px;">Loading…</div>
@@ -201,16 +216,110 @@ function buildQuizList() {
   allQuizzes.forEach(q => { const s = q.section || 'Other'; (groups[s] = groups[s] || []).push(q); });
   let html = '';
   Object.keys(groups).forEach(section => {
-    html += '<div class="qlist-group">' + esc(section) + '</div>';
+    html += '<div class="qlist-group" data-section="' + esc(section) + '">' + esc(section) + '</div>';
     groups[section].forEach(q => {
       const count = allQuestions.filter(x => x.quizId === q.id).length;
-      html += '<div class="qlist-item' + (q.id===currentId?' active':'') + '" onclick="selectQuiz(\'' + q.id + '\')">'
-            + '<div class="qi-name">' + esc(q.name) + '</div>'
-            + '<div class="qi-meta">' + esc(q.mod) + ' · ' + (q.type==='test'?'Test':'KC') + ' · ' + count + ' Qs</div>'
+      html += '<div class="qlist-item' + (q.id===currentId?' active':'') + '" draggable="true" data-id="' + esc(q.id) + '" data-section="' + esc(section) + '">'
+            + '<div class="qi-name"><span class="qi-grip" title="Drag to reorder">&#9776;</span>' + esc(q.name) + '</div>'
+            + '<div class="qi-meta">' + esc(q.mod) + ' &middot; ' + (q.type==='test'?'Test':'KC') + ' &middot; ' + count + ' Qs</div>'
             + '</div>';
     });
   });
   body.innerHTML = html;
+  wireDragAndDrop();
+}
+
+// ── Drag-and-drop reordering of quizzes in the sidebar ──
+let dragEl = null;
+let orderDirty = false;
+
+function wireDragAndDrop() {
+  const body = document.getElementById('qlist-body');
+  const items = body.querySelectorAll('.qlist-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', function(e){
+      dragEl = item; item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', item.dataset.id); } catch(err){}
+    });
+    item.addEventListener('dragend', function(){
+      item.classList.remove('dragging');
+      body.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+      dragEl = null;
+    });
+    item.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      body.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+      if (item !== dragEl) item.classList.add('drag-over');
+    });
+    item.addEventListener('drop', function(e){
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if (!dragEl || dragEl === item) return;
+      // insert dragged element before the drop target
+      body.insertBefore(dragEl, item);
+      commitDomOrder();
+    });
+    item.addEventListener('click', function(){
+      selectQuiz(item.dataset.id);
+    });
+  });
+  // allow dropping onto a section header (drops at top of that section)
+  body.querySelectorAll('.qlist-group').forEach(hdr => {
+    hdr.addEventListener('dragover', function(e){ e.preventDefault(); });
+    hdr.addEventListener('drop', function(e){
+      e.preventDefault();
+      if (!dragEl) return;
+      // place right after the header
+      if (hdr.nextSibling) body.insertBefore(dragEl, hdr.nextSibling);
+      else body.appendChild(dragEl);
+      commitDomOrder();
+    });
+  });
+}
+
+// Read the DOM order, reassign order numbers + section to allQuizzes
+function commitDomOrder() {
+  const body = document.getElementById('qlist-body');
+  let currentSection = 'Other';
+  let counter = 10;
+  const nodes = body.childNodes;
+  nodes.forEach(node => {
+    if (node.classList && node.classList.contains('qlist-group')) {
+      currentSection = node.dataset.section || 'Other';
+    } else if (node.classList && node.classList.contains('qlist-item')) {
+      const id = node.dataset.id;
+      const q = allQuizzes.find(x => x.id === id);
+      if (q) { q.order = counter; q.section = currentSection; counter += 10; }
+    }
+  });
+  // re-sort allQuizzes to match new order so a rebuild is consistent
+  allQuizzes.sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+  orderDirty = true;
+  document.getElementById('order-bar').classList.add('show');
+}
+
+function revertOrder() {
+  orderDirty = false;
+  document.getElementById('order-bar').classList.remove('show');
+  loadData(); // reload from sheet = source of truth
+}
+
+function saveOrder() {
+  const bar = document.getElementById('order-bar');
+  bar.querySelector('button:last-child').textContent = 'Saving...';
+  const payload = {
+    action: 'saveOrder',
+    quizzes: allQuizzes.map(q => ({ id:q.id, section:q.section, order:q.order }))
+  };
+  postData(payload, function(){
+    orderDirty = false;
+    bar.classList.remove('show');
+    bar.querySelector('button:last-child').textContent = 'Save order';
+    toast('Order saved', 'ok');
+    loadData();
+  });
 }
 
 // ── Select / load a quiz into the editor ──
