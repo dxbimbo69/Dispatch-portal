@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breeze Dispatch — Question Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F3A;--navy-mid:#1A3A6B;--blue:#1A5FB4;--blue-lt:#DDEEFF;
+  --cyan:#0EA5C4;--cyan-lt:rgba(14,165,196,.1);
+  --ink:#0F0F0E;--ink2:#2E2E2C;--ink3:#6B6A64;
+  --surface:#F7F6F2;--white:#FFFFFF;--gray:#E8E6DC;--gray-dk:#C8C5B8;
+  --green:#1A7A3C;--green-lt:#E3F5EA;--red:#C0392B;--red-lt:#FBEAEA;
+  --amber:#B45309;--amber-lt:#FEF3C7;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;}
+
+.hdr{background:var(--navy);}
+.hdr-inner{max-width:1100px;margin:0 auto;padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.hdr-badge{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);}
+.hdr-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#fff;line-height:1.1;}
+.hdr-stripe{height:3px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--navy));}
+.hdr-status{font-size:12px;color:rgba(255,255,255,.6);font-family:'Syne',sans-serif;}
+
+.page{max-width:1100px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:280px 1fr;gap:2rem;align-items:start;}
+
+/* Quiz list sidebar */
+.qlist{position:sticky;top:1rem;background:var(--white);border:1.5px solid var(--gray);border-radius:14px;overflow:hidden;}
+.qlist-head{background:var(--navy);padding:.85rem 1rem;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;display:flex;justify-content:space-between;align-items:center;}
+.qlist-body{max-height:70vh;overflow-y:auto;}
+.qlist-group{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding:.7rem 1rem .3rem;background:var(--surface);}
+.qlist-item{padding:.6rem 1rem;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray);transition:background .12s;}
+.qlist-item:hover{background:var(--blue-lt);}
+.qlist-item.active{background:var(--navy);color:#fff;}
+.qlist-item .qi-name{font-weight:600;}
+.qlist-item .qi-meta{font-size:11px;color:var(--ink3);margin-top:1px;}
+.qlist-item.active .qi-meta{color:rgba(255,255,255,.6);}
+
+.btn{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;border-radius:8px;border:1.5px solid var(--gray);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;}
+.btn:hover{border-color:var(--navy);color:var(--navy);}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-primary:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-green:hover{background:#15602f;border-color:#15602f;color:#fff;}
+.btn-danger{background:var(--white);color:var(--red);border-color:#e5b8b3;}
+.btn-danger:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-sm{padding:5px 10px;font-size:10px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-add{background:var(--cyan);color:#fff;border:none;font-size:18px;line-height:1;padding:2px 9px;border-radius:6px;}
+
+/* Editor main */
+.editor{min-width:0;}
+.empty{background:var(--white);border:1.5px dashed var(--gray-dk);border-radius:14px;padding:3rem 2rem;text-align:center;color:var(--ink3);}
+.empty h2{font-family:'Syne',sans-serif;color:var(--navy);font-size:18px;margin-bottom:.5rem;}
+
+.meta-card{background:var(--white);border:1.5px solid var(--gray);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.25rem;}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;}
+.field input,.field select,.field textarea{padding:8px 10px;border:1.5px solid var(--gray);border-radius:7px;font-size:13.5px;font-family:'Instrument Sans',sans-serif;color:var(--ink);background:var(--white);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);}
+.field textarea{resize:vertical;min-height:60px;line-height:1.5;}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+.toolbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--navy);}
+.toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* Question card */
+.qcard{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1rem;}
+.qcard-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem;}
+.qcard-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#fff;background:var(--navy);border-radius:6px;padding:3px 10px;}
+.qcard-ctrls{display:flex;gap:6px;align-items:center;}
+.opt-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.opt-letter{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--ink3);width:18px;text-align:center;flex-shrink:0;}
+.opt-row input[type=text]{flex:1;padding:7px 10px;border:1.5px solid var(--gray);border-radius:7px;font-size:13px;font-family:'Instrument Sans',sans-serif;}
+.opt-row input[type=text]:focus{outline:none;border-color:var(--blue);}
+.opt-row.correct input[type=text]{border-color:var(--green);background:var(--green-lt);}
+.opt-radio{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3);cursor:pointer;flex-shrink:0;white-space:nowrap;}
+.opt-radio input{accent-color:var(--green);width:15px;height:15px;}
+.row2{display:grid;grid-template-columns:90px 1fr;gap:10px;margin-top:.6rem;}
+
+.bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);padding:.85rem 2rem;display:none;align-items:center;justify-content:space-between;gap:1rem;box-shadow:0 -4px 16px rgba(0,0,0,.15);z-index:50;}
+.bar.show{display:flex;}
+.bar-text{color:#fff;font-size:13px;font-family:'Syne',sans-serif;}
+.bar-text .dirty{color:var(--amber-lt);}
+
+.toast{position:fixed;top:1rem;right:1rem;background:var(--navy);color:#fff;padding:.8rem 1.2rem;border-radius:10px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:100;opacity:0;transform:translateY(-10px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{background:var(--green);}
+.toast.err{background:var(--red);}
+
+@media(max-width:800px){.page{grid-template-columns:1fr;}.qlist{position:static;}.meta-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div>
+      <div class="hdr-badge">Breeze Airways · Dispatch Training</div>
+      <div class="hdr-title">Question Editor</div>
+    </div>
+    <div class="hdr-status" id="conn-status">Connecting…</div>
+  </div>
+  <div class="hdr-stripe"></div>
+</header>
+
+<div class="page">
+  <!-- Quiz list -->
+  <aside class="qlist">
+    <div class="qlist-head">
+      <span>Quizzes</span>
+      <button class="btn-add" title="New quiz" onclick="newQuiz()">+</button>
+    </div>
+    <div class="qlist-body" id="qlist-body">
+      <div style="padding:1.5rem;text-align:center;color:var(--ink3);font-size:13px;">Loading…</div>
+    </div>
+  </aside>
+
+  <!-- Editor -->
+  <main class="editor" id="editor">
+    <div class="empty">
+      <h2>Select a quiz</h2>
+      <p>Choose a quiz from the list to edit its questions, or create a new one.</p>
+    </div>
+  </main>
+</div>
+
+<div class="bar" id="savebar">
+  <div class="bar-text" id="savebar-text"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3);" onclick="revertQuiz()">Revert</button>
+    <button class="btn-green btn" onclick="saveCurrentQuiz()" id="save-btn">Save to sheet</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONFIG — paste your deployed Apps Script /exec URL here
+// ════════════════════════════════════════════════════════════════
+const QUESTIONS_URL = 'https://script.google.com/macros/s/AKfycbxO1FIbW4oaaHTfOEqbSN4eMDzRXuyxNz7bFLHYBmAkpBpifVkHeQRDQOlfFVXW5qF2/exec';
+
+const LETTERS = ['A','B','C','D'];
+let allQuizzes = [];      // metadata rows
+let allQuestions = [];    // question rows
+let currentId = null;     // selected quiz id
+let working = null;       // { quiz:{}, questions:[] } — editable copy
+let dirty = false;
+
+// ── Load everything via JSONP ──
+function loadData() {
+  setStatus('Connecting…');
+  jsonp(QUESTIONS_URL, function(res){
+    if (!res || res.status !== 'ok') { setStatus('⚠ Load failed', true); toast('Could not load questions','err'); return; }
+    allQuizzes = res.quizzes || [];
+    allQuestions = res.questions || [];
+    setStatus('● Connected');
+    buildQuizList();
+  }, function(){ setStatus('⚠ Connection error', true); toast('Connection error — check the URL','err'); });
+}
+
+function jsonp(url, ok, fail) {
+  const cb = 'cb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let done = false;
+  window[cb] = function(data){ done = true; ok(data); cleanup(); };
+  function cleanup(){ delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+  s.onerror = function(){ if(!done){ fail && fail(); cleanup(); } };
+  s.src = url + (url.indexOf('?')>-1?'&':'?') + 'callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(!done){ fail && fail(); cleanup(); } }, 12000);
+}
+
+// POST via hidden form+iframe (write), then reload
+function postData(payload, after) {
+  const form = document.createElement('form');
+  form.method='POST'; form.action=QUESTIONS_URL; form.target='postframe'; form.style.display='none';
+  const inp = document.createElement('input');
+  inp.type='hidden'; inp.name='data'; inp.value=JSON.stringify(payload);
+  form.appendChild(inp);
+  let ifr = document.getElementById('postframe');
+  if (!ifr) { ifr = document.createElement('iframe'); ifr.name='postframe'; ifr.id='postframe'; ifr.style.display='none'; document.body.appendChild(ifr); }
+  ifr.onload = function(){ setTimeout(after, 400); };
+  setTimeout(after, 8000); // fallback
+  document.body.appendChild(form); form.submit();
+  setTimeout(function(){ if(form.parentNode) form.parentNode.removeChild(form); }, 1000);
+}
+
+// ── Quiz list ──
+function buildQuizList() {
+  const body = document.getElementById('qlist-body');
+  if (!allQuizzes.length) { body.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--ink3);font-size:13px;">No quizzes yet. Click + to add one.</div>'; return; }
+  // group by section
+  const groups = {};
+  allQuizzes.forEach(q => { const s = q.section || 'Other'; (groups[s] = groups[s] || []).push(q); });
+  let html = '';
+  Object.keys(groups).forEach(section => {
+    html += '<div class="qlist-group">' + esc(section) + '</div>';
+    groups[section].forEach(q => {
+      const count = allQuestions.filter(x => x.quizId === q.id).length;
+      html += '<div class="qlist-item' + (q.id===currentId?' active':'') + '" onclick="selectQuiz(\'' + q.id + '\')">'
+            + '<div class="qi-name">' + esc(q.name) + '</div>'
+            + '<div class="qi-meta">' + esc(q.mod) + ' · ' + (q.type==='test'?'Test':'KC') + ' · ' + count + ' Qs</div>'
+            + '</div>';
+    });
+  });
+  body.innerHTML = html;
+}
+
+// ── Select / load a quiz into the editor ──
+function selectQuiz(id) {
+  if (dirty && !confirm('You have unsaved changes. Discard them?')) return;
+  currentId = id;
+  const meta = allQuizzes.find(q => q.id === id);
+  const qs = allQuestions.filter(q => q.quizId === id)
+    .sort((a,b)=>(Number(a.n)||0)-(Number(b.n)||0))
+    .map(q => ({ n:Number(q.n), pts:Number(q.pts), text:q.text||'',
+      options:[q.optionA||'',q.optionB||'',q.optionC||'',q.optionD||''],
+      correct: LETTERS.indexOf(String(q.correct||'A').trim().toUpperCase()), cite:q.cite||'' }));
+  working = { quiz: Object.assign({}, meta), questions: qs };
+  dirty = false;
+  buildQuizList();
+  renderEditor();
+}
+
+function newQuiz() {
+  if (dirty && !confirm('You have unsaved changes. Discard them?')) return;
+  const id = 'quiz_' + Date.now().toString(36);
+  working = { quiz: { id:id, type:'kc', mod:'', name:'New Quiz', sub:'', section:'Basic Indoctrination', passMark:80, order:(allQuizzes.length+1)*10 }, questions: [] };
+  currentId = id;
+  dirty = true;
+  renderEditor();
+  updateBar();
+}
+
+// ── Render the editor ──
+function renderEditor() {
+  if (!working) return;
+  const ed = document.getElementById('editor');
+  const m = working.quiz;
+  let html = '<div class="meta-card"><div class="meta-grid">'
+    + field('Quiz name','name',m.name,'full')
+    + field('Module label','mod',m.mod)
+    + selectField('Type','type',m.type,[['kc','Knowledge Check'],['test','Test / Final']])
+    + field('Subtitle','sub',m.sub,'full')
+    + field('Section','section',m.section)
+    + field('Pass mark (%)','passMark',m.passMark,'','number')
+    + '</div></div>';
+
+  html += '<div class="toolbar"><div class="toolbar-title">Questions ('+working.questions.length+')</div>'
+    + '<div class="toolbar-actions">'
+    + '<button class="btn" onclick="renumber()">Renumber</button>'
+    + '<button class="btn-primary btn" onclick="addQuestion()">+ Add question</button>'
+    + '</div></div>';
+
+  html += '<div id="qcards">' + working.questions.map((q,i)=>questionCard(q,i)).join('') + '</div>';
+  ed.innerHTML = html;
+}
+
+function field(label,key,val,extra,type){ extra=extra||''; type=type||'text';
+  return '<div class="field '+extra+'"><label>'+label+'</label><input type="'+type+'" value="'+esc(val)+'" oninput="setMeta(\''+key+'\',this.value)"></div>'; }
+function selectField(label,key,val,opts){
+  return '<div class="field"><label>'+label+'</label><select onchange="setMeta(\''+key+'\',this.value)">'
+    + opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+o[1]+'</option>').join('')
+    + '</select></div>'; }
+
+function questionCard(q,i){
+  let opts='';
+  for (let oi=0; oi<4; oi++){
+    opts += '<div class="opt-row'+(q.correct===oi?' correct':'')+'">'
+      + '<span class="opt-letter">'+LETTERS[oi]+'</span>'
+      + '<input type="text" value="'+esc(q.options[oi])+'" oninput="setOpt('+i+','+oi+',this.value)" placeholder="Option '+LETTERS[oi]+'">'
+      + '<label class="opt-radio"><input type="radio" name="correct'+i+'" '+(q.correct===oi?'checked':'')+' onchange="setCorrect('+i+','+oi+')">correct</label>'
+      + '</div>';
+  }
+  return '<div class="qcard">'
+    + '<div class="qcard-top"><span class="qcard-num">Q'+q.n+'</span>'
+    + '<div class="qcard-ctrls">'
+    + '<button class="btn btn-sm" onclick="moveQ('+i+',-1)" title="Move up">↑</button>'
+    + '<button class="btn btn-sm" onclick="moveQ('+i+',1)" title="Move down">↓</button>'
+    + '<button class="btn btn-sm btn-danger" onclick="delQ('+i+')">Delete</button>'
+    + '</div></div>'
+    + '<div class="field full"><label>Question text</label><textarea oninput="setText('+i+',this.value)">'+esc(q.text)+'</textarea></div>'
+    + '<div style="margin-top:.6rem;">'+opts+'</div>'
+    + '<div class="row2">'
+    + '<div class="field"><label>Points</label><input type="number" value="'+q.pts+'" oninput="setPts('+i+',this.value)"></div>'
+    + '<div class="field"><label>Citation / reference</label><input type="text" value="'+esc(q.cite)+'" oninput="setCite('+i+',this.value)"></div>'
+    + '</div>'
+    + '</div>';
+}
+
+// ── Edits (mark dirty, avoid full re-render where possible) ──
+function markDirty(){ dirty=true; updateBar(); }
+function setMeta(k,v){ working.quiz[k]=v; markDirty(); }
+function setText(i,v){ working.questions[i].text=v; markDirty(); }
+function setOpt(i,oi,v){ working.questions[i].options[oi]=v; markDirty(); }
+function setCorrect(i,oi){ working.questions[i].correct=oi; markDirty(); refreshCard(i); }
+function setPts(i,v){ working.questions[i].pts=Number(v)||0; markDirty(); }
+function setCite(i,v){ working.questions[i].cite=v; markDirty(); }
+
+function refreshCard(i){
+  const cards = document.querySelectorAll('#qcards .qcard');
+  if (cards[i]) cards[i].outerHTML = questionCard(working.questions[i], i);
+}
+
+function addQuestion(){
+  const nextN = working.questions.length ? Math.max.apply(null,working.questions.map(q=>q.n))+1 : 1;
+  working.questions.push({ n:nextN, pts:10, text:'', options:['','','',''], correct:0, cite:'' });
+  markDirty(); renderEditor();
+}
+function delQ(i){ if(!confirm('Delete Q'+working.questions[i].n+'?'))return; working.questions.splice(i,1); markDirty(); renderEditor(); }
+function moveQ(i,dir){ const j=i+dir; if(j<0||j>=working.questions.length)return; const t=working.questions[i]; working.questions[i]=working.questions[j]; working.questions[j]=t; markDirty(); renderEditor(); }
+function renumber(){ working.questions.forEach((q,i)=>q.n=i+1); markDirty(); renderEditor(); }
+
+// ── Save / revert ──
+function updateBar(){
+  const bar=document.getElementById('savebar');
+  if (dirty){ bar.classList.add('show'); document.getElementById('savebar-text').innerHTML = '<span class="dirty">●</span> Unsaved changes to "'+esc(working.quiz.name)+'"'; }
+  else bar.classList.remove('show');
+}
+
+function saveCurrentQuiz(){
+  if(!working) return;
+  // validate
+  for (const q of working.questions){
+    if(!q.text.trim()){ toast('A question is missing its text','err'); return; }
+  }
+  const btn=document.getElementById('save-btn'); btn.disabled=true; btn.textContent='Saving…';
+  const payload = {
+    action:'saveQuiz',
+    quiz: working.quiz,
+    questions: working.questions.map(q=>({
+      quizId: working.quiz.id, n:q.n, pts:q.pts, text:q.text,
+      optionA:q.options[0], optionB:q.options[1], optionC:q.options[2], optionD:q.options[3],
+      correct: LETTERS[q.correct]||'A', cite:q.cite
+    }))
+  };
+  postData(payload, function(){
+    btn.disabled=false; btn.textContent='Save to sheet';
+    dirty=false; updateBar(); toast('Saved to sheet','ok');
+    loadData(); // refresh from source of truth
+  });
+}
+
+function revertQuiz(){ if(currentId && allQuizzes.find(q=>q.id===currentId)) selectQuiz(currentId); else { working=null; dirty=false; document.getElementById('editor').innerHTML='<div class="empty"><h2>Select a quiz</h2><p>Choose a quiz from the list.</p></div>'; } dirty=false; updateBar(); }
+
+// ── helpers ──
+function setStatus(t,err){ const e=document.getElementById('conn-status'); e.textContent=t; e.style.color=err?'#ffb3ab':'rgba(255,255,255,.6)'; }
+function esc(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let toastTimer;
+function toast(msg,kind){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+(kind||''); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+
+window.addEventListener('beforeunload', function(e){ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+
+loadData();
+</script>
+</body>
+</html>
