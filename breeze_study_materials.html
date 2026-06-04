@@ -1869,6 +1869,7 @@ function loadChecklistFromSheet() {
 
 // ── Crew Escalation interactive engine ──
 // Crew Escalation decision flows, transcribed from Breeze Crew Escalation Page 3
+// Node types: 'step' (Next), 'decision' (Yes/No -> goto node id), 'end' (terminal outcome)
 const ESCALATION = {
   intro: {
     title: "Crew Escalation Process",
@@ -1881,69 +1882,92 @@ const ESCALATION = {
       {key:'safety', label:'Safety', desc:'Overall safety concern; all other buckets must be vetted and ruled out first'}
     ]
   },
-  // Each flow = ordered list of nodes. type: 'step' (click Next) or 'decision' (Yes/No) or 'end'
   flows: {
     airworthiness: [
-      {type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
-      {type:'step', text:'OCC DM holds conference with MOC DM, DX, and DX Sup.'},
-      {type:'decision', text:'MOC DM: Is the aircraft airworthy?',
+      {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
+      {id:'s2', type:'step', text:'OCC DM holds conference with MOC DM, DX, and DX Sup.'},
+      {id:'d1', type:'decision', text:'MOC DM: Is the aircraft airworthy?',
         yes:{goto:'depart'}, no:{goto:'oos'}},
-      {type:'end', id:'depart', text:'Flight departs.', tone:'go'},
-      {type:'end', id:'oos', text:'Aircraft out of service.', tone:'stop',
-        follow:'CPO & MOC concur whether the AC can be used. If yes, conf call with PIC — MOC DM explains airworthiness. If PIC agrees, flight departs; if not, see escalation fallback.'}
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'oos', type:'step', text:'Aircraft out of service. CPO & MOC concur on whether the AC can be used.'},
+      {id:'d2', type:'decision', text:'CPO & MOC: Can the aircraft be used?',
+        yes:{goto:'confcall'}, no:{goto:'final_oos'}},
+      {id:'confcall', type:'step', text:'Conference call with PIC — MOC DM explains airworthiness.'},
+      {id:'d3', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'depart2'}, no:{goto:'fallback'}},
+      {id:'depart2', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'final_oos', type:'end', text:'Aircraft out of service.', tone:'stop'},
+      {id:'fallback', type:'fallback'}
     ],
     business: [
-      {type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
-      {type:'step', text:'OCC DM reviews business risk.'},
-      {type:'decision', text:'DM: Is it best to continue the operation?',
+      {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
+      {id:'s2', type:'step', text:'OCC DM reviews business risk.'},
+      {id:'d1', type:'decision', text:'DM: Is it best to continue the operation?',
         yes:{goto:'depart'}, no:{goto:'delay'}},
-      {type:'end', id:'depart', text:'Flight departs.', tone:'go'},
-      {type:'end', id:'delay', text:'Implement delay or recovery.', tone:'warn',
-        follow:'OCC DM conf call with DX & PIC to explain rationale and alternate plans. If PIC agrees, proceed; if not, see escalation fallback.'}
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'delay', type:'step', text:'Implement delay or recovery.'},
+      {id:'s3', type:'step', text:'OCC DM conference call with DX & PIC — explain rationale and alternate plans.'},
+      {id:'d2', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'depart2'}, no:{goto:'fallback'}},
+      {id:'depart2', type:'end', text:'Flight departs (per delay / recovery plan).', tone:'go'},
+      {id:'fallback', type:'fallback'}
     ],
     procedural: [
-      {type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
-      {type:'step', text:'OCC DM conferences DX Sup, CPO/Tech Pilot (and MOC DM if warranted).'},
-      {type:'decision', text:'CPO/Tech Pilot: Does an adequate procedure exist?',
+      {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
+      {id:'s2', type:'step', text:'OCC DM conferences DX Sup, CPO/Tech Pilot (and MOC DM if warranted).'},
+      {id:'d1', type:'decision', text:'CPO/Tech Pilot: Does an adequate procedure exist?',
         yes:{goto:'depart'}, no:{goto:'unusable'}},
-      {type:'end', id:'depart', text:'Flight departs.', tone:'go'},
-      {type:'end', id:'unusable', text:'AC unusable in current configuration.', tone:'stop',
-        follow:'OCC DM conf call with DX, CPO/Tech Pilot & PIC to provide guidance. If PIC agrees, proceed; if not, see escalation fallback.'}
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'unusable', type:'step', text:'AC unusable in current configuration.'},
+      {id:'s3', type:'step', text:'OCC DM conference call with DX, CPO/Tech Pilot & PIC — provide guidance.'},
+      {id:'d2', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'depart2'}, no:{goto:'fallback'}},
+      {id:'depart2', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'fallback', type:'fallback'}
     ],
     legality: [
-      {type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
-      {type:'step', text:'OCC DM conf call with DX Leader & CPO to determine legality.'},
-      {type:'decision', text:'DX Leadership & CPO: Is the flight legal?',
+      {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
+      {id:'s2', type:'step', text:'OCC DM conference call with DX Leader & CPO to determine legality.'},
+      {id:'d1', type:'decision', text:'DX Leadership & CPO: Is the flight legal?',
         yes:{goto:'depart'}, no:{goto:'nodispatch'}},
-      {type:'end', id:'depart', text:'Flight departs.', tone:'go'},
-      {type:'end', id:'nodispatch', text:"Can't be dispatched.", tone:'stop',
-        follow:'Conf call with PIC — OCC DM, DX Leader, CPO & DX explain legality. If PIC agrees, proceed; if not, see escalation fallback.'}
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'nodispatch', type:'step', text:"Can't be dispatched. Conference call with PIC."},
+      {id:'s3', type:'step', text:'OCC DM, DX Leader, CPO & DX explain legality to the PIC.'},
+      {id:'d2', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'final_no'}, no:{goto:'fallback'}},
+      {id:'final_no', type:'end', text:"Can't be dispatched (PIC agrees).", tone:'stop'},
+      {id:'fallback', type:'fallback'}
     ],
     safety: [
-      {type:'step', text:'All other buckets vetted; concern confirmed as Safety.'},
-      {type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
-      {type:'step', text:'OCC DM conf call with DX Leader & CPO to evaluate safety.'},
-      {type:'decision', text:'DX, MOC & CPO: Is it safe to operate?',
+      {id:'s0', type:'step', text:'All other buckets vetted; concern confirmed as Safety.'},
+      {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
+      {id:'s2', type:'step', text:'OCC DM conference call with DX Leader & CPO to evaluate safety.'},
+      {id:'d1', type:'decision', text:'DX, MOC & CPO: Is it safe to operate?',
         yes:{goto:'depart'}, no:{goto:'nodispatch'}},
-      {type:'end', id:'depart', text:'Flight departs.', tone:'go'},
-      {type:'end', id:'nodispatch', text:"Can't be dispatched.", tone:'stop',
-        follow:'Conf call with PIC — OCC DM, DX Leader, CPO & DX explain safety. If PIC agrees, proceed; if not, see escalation fallback.'}
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
+      {id:'nodispatch', type:'step', text:"Can't be dispatched. Conference call with PIC."},
+      {id:'s3', type:'step', text:'OCC DM, DX Leader, CPO & DX explain safety to the PIC.'},
+      {id:'d2', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'final_no'}, no:{goto:'fallback'}},
+      {id:'final_no', type:'end', text:"Can't be dispatched (PIC agrees).", tone:'stop'},
+      {id:'fallback', type:'fallback'}
     ]
   },
   fallback: "If the pilot is not accepting the resolution flow, the DM selects a resolution to enable the flight to depart most expeditiously. The OCC Duty Manager completes a BOSS event to document the escalation."
 };
 
 let escChannel = null;
-let escIdx = 0;
+let escPath = [];   // ordered list of node ids that have been revealed/answered
+let escAnswers = {}; // nodeId -> 'Yes'/'No'
 
 function escEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escNode(id){ return ESCALATION.flows[escChannel].find(function(n){return n.id===id;}); }
 
 function escStart(){
-  escChannel = null; escIdx = 0;
+  escChannel = null; escPath = []; escAnswers = {};
   const root = document.getElementById('esc-root');
   if (!root) return;
-  let html = '<div class="esc-lead">' + escEsc(ESCALATION.intro.lead) + '</div>';
-  html += '<div class="esc-channels">';
+  let html = '<div class="esc-lead">' + escEsc(ESCALATION.intro.lead) + '</div><div class="esc-channels">';
   ESCALATION.intro.channels.forEach(function(c){
     html += '<button class="esc-chan" onclick="escPick(\''+c.key+'\')">'
          + '<div class="esc-chan-name">'+escEsc(c.label)+'</div>'
@@ -1953,67 +1977,70 @@ function escStart(){
   root.innerHTML = html;
 }
 
-function escPick(key){ escChannel = key; escIdx = 0; escRender(); }
+function escPick(key){
+  escChannel = key; escAnswers = {};
+  escPath = [ ESCALATION.flows[key][0].id ];  // start at first node
+  escRender();
+}
+
+// advance from a step node to the next node in array order
+function escAdvance(){
+  const flow = ESCALATION.flows[escChannel];
+  const cur = escPath[escPath.length-1];
+  const idx = flow.findIndex(function(n){return n.id===cur;});
+  if (idx > -1 && idx < flow.length-1) { escPath.push(flow[idx+1].id); escRender(); }
+}
+
+function escAnswer(nodeId, ans){
+  const node = escNode(nodeId);
+  escAnswers[nodeId] = ans==='yes' ? 'Yes' : 'No';
+  const target = ans==='yes' ? node.yes.goto : node.no.goto;
+  escPath.push(target);
+  escRender();
+}
 
 function escRender(){
   const root = document.getElementById('esc-root');
   const chan = ESCALATION.intro.channels.find(function(c){return c.key===escChannel;});
-  const flow = ESCALATION.flows[escChannel];
   let html = '<div class="esc-active-chan">'+escEsc(chan.label)+'</div>';
-  // render revealed nodes up to escIdx (skipping end nodes that aren't the active target)
   let stepNum = 0;
-  for (let i=0;i<=escIdx && i<flow.length;i++){
-    const node = flow[i];
+  const last = escPath[escPath.length-1];
+
+  escPath.forEach(function(id){
+    const node = escNode(id);
+    const isLast = (id === last);
     if (node.type==='step'){
       stepNum++;
       html += '<div class="esc-step"><div class="esc-step-n">Step '+stepNum+'</div><div class="esc-step-text">'+escEsc(node.text)+'</div></div>';
     } else if (node.type==='decision'){
-      if (i===escIdx){
+      if (isLast){
         html += '<div class="esc-decision"><div class="esc-decision-q">'+escEsc(node.text)+'</div>'
-             + '<div class="esc-btns"><button class="esc-btn esc-btn-yes" onclick="escAnswer(\'yes\')">Yes</button>'
-             + '<button class="esc-btn esc-btn-no" onclick="escAnswer(\'no\')">No</button></div></div>';
+             + '<div class="esc-btns"><button class="esc-btn esc-btn-yes" onclick="escAnswer(\''+id+'\',\'yes\')">Yes</button>'
+             + '<button class="esc-btn esc-btn-no" onclick="escAnswer(\''+id+'\',\'no\')">No</button></div></div>';
       } else {
-        html += '<div class="esc-step"><div class="esc-step-n">Decision</div><div class="esc-step-text">'+escEsc(node.text)+' &mdash; <strong>'+escEsc(escLastAnswer||'')+'</strong></div></div>';
+        html += '<div class="esc-step"><div class="esc-step-n">Decision</div><div class="esc-step-text">'+escEsc(node.text)+' &mdash; <strong>'+escEsc(escAnswers[id]||'')+'</strong></div></div>';
       }
+    } else if (node.type==='end'){
+      html += '<div class="esc-end '+(node.tone||'')+'"><div class="esc-end-title">'+escEsc(node.text)+'</div></div>';
+    } else if (node.type==='fallback'){
+      html += '<div class="esc-end warn"><div class="esc-end-title">Pilot does not accept the resolution</div>'
+           + '<div class="esc-end-follow">'+escEsc(ESCALATION.fallback)+'</div></div>';
     }
-  }
-  // advance button for plain steps
-  const cur = flow[escIdx];
-  if (cur && cur.type==='step' && escIdx < flow.length-1 && flow[escIdx+1] && flow[escIdx+1].type!=='end'){
-    html += '<button class="esc-next" onclick="escAdvance()">Next step &rarr;</button> ';
+  });
+
+  // controls: if last node is a step that has a following node, show Next
+  const flow = ESCALATION.flows[escChannel];
+  const lastNode = escNode(last);
+  if (lastNode && lastNode.type==='step'){
+    const idx = flow.findIndex(function(n){return n.id===last;});
+    if (idx < flow.length-1) html += '<button class="esc-next" onclick="escAdvance()">Next step &rarr;</button> ';
   }
   html += ' <button class="esc-restart" onclick="escStart()">Start over</button>';
   root.innerHTML = html;
 }
 
-let escLastAnswer = '';
-function escAdvance(){ escIdx++; escRender(); }
-
-function escAnswer(ans){
-  const flow = ESCALATION.flows[escChannel];
-  const node = flow[escIdx];
-  escLastAnswer = ans==='yes' ? 'Yes' : 'No';
-  const target = ans==='yes' ? node.yes.goto : node.no.goto;
-  const end = flow.find(function(n){return n.type==='end' && n.id===target;});
-  escShowEnd(end);
-}
-
-function escShowEnd(end){
-  escRender(); // shows steps + answered decision
-  const root = document.getElementById('esc-root');
-  let html = '<div class="esc-end '+(end.tone||'')+'">'
-    + '<div class="esc-end-title">'+escEsc(end.text)+'</div>'
-    + (end.follow ? '<div class="esc-end-follow">'+escEsc(end.follow)+'</div>' : '')
-    + '</div>';
-  html += '<div class="esc-fallback"><strong>If the pilot does not accept the resolution:</strong> '+escEsc(ESCALATION.fallback)+'</div>';
-  // insert before the restart button
-  const restart = root.querySelector('.esc-restart');
-  const wrap = document.createElement('div');
-  wrap.innerHTML = html;
-  while (wrap.firstChild) root.insertBefore(wrap.firstChild, restart);
-}
-
 escStart();
+
 
 loadAirportsFromSheet();
 loadChecklistFromSheet();
