@@ -1868,8 +1868,9 @@ function loadChecklistFromSheet() {
 
 
 // ── Crew Escalation interactive engine ──
-// Crew Escalation decision flows, transcribed from Breeze Crew Escalation Page 3
-// Node types: 'step' (Next), 'decision' (Yes/No -> goto node id), 'end' (terminal outcome)
+// Crew Escalation decision flows — Breeze Crew Escalation Page 3
+// Pattern: the decision's "problem" answer ENDS the flow; the "OK" answer CONTINUES
+// to a conf call with the PIC, then "PIC agree?" (Yes = departs, No = fallback).
 const ESCALATION = {
   intro: {
     title: "Crew Escalation Process",
@@ -1887,55 +1888,48 @@ const ESCALATION = {
       {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
       {id:'s2', type:'step', text:'OCC DM holds conference with MOC DM, DX, and DX Sup.'},
       {id:'d1', type:'decision', text:'MOC DM: Is the aircraft airworthy?',
-        yes:{goto:'depart'}, no:{goto:'oos'}},
-      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'oos', type:'step', text:'Aircraft out of service. CPO & MOC concur on whether the AC can be used.'},
-      {id:'d2', type:'decision', text:'CPO & MOC: Can the aircraft be used?',
-        yes:{goto:'confcall'}, no:{goto:'final_oos'}},
+        yes:{goto:'confcall'}, no:{goto:'oos'}},
+      {id:'oos', type:'end', text:'Aircraft out of service.', tone:'stop'},
       {id:'confcall', type:'step', text:'Conference call with PIC — MOC DM explains airworthiness.'},
-      {id:'d3', type:'decision', text:'Does the PIC agree?',
-        yes:{goto:'depart2'}, no:{goto:'fallback'}},
-      {id:'depart2', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'final_oos', type:'end', text:'Aircraft out of service.', tone:'stop'},
+      {id:'d2', type:'decision', text:'Does the PIC agree?',
+        yes:{goto:'depart'}, no:{goto:'fallback'}},
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
       {id:'fallback', type:'fallback'}
     ],
     business: [
       {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
       {id:'s2', type:'step', text:'OCC DM reviews business risk.'},
       {id:'d1', type:'decision', text:'DM: Is it best to continue the operation?',
-        yes:{goto:'depart'}, no:{goto:'delay'}},
-      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'delay', type:'step', text:'Implement delay or recovery.'},
-      {id:'s3', type:'step', text:'OCC DM conference call with DX & PIC — explain rationale and alternate plans.'},
+        yes:{goto:'confcall'}, no:{goto:'delay'}},
+      {id:'delay', type:'end', text:'Implement delay or recovery.', tone:'warn'},
+      {id:'confcall', type:'step', text:'OCC DM conference call with DX & PIC — explain rationale and alternate plans.'},
       {id:'d2', type:'decision', text:'Does the PIC agree?',
-        yes:{goto:'depart2'}, no:{goto:'fallback'}},
-      {id:'depart2', type:'end', text:'Flight departs (per delay / recovery plan).', tone:'go'},
+        yes:{goto:'depart'}, no:{goto:'fallback'}},
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
       {id:'fallback', type:'fallback'}
     ],
     procedural: [
       {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
       {id:'s2', type:'step', text:'OCC DM conferences DX Sup, CPO/Tech Pilot (and MOC DM if warranted).'},
       {id:'d1', type:'decision', text:'CPO/Tech Pilot: Does an adequate procedure exist?',
-        yes:{goto:'depart'}, no:{goto:'unusable'}},
-      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'unusable', type:'step', text:'AC unusable in current configuration.'},
-      {id:'s3', type:'step', text:'OCC DM conference call with DX, CPO/Tech Pilot & PIC — provide guidance.'},
+        yes:{goto:'confcall'}, no:{goto:'unusable'}},
+      {id:'unusable', type:'end', text:'AC unusable in current configuration.', tone:'stop'},
+      {id:'confcall', type:'step', text:'OCC DM conference call with DX, CPO/Tech Pilot & PIC — provide guidance.'},
       {id:'d2', type:'decision', text:'Does the PIC agree?',
-        yes:{goto:'depart2'}, no:{goto:'fallback'}},
-      {id:'depart2', type:'end', text:'Flight departs.', tone:'go'},
+        yes:{goto:'depart'}, no:{goto:'fallback'}},
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
       {id:'fallback', type:'fallback'}
     ],
     legality: [
       {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
       {id:'s2', type:'step', text:'OCC DM conference call with DX Leader & CPO to determine legality.'},
       {id:'d1', type:'decision', text:'DX Leadership & CPO: Is the flight legal?',
-        yes:{goto:'depart'}, no:{goto:'nodispatch'}},
-      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'nodispatch', type:'step', text:"Can't be dispatched. Conference call with PIC."},
-      {id:'s3', type:'step', text:'OCC DM, DX Leader, CPO & DX explain legality to the PIC.'},
+        yes:{goto:'confcall'}, no:{goto:'nodispatch'}},
+      {id:'nodispatch', type:'end', text:"Can't be dispatched.", tone:'stop'},
+      {id:'confcall', type:'step', text:'Conference call with PIC — OCC DM, DX Leader, CPO & DX explain legality.'},
       {id:'d2', type:'decision', text:'Does the PIC agree?',
-        yes:{goto:'final_no'}, no:{goto:'fallback'}},
-      {id:'final_no', type:'end', text:"Can't be dispatched (PIC agrees).", tone:'stop'},
+        yes:{goto:'depart'}, no:{goto:'fallback'}},
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
       {id:'fallback', type:'fallback'}
     ],
     safety: [
@@ -1943,13 +1937,12 @@ const ESCALATION = {
       {id:'s1', type:'step', text:'Dispatcher notifies bridge (DX Sup, OCC DM).'},
       {id:'s2', type:'step', text:'OCC DM conference call with DX Leader & CPO to evaluate safety.'},
       {id:'d1', type:'decision', text:'DX, MOC & CPO: Is it safe to operate?',
-        yes:{goto:'depart'}, no:{goto:'nodispatch'}},
-      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
-      {id:'nodispatch', type:'step', text:"Can't be dispatched. Conference call with PIC."},
-      {id:'s3', type:'step', text:'OCC DM, DX Leader, CPO & DX explain safety to the PIC.'},
+        yes:{goto:'confcall'}, no:{goto:'nodispatch'}},
+      {id:'nodispatch', type:'end', text:"Can't be dispatched.", tone:'stop'},
+      {id:'confcall', type:'step', text:'Conference call with PIC — OCC DM, DX Leader, CPO & DX explain safety.'},
       {id:'d2', type:'decision', text:'Does the PIC agree?',
-        yes:{goto:'final_no'}, no:{goto:'fallback'}},
-      {id:'final_no', type:'end', text:"Can't be dispatched (PIC agrees).", tone:'stop'},
+        yes:{goto:'depart'}, no:{goto:'fallback'}},
+      {id:'depart', type:'end', text:'Flight departs.', tone:'go'},
       {id:'fallback', type:'fallback'}
     ]
   },
