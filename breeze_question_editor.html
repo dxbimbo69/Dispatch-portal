@@ -599,7 +599,7 @@ function saveCurrentQuiz(){
     if(q.kind === 'written'){
       if(!(q.model||'').trim()){ toast('Q'+q.n+' (written) needs a model answer','err'); return; }
     } else {
-      const filled = q.options.filter(o=>(o||'').trim()).length;
+      const filled = q.options.filter(o=>String(o == null ? '' : o).trim()).length;
       if(filled < 2){ toast('Q'+q.n+' needs at least two options','err'); return; }
     }
   }

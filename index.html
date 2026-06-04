@@ -1346,7 +1346,7 @@ function renderExam() {
 function isWrittenQ(qu) {
   if (qu.written === true) return true;
   const hasModel = qu.model && String(qu.model).trim().length > 0;
-  const realOpts = Array.isArray(qu.options) && qu.options.filter(o => (o||'').trim()).length >= 2;
+  const realOpts = Array.isArray(qu.options) && qu.options.filter(o => String(o == null ? '' : o).trim()).length >= 2;
   return !!hasModel && !realOpts;
 }
 
