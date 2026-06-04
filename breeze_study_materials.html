@@ -1735,6 +1735,97 @@ sfUpdateCrumbs();
 
 loadContentOverrides();
 loadFlashcardsFromSheet();
+loadCustomSections();
+
+function loadCustomSections() {
+  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
+  const cb = 'seccb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let done = false;
+  function cleanup(){ delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+  window[cb] = function(res){
+    done = true;
+    try {
+      if (res && res.status === 'ok' && res.sections && res.sections.length) {
+        renderCustomSections(res.sections);
+      }
+    } catch(e){}
+    cleanup();
+  };
+  s.onerror = function(){ if(!done) cleanup(); };
+  s.src = SM_CONTENT_URL + (SM_CONTENT_URL.indexOf('?')>-1?'&':'?') + 'mode=sections&callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(!done) cleanup(); }, 12000);
+}
+
+function smEsc(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderCustomSections(sections) {
+  const sidebar = document.querySelector('.sidebar');
+  const content = document.querySelector('.content');
+  if (!sidebar || !content) return;
+
+  // sidebar group for custom sections
+  let group = document.getElementById('custom-sidebar-group');
+  if (!group) {
+    group = document.createElement('div');
+    group.className = 'sidebar-section';
+    group.id = 'custom-sidebar-group';
+    group.innerHTML = '<div class="sidebar-label">Notes &amp; References</div>';
+    sidebar.appendChild(group);
+  } else {
+    group.innerHTML = '<div class="sidebar-label">Notes &amp; References</div>';
+  }
+
+  sections.forEach(function(sec){
+    const pid = 'custom-' + sec.id;
+    // sidebar link
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-link';
+    btn.setAttribute('onclick', "showPanel('" + pid + "')");
+    btn.innerHTML = (sec.icon ? sec.icon + ' ' : '') + smEsc(sec.title);
+    group.appendChild(btn);
+    // panel (remove old if re-rendering)
+    const existing = document.getElementById('panel-' + pid);
+    if (existing) existing.remove();
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.id = 'panel-' + pid;
+    panel.innerHTML = '<div class="guide-card">'
+      + '<div class="guide-card-header"><span class="guide-card-icon">' + (sec.icon || '&#128221;') + '</span>'
+      + '<span class="guide-card-title">' + smEsc(sec.title) + '</span></div>'
+      + '<div class="guide-card-body">' + renderSectionBody(sec) + '</div></div>';
+    content.appendChild(panel);
+  });
+}
+
+function renderSectionBody(sec) {
+  const c = sec.content || {};
+  if (sec.type === 'notes') {
+    const paras = String(c.body||'').split(/\n\n+/).map(function(p){ return '<p style="margin:0 0 1rem;line-height:1.7;">'+smEsc(p).replace(/\n/g,'<br>')+'</p>'; }).join('');
+    return paras || '<p style="color:var(--ink3);">No content yet.</p>';
+  }
+  if (sec.type === 'list') {
+    const items = (c.items||[]).map(function(it){ return '<li style="margin-bottom:.5rem;line-height:1.6;">'+smEsc(it)+'</li>'; }).join('');
+    return '<ul style="padding-left:1.25rem;margin:0;">'+items+'</ul>';
+  }
+  if (sec.type === 'definitions') {
+    const rows = (c.pairs||[]).map(function(p){
+      return '<div style="margin-bottom:.85rem;"><div style="font-weight:700;color:var(--navy);font-family:\'Syne\',sans-serif;font-size:14px;">'+smEsc(p.term)+'</div>'
+           + '<div style="color:var(--ink2);line-height:1.6;">'+smEsc(p.def)+'</div></div>';
+    }).join('');
+    return rows;
+  }
+  if (sec.type === 'table') {
+    const cols = c.columns||[];
+    const head = '<thead><tr>'+cols.map(function(h){return '<th>'+smEsc(h)+'</th>';}).join('')+'</tr></thead>';
+    const body = '<tbody>'+(c.rows||[]).map(function(r){
+      return '<tr>'+cols.map(function(_,ci){ return '<td>'+smEsc(r[ci]||'')+'</td>'; }).join('')+'</tr>';
+    }).join('')+'</tbody>';
+    return '<table class="ref-table">'+head+body+'</table>';
+  }
+  return '';
+}
 </script>
 </body>
 </html>
