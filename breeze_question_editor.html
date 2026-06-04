@@ -45,6 +45,10 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 .sm-empty{text-align:center;padding:2.5rem;color:var(--ink3);}
 #flashcards-view{display:none;}
 #flashcards-view.active{display:block;}
+#airports-view{display:none;}
+#airports-view.active{display:block;}
+#checklist-view{display:none;}
+#checklist-view.active{display:block;}
 .fc-crumbs .fc-crumb{cursor:pointer;color:var(--blue);font-weight:600;}
 .fc-crumbs .fc-crumb:hover{text-decoration:underline;}
 .fc-crumbs .fc-sep{margin:0 7px;color:var(--gray-dk);}
@@ -164,6 +168,8 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
         <button class="mode-tab active" id="tab-questions" onclick="switchMode('questions')">Questions</button>
         <button class="mode-tab" id="tab-content" onclick="switchMode('content')">Study Materials</button>
         <button class="mode-tab" id="tab-flashcards" onclick="switchMode('flashcards')">Flashcards</button>
+        <button class="mode-tab" id="tab-airports" onclick="switchMode('airports')">Airports</button>
+        <button class="mode-tab" id="tab-checklist" onclick="switchMode('checklist')">Checklist</button>
       </div>
       <div class="hdr-status" id="conn-status">Connecting…</div>
     </div>
@@ -213,6 +219,25 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 <div id="flashcards-view" style="max-width:1000px;margin:0 auto;padding:2rem;">
   <div class="fc-crumbs" id="fc-crumbs" style="font-size:12px;color:var(--ink3);margin-bottom:1rem;min-height:18px;"></div>
   <div id="fc-editor-body"><div class="sm-empty">Loading flashcards…</div></div>
+</div>
+
+<!-- Airports editor -->
+<div id="airports-view" style="max-width:900px;margin:0 auto;padding:2rem;">
+  <div class="sm-toolbar" style="margin-bottom:1rem;">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--navy);">Airport Codes</span>
+    <input class="sm-search" id="ap-ed-search" placeholder="Filter…" oninput="apEdRender()" style="max-width:200px;">
+    <button class="btn btn-primary" onclick="apEdAdd()" style="margin-left:auto;">+ Add airport</button>
+  </div>
+  <div id="ap-ed-list"></div>
+</div>
+
+<!-- Checklist editor -->
+<div id="checklist-view" style="max-width:900px;margin:0 auto;padding:2rem;">
+  <div class="sm-toolbar" style="margin-bottom:1rem;">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--navy);">Release Checklist</span>
+    <button class="btn btn-primary" onclick="clEdAddSection()" style="margin-left:auto;">+ Add section</button>
+  </div>
+  <div id="cl-ed-list"></div>
 </div>
 
 <div class="bar" id="savebar">
@@ -578,12 +603,14 @@ let smDeleted = {};     // boxid -> true
 let smFrameDoc = null;
 
 function switchMode(mode) {
-  ['questions','content','flashcards'].forEach(function(m){
+  ['questions','content','flashcards','airports','checklist'].forEach(function(m){
     document.getElementById('tab-'+m).classList.toggle('active', m===mode);
   });
   document.getElementById('questions-view').style.display = (mode==='questions') ? '' : 'none';
   document.getElementById('content-view').classList.toggle('active', mode==='content');
   document.getElementById('flashcards-view').classList.toggle('active', mode==='flashcards');
+  document.getElementById('airports-view').classList.toggle('active', mode==='airports');
+  document.getElementById('checklist-view').classList.toggle('active', mode==='checklist');
   const bar = document.getElementById('savebar');
   const btn = document.getElementById('save-btn');
   bar.classList.remove('show');
@@ -594,6 +621,10 @@ function switchMode(mode) {
     if (!smLoaded) loadSmEditor(); else updateSmBar();
   } else if (mode==='flashcards') {
     if (!fcLoaded) loadFlashcards(); else updateFcBar();
+  } else if (mode==='airports') {
+    if (!apEdLoaded) apEdLoad(); else updateApBar();
+  } else if (mode==='checklist') {
+    if (!clEdLoaded) clEdLoad(); else updateClBar();
   }
 }
 
@@ -689,10 +720,62 @@ function wireSmEditing(doc) {
     box.insertBefore(btn, box.firstChild);
   });
 
+  smWireTableAdds(doc);
   smLoaded = true;
   document.getElementById('sm-load-status').textContent = '● Ready to edit';
   updateSmBar();
 }
+
+// add "+ row" button under each table body so rows can be added in place
+function smWireTableAdds(doc) {
+  doc.querySelectorAll('table').forEach(function(tbl){
+    const body = tbl.querySelector('tbody') || tbl;
+    const lastRow = body.querySelector('tr:last-child');
+    if (!lastRow) return;
+    const cols = lastRow.children.length;
+    const btn = doc.createElement('button');
+    btn.textContent = '+ Add row';
+    btn.className = 'sm-addrow-btn';
+    btn.style.cssText = 'margin:8px 0;background:#0EA5C4;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:sans-serif;';
+    btn.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      const tr = doc.createElement('tr');
+      for (let k=0;k<cols;k++){ const td=doc.createElement('td'); td.textContent=' '; tr.appendChild(td); }
+      body.appendChild(tr);
+      smAssignIdsIn(doc);   // re-id so new cells get ids
+      smRewireNewRow(doc, tr);
+      smDirty = true; updateSmBar();
+    });
+    if (tbl.parentNode) tbl.parentNode.insertBefore(btn, tbl.nextSibling);
+  });
+}
+
+// make a newly added row's cells editable + deletable like the rest
+function smRewireNewRow(doc, tr) {
+  tr.querySelectorAll('[data-smid]').forEach(function(el){
+    const id = el.getAttribute('data-smid');
+    if (smOriginals[id] === undefined) smOriginals[id] = '';
+    el.setAttribute('contenteditable','true');
+    el.addEventListener('input', function(){
+      el.setAttribute('data-smchg', el.textContent.trim() !== smOriginals[id] ? '1' : '0');
+      smDirty = true; updateSmBar();
+    });
+    el.addEventListener('click', function(e){ e.stopPropagation(); });
+    if (el.textContent.trim()) el.setAttribute('data-smchg','1');
+  });
+  const bid = tr.getAttribute('data-smbox');
+  if (bid) {
+    const btn = doc.createElement('button');
+    btn.className='sm-del-btn'; btn.textContent='Delete';
+    btn.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault();
+      if(smDeleted[bid]){delete smDeleted[bid];tr.removeAttribute('data-smdeleted');btn.textContent='Delete';}
+      else{smDeleted[bid]=true;tr.setAttribute('data-smdeleted','1');btn.textContent='Undo';}
+      smDirty=true; updateSmBar();
+    });
+    tr.insertBefore(btn, tr.firstChild);
+  }
+}
+
 
 function smCollect() {
   const out = [];
@@ -935,6 +1018,115 @@ function saveFlashcards(){
     fcDirty = false;
     document.getElementById('savebar').classList.remove('show');
     toast('Flashcards saved', 'ok');
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  AIRPORTS EDITOR
+// ════════════════════════════════════════════════════════════════
+let apEdData = [];
+let apEdLoaded = false;
+let apEdDirty = false;
+
+function apEdLoad() {
+  document.getElementById('ap-ed-list').innerHTML = '<div class="sm-empty">Loading…</div>';
+  jsonp(QUESTIONS_URL + '?mode=airports', function(res){
+    apEdData = (res && res.status==='ok' && res.airports) ? res.airports : [];
+    apEdLoaded = true; apEdRender();
+  }, function(){ apEdData=[]; apEdLoaded=true; apEdRender(); });
+}
+function apEdMark(){ apEdDirty=true; updateApBar(); }
+function updateApBar(){
+  const bar=document.getElementById('savebar'), btn=document.getElementById('save-btn');
+  if (document.getElementById('airports-view').classList.contains('active') && apEdDirty){
+    bar.classList.add('show');
+    document.getElementById('savebar-text').innerHTML='<span class="dirty">●</span> Unsaved airport changes';
+    btn.setAttribute('onclick','apEdSave()'); btn.textContent='Save airports';
+  } else if(!dirty){ bar.classList.remove('show'); }
+}
+function apEdRender(){
+  const q=(document.getElementById('ap-ed-search').value||'').toLowerCase();
+  const list=document.getElementById('ap-ed-list');
+  const items=apEdData.map(function(a,i){return {a:a,i:i};}).filter(function(x){
+    return !q || (x.a.code||'').toLowerCase().includes(q) || (x.a.city||'').toLowerCase().includes(q) || (x.a.region||'').toLowerCase().includes(q);
+  });
+  if(!items.length){ list.innerHTML='<div class="sm-empty">No airports.</div>'; return; }
+  list.innerHTML = items.map(function(x){
+    return '<div class="fc-card-edit" style="display:flex;gap:8px;align-items:center;">'
+      + '<input style="width:80px;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;font-weight:700;" value="'+esc(x.a.code||'')+'" placeholder="Code" oninput="apEdSet('+x.i+',\'code\',this.value)">'
+      + '<input style="flex:1;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;" value="'+esc(x.a.city||'')+'" placeholder="City, ST" oninput="apEdSet('+x.i+',\'city\',this.value)">'
+      + '<input style="width:90px;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;" value="'+esc(x.a.region||'')+'" placeholder="State" oninput="apEdSet('+x.i+',\'region\',this.value)">'
+      + '<button class="btn btn-sm btn-danger" onclick="apEdDel('+x.i+')">×</button></div>';
+  }).join('');
+}
+function apEdSet(i,k,v){ apEdData[i][k]=v; apEdMark(); }
+function apEdAdd(){ apEdData.unshift({code:'',city:'',region:''}); apEdMark(); apEdRender(); }
+function apEdDel(i){ apEdData.splice(i,1); apEdMark(); apEdRender(); }
+function apEdSave(){
+  const btn=document.getElementById('save-btn'); btn.disabled=true; btn.textContent='Saving…';
+  postData({action:'saveAirports',rows:apEdData.filter(function(a){return a.code;})}, function(){
+    btn.disabled=false; btn.textContent='Save airports'; apEdDirty=false;
+    document.getElementById('savebar').classList.remove('show'); toast('Airports saved','ok');
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CHECKLIST EDITOR
+// ════════════════════════════════════════════════════════════════
+let clEdData = [];   // [{section, items:[...]}]
+let clEdLoaded = false;
+let clEdDirty = false;
+
+function clEdLoad(){
+  document.getElementById('cl-ed-list').innerHTML='<div class="sm-empty">Loading…</div>';
+  jsonp(QUESTIONS_URL + '?mode=checklist', function(res){
+    clEdData = (res && res.status==='ok' && res.checklist) ? res.checklist : [];
+    clEdLoaded=true; clEdRender();
+  }, function(){ clEdData=[]; clEdLoaded=true; clEdRender(); });
+}
+function clEdMark(){ clEdDirty=true; updateClBar(); }
+function updateClBar(){
+  const bar=document.getElementById('savebar'), btn=document.getElementById('save-btn');
+  if (document.getElementById('checklist-view').classList.contains('active') && clEdDirty){
+    bar.classList.add('show');
+    document.getElementById('savebar-text').innerHTML='<span class="dirty">●</span> Unsaved checklist changes';
+    btn.setAttribute('onclick','clEdSave()'); btn.textContent='Save checklist';
+  } else if(!dirty){ bar.classList.remove('show'); }
+}
+function clEdRender(){
+  const list=document.getElementById('cl-ed-list');
+  if(!clEdData.length){ list.innerHTML='<div class="sm-empty">No checklist sections yet.</div>'; return; }
+  list.innerHTML = clEdData.map(function(sec,si){
+    const items=(sec.items||[]).map(function(it,ii){
+      return '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">'
+        + '<textarea rows="2" style="flex:1;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;font-size:13px;" oninput="clEdSetItem('+si+','+ii+',this.value)">'+esc(it)+'</textarea>'
+        + '<button class="btn btn-sm btn-danger" onclick="clEdDelItem('+si+','+ii+')">×</button></div>';
+    }).join('');
+    return '<div class="fc-card-edit">'
+      + '<div class="fc-card-top">'
+      + '<input style="font-family:\'Syne\',sans-serif;font-weight:800;font-size:14px;color:var(--navy);border:none;background:transparent;flex:1;" value="'+esc(sec.section||'')+'" placeholder="Section name" oninput="clEdSetSection('+si+',this.value)">'
+      + '<button class="btn btn-sm" onclick="clEdMoveSection('+si+',-1)">↑</button>'
+      + '<button class="btn btn-sm" onclick="clEdMoveSection('+si+',1)">↓</button>'
+      + '<button class="btn btn-sm btn-danger" onclick="clEdDelSection('+si+')">Delete section</button></div>'
+      + items
+      + '<button class="btn btn-sm" onclick="clEdAddItem('+si+')">+ Add step</button></div>';
+  }).join('');
+}
+function clEdSetSection(si,v){ clEdData[si].section=v; clEdMark(); }
+function clEdSetItem(si,ii,v){ clEdData[si].items[ii]=v; clEdMark(); }
+function clEdAddItem(si){ clEdData[si].items=clEdData[si].items||[]; clEdData[si].items.push(''); clEdMark(); clEdRender(); }
+function clEdDelItem(si,ii){ clEdData[si].items.splice(ii,1); clEdMark(); clEdRender(); }
+function clEdAddSection(){ clEdData.push({section:'New Section',items:['']}); clEdMark(); clEdRender(); }
+function clEdDelSection(si){ if(!confirm('Delete section "'+(clEdData[si].section||'')+'"?'))return; clEdData.splice(si,1); clEdMark(); clEdRender(); }
+function clEdMoveSection(si,dir){ const j=si+dir; if(j<0||j>=clEdData.length)return; const t=clEdData[si]; clEdData[si]=clEdData[j]; clEdData[j]=t; clEdMark(); clEdRender(); }
+function clEdSave(){
+  const rows=[]; let n=0;
+  clEdData.forEach(function(sec){ (sec.items||[]).forEach(function(it){ if(it.trim()) rows.push([sec.section||'', it, ++n]); }); });
+  const btn=document.getElementById('save-btn'); btn.disabled=true; btn.textContent='Saving…';
+  postData({action:'saveChecklist',rows:rows}, function(){
+    btn.disabled=false; btn.textContent='Save checklist'; clEdDirty=false;
+    document.getElementById('savebar').classList.remove('show'); toast('Checklist saved','ok');
   });
 }
 

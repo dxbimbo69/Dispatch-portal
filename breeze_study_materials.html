@@ -1468,7 +1468,7 @@ apPopulateFilter();
 apRender();
 
 // ── Checklist ────────────────────────────────────────────────────────────────
-const CHECKLIST = [
+const CHECKLIST_FALLBACK = [
   {section:'Flight Plan', items:[
     'Flight Number — type of flight identified (Domestic/Charter/Repo/International Supplemental)',
     'Release not expired (expires 2 hrs after ETD) — IOCM 4.2.1.2',
@@ -1568,6 +1568,8 @@ const CHECKLIST = [
     'Weather screenshots attached (if required)',
   ]},
 ];
+
+let CHECKLIST = CHECKLIST_FALLBACK;
 
 const STORAGE_KEY = 'bz_checklist_state';
 
@@ -1766,6 +1768,54 @@ sfUpdateCrumbs();
 loadContentOverrides();
 loadFlashcardsFromSheet();
 loadCustomSections();
+
+function loadAirportsFromSheet() {
+  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
+  const cb = 'apcb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let done = false;
+  function cleanup(){ delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+  window[cb] = function(res){
+    done = true;
+    try {
+      if (res && res.status==='ok' && res.airports && res.airports.length) {
+        apAirports = res.airports.map(function(a){ return {code:a.code, city:a.city, region:a.region}; });
+        if (typeof apPopulateFilter==='function') apPopulateFilter();
+        if (typeof apRender==='function') apRender();
+      }
+    } catch(e){}
+    cleanup();
+  };
+  s.onerror = function(){ if(!done) cleanup(); };
+  s.src = SM_CONTENT_URL + (SM_CONTENT_URL.indexOf('?')>-1?'&':'?') + 'mode=airports&callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(!done) cleanup(); }, 12000);
+}
+
+function loadChecklistFromSheet() {
+  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
+  const cb = 'clcb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let done = false;
+  function cleanup(){ delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+  window[cb] = function(res){
+    done = true;
+    try {
+      if (res && res.status==='ok' && res.checklist && res.checklist.length) {
+        CHECKLIST = res.checklist;
+        if (typeof buildChecklist==='function') buildChecklist();
+      }
+    } catch(e){}
+    cleanup();
+  };
+  s.onerror = function(){ if(!done) cleanup(); };
+  s.src = SM_CONTENT_URL + (SM_CONTENT_URL.indexOf('?')>-1?'&':'?') + 'mode=checklist&callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(!done) cleanup(); }, 12000);
+}
+
+loadAirportsFromSheet();
+loadChecklistFromSheet();
 
 function loadCustomSections() {
   if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
