@@ -1651,7 +1651,7 @@ function loadContentOverrides() {
 // To add real content: rename module/category titles and replace the placeholder
 // { front, back } cards. Add or remove modules, categories, and cards freely.
 // CBT-only modules (22, 23, 32, 33) are intentionally not represented.
-const SF_DATA = {
+const SF_DATA_FALLBACK = {
   "basic-indoc": { title:"Basic Indoctrination", eyebrow:"Section 1", modules:{
     "module-1":{title:"Module 1",categories:{"category-a":{title:"Category A",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]},"category-b":{title:"Category B",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]}}},
     "module-2":{title:"Module 2",categories:{"category-a":{title:"Category A",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]},"category-b":{title:"Category B",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]}}},
@@ -1673,6 +1673,31 @@ const SF_DATA = {
     "module-3":{title:"Module 3",categories:{"category-a":{title:"Category A",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]},"category-b":{title:"Category B",cards:[{front:"Placeholder front 1",back:"Placeholder back 1"},{front:"Placeholder front 2",back:"Placeholder back 2"},{front:"Placeholder front 3",back:"Placeholder back 3"}]}}}
   }}
 };
+
+// Live flashcard data: starts as fallback, replaced by sheet on load.
+let SF_DATA = SF_DATA_FALLBACK;
+
+function loadFlashcardsFromSheet() {
+  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
+  const cb = 'fccb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let done = false;
+  function cleanup(){ delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+  window[cb] = function(res){
+    done = true;
+    try {
+      if (res && res.status === 'ok' && res.flashcards && Object.keys(res.flashcards).length) {
+        SF_DATA = res.flashcards;
+        if (typeof sfBuildSectionGrid === 'function') sfBuildSectionGrid();
+      }
+    } catch(e){}
+    cleanup();
+  };
+  s.onerror = function(){ if(!done) cleanup(); };
+  s.src = SM_CONTENT_URL + (SM_CONTENT_URL.indexOf('?')>-1?'&':'?') + 'mode=flashcards&callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(!done) cleanup(); }, 12000);
+}
 
 let sfState = { sectionKey:null, moduleKey:null, categoryKey:null, order:[], position:0, known:{} };
 function sfKnownKey(s,m,c){ return s+"/"+m+"/"+c; }
@@ -1709,6 +1734,7 @@ sfBuildSectionGrid();
 sfUpdateCrumbs();
 
 loadContentOverrides();
+loadFlashcardsFromSheet();
 </script>
 </body>
 </html>

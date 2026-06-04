@@ -43,6 +43,28 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 .sm-block-revert{font-size:11px;color:var(--ink3);background:none;border:none;cursor:pointer;text-decoration:underline;}
 .sm-block-revert:hover{color:var(--navy);}
 .sm-empty{text-align:center;padding:2.5rem;color:var(--ink3);}
+#flashcards-view{display:none;}
+#flashcards-view.active{display:block;}
+.fc-crumbs .fc-crumb{cursor:pointer;color:var(--blue);font-weight:600;}
+.fc-crumbs .fc-crumb:hover{text-decoration:underline;}
+.fc-crumbs .fc-sep{margin:0 7px;color:var(--gray-dk);}
+.fc-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:1rem;}
+.fc-tile{background:var(--white);border:1.5px solid var(--gray);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;position:relative;}
+.fc-tile:hover{border-color:var(--cyan);box-shadow:0 2px 8px rgba(14,165,196,.12);}
+.fc-tile-title{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--navy);margin-bottom:5px;padding-right:20px;}
+.fc-tile-meta{font-size:12px;color:var(--ink3);}
+.fc-tile-x{position:absolute;top:8px;right:8px;width:20px;height:20px;border:none;background:transparent;color:var(--gray-dk);font-size:15px;cursor:pointer;border-radius:5px;display:none;}
+.fc-tile:hover .fc-tile-x{display:block;}
+.fc-tile-x:hover{background:var(--red);color:#fff;}
+.fc-add-tile{background:var(--cyan-lt);border:1.5px dashed var(--cyan);color:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;min-height:80px;}
+.fc-toolbar{display:flex;gap:10px;align-items:center;margin:1rem 0;flex-wrap:wrap;}
+.fc-toolbar input{padding:7px 10px;border:1.5px solid var(--gray);border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:13px;}
+.fc-card-edit{background:var(--white);border:1.5px solid var(--gray);border-radius:11px;padding:14px;margin-bottom:12px;}
+.fc-card-edit .fc-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.fc-card-num{font-family:'Syne',sans-serif;font-weight:800;font-size:11px;color:#fff;background:var(--navy);border-radius:6px;padding:3px 10px;}
+.fc-card-edit textarea{width:100%;border:1.5px solid var(--gray);border-radius:7px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif;line-height:1.5;resize:vertical;min-height:42px;margin-bottom:8px;}
+.fc-card-edit label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);display:block;margin-bottom:3px;}
+.fc-card-edit textarea:focus{outline:none;border-color:var(--blue);}
 
 .page{max-width:1100px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:280px 1fr;gap:2rem;align-items:start;}
 
@@ -141,6 +163,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
       <div class="mode-tabs">
         <button class="mode-tab active" id="tab-questions" onclick="switchMode('questions')">Questions</button>
         <button class="mode-tab" id="tab-content" onclick="switchMode('content')">Study Materials</button>
+        <button class="mode-tab" id="tab-flashcards" onclick="switchMode('flashcards')">Flashcards</button>
       </div>
       <div class="hdr-status" id="conn-status">Connecting…</div>
     </div>
@@ -184,6 +207,12 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
     <span id="sm-load-status" style="font-size:12px;color:var(--ink3);margin-left:auto;">Loading…</span>
   </div>
   <iframe id="sm-frame" style="width:100%;height:calc(100vh - 160px);border:none;display:block;background:#fff;"></iframe>
+</div>
+
+<!-- Flashcards editor -->
+<div id="flashcards-view" style="max-width:1000px;margin:0 auto;padding:2rem;">
+  <div class="fc-crumbs" id="fc-crumbs" style="font-size:12px;color:var(--ink3);margin-bottom:1rem;min-height:18px;"></div>
+  <div id="fc-editor-body"><div class="sm-empty">Loading flashcards…</div></div>
 </div>
 
 <div class="bar" id="savebar">
@@ -547,10 +576,12 @@ let smOriginals = {};        // id -> original page text
 let smFrameDoc = null;
 
 function switchMode(mode) {
-  document.getElementById('tab-questions').classList.toggle('active', mode==='questions');
-  document.getElementById('tab-content').classList.toggle('active', mode==='content');
+  ['questions','content','flashcards'].forEach(function(m){
+    document.getElementById('tab-'+m).classList.toggle('active', m===mode);
+  });
   document.getElementById('questions-view').style.display = (mode==='questions') ? '' : 'none';
   document.getElementById('content-view').classList.toggle('active', mode==='content');
+  document.getElementById('flashcards-view').classList.toggle('active', mode==='flashcards');
   const bar = document.getElementById('savebar');
   const btn = document.getElementById('save-btn');
   bar.classList.remove('show');
@@ -558,9 +589,12 @@ function switchMode(mode) {
     btn.setAttribute('onclick','saveCurrentQuiz()');
     btn.textContent = 'Save to sheet';
     if (dirty) updateBar();
-  } else {
+  } else if (mode==='content') {
     if (!smLoaded) loadStudyMaterials();
     else updateSmBar();
+  } else if (mode==='flashcards') {
+    if (!fcLoaded) loadFlashcards();
+    else updateFcBar();
   }
 }
 
@@ -670,6 +704,209 @@ function saveContent() {
   });
 }
 
+
+
+// ════════════════════════════════════════════════════════════════
+//  FLASHCARDS EDITOR
+// ════════════════════════════════════════════════════════════════
+let fcData = null;       // nested {section:{title,eyebrow,modules:{...}}}
+let fcLoaded = false;
+let fcDirty = false;
+let fcNav = { section:null, module:null, category:null };
+
+function loadFlashcards() {
+  document.getElementById('fc-editor-body').innerHTML = '<div class="sm-empty">Loading flashcards…</div>';
+  jsonp(QUESTIONS_URL + '?mode=flashcards', function(res){
+    if (res && res.status==='ok' && res.flashcards && Object.keys(res.flashcards).length) {
+      fcData = res.flashcards;
+    } else {
+      fcData = {}; // empty; user can build
+    }
+    fcLoaded = true;
+    fcRender();
+  }, function(){ fcData = fcData || {}; fcLoaded = true; fcRender(); });
+}
+
+function fcMarkDirty(){ fcDirty = true; updateFcBar(); }
+
+function updateFcBar() {
+  const bar = document.getElementById('savebar');
+  const btn = document.getElementById('save-btn');
+  if (document.getElementById('flashcards-view').classList.contains('active') && fcDirty) {
+    bar.classList.add('show');
+    document.getElementById('savebar-text').innerHTML = '<span class="dirty">●</span> Unsaved flashcard changes';
+    btn.setAttribute('onclick','saveFlashcards()');
+    btn.textContent = 'Save flashcards';
+  } else if (!dirty && !smDirty) {
+    bar.classList.remove('show');
+  }
+}
+
+function fcCrumbs() {
+  const c = document.getElementById('fc-crumbs');
+  let p = ['<span class="fc-crumb" onclick="fcGo(null,null,null)">All sections</span>'];
+  if (fcNav.section) {
+    p.push('<span class="fc-sep">›</span>');
+    const t = fcData[fcNav.section] ? fcData[fcNav.section].title : fcNav.section;
+    if (fcNav.module) p.push('<span class="fc-crumb" onclick="fcGo(\''+fcNav.section+'\',null,null)">'+esc(t)+'</span>');
+    else p.push('<span>'+esc(t)+'</span>');
+  }
+  if (fcNav.module) {
+    const m = fcData[fcNav.section].modules[fcNav.module];
+    p.push('<span class="fc-sep">›</span>');
+    if (fcNav.category) p.push('<span class="fc-crumb" onclick="fcGo(\''+fcNav.section+'\',\''+fcNav.module+'\',null)">'+esc(m.title)+'</span>');
+    else p.push('<span>'+esc(m.title)+'</span>');
+  }
+  if (fcNav.category) {
+    const cat = fcData[fcNav.section].modules[fcNav.module].categories[fcNav.category];
+    p.push('<span class="fc-sep">›</span><span>'+esc(cat.title)+'</span>');
+  }
+  c.innerHTML = p.join('');
+}
+
+function fcGo(s,m,c){ fcNav.section=s; fcNav.module=m; fcNav.category=c; fcRender(); }
+
+function fcRender() {
+  fcCrumbs();
+  const body = document.getElementById('fc-editor-body');
+  if (!fcNav.section) return fcRenderSections(body);
+  if (!fcNav.module)  return fcRenderModules(body);
+  if (!fcNav.category) return fcRenderCategories(body);
+  return fcRenderCards(body);
+}
+
+function fcRenderSections(body) {
+  let html = '<div class="fc-tiles">';
+  Object.keys(fcData).forEach(function(sk){
+    const sec = fcData[sk];
+    const mods = Object.keys(sec.modules||{}).length;
+    html += '<div class="fc-tile" onclick="fcGo(\''+sk+'\',null,null)">'
+          + '<button class="fc-tile-x" onclick="event.stopPropagation();fcDeleteSection(\''+sk+'\')">×</button>'
+          + '<div class="fc-tile-title">'+esc(sec.title||sk)+'</div>'
+          + '<div class="fc-tile-meta">'+esc(sec.eyebrow||'')+' · '+mods+' module'+(mods===1?'':'s')+'</div></div>';
+  });
+  html += '<div class="fc-tile fc-add-tile" onclick="fcAddSection()">+ Add section</div></div>';
+  body.innerHTML = html;
+}
+
+function fcRenderModules(body) {
+  const sec = fcData[fcNav.section];
+  let html = '<div class="fc-tiles">';
+  Object.keys(sec.modules).forEach(function(mk){
+    const mod = sec.modules[mk];
+    const cats = Object.keys(mod.categories||{}).length;
+    html += '<div class="fc-tile" onclick="fcGo(\''+fcNav.section+'\',\''+mk+'\',null)">'
+          + '<button class="fc-tile-x" onclick="event.stopPropagation();fcDeleteModule(\''+mk+'\')">×</button>'
+          + '<div class="fc-tile-title">'+esc(mod.title||mk)+'</div>'
+          + '<div class="fc-tile-meta">'+cats+' categor'+(cats===1?'y':'ies')+'</div></div>';
+  });
+  html += '<div class="fc-tile fc-add-tile" onclick="fcAddModule()">+ Add module</div></div>';
+  body.innerHTML = html;
+}
+
+function fcRenderCategories(body) {
+  const mod = fcData[fcNav.section].modules[fcNav.module];
+  let html = '<div class="fc-tiles">';
+  Object.keys(mod.categories).forEach(function(ck){
+    const cat = mod.categories[ck];
+    const cards = (cat.cards||[]).length;
+    html += '<div class="fc-tile" onclick="fcGo(\''+fcNav.section+'\',\''+fcNav.module+'\',\''+ck+'\')">'
+          + '<button class="fc-tile-x" onclick="event.stopPropagation();fcDeleteCategory(\''+ck+'\')">×</button>'
+          + '<div class="fc-tile-title">'+esc(cat.title||ck)+'</div>'
+          + '<div class="fc-tile-meta">'+cards+' card'+(cards===1?'':'s')+'</div></div>';
+  });
+  html += '<div class="fc-tile fc-add-tile" onclick="fcAddCategory()">+ Add category</div></div>';
+  body.innerHTML = html;
+}
+
+function fcRenderCards(body) {
+  const cat = fcData[fcNav.section].modules[fcNav.module].categories[fcNav.category];
+  let html = '<div class="fc-toolbar"><button class="btn-primary btn" onclick="fcAddCard()">+ Add card</button></div>';
+  (cat.cards||[]).forEach(function(card,i){
+    html += '<div class="fc-card-edit">'
+      + '<div class="fc-card-top"><span class="fc-card-num">Card '+(i+1)+'</span>'
+      + '<button class="btn btn-sm btn-danger" onclick="fcDeleteCard('+i+')">Delete</button></div>'
+      + '<label>Front (term / question)</label>'
+      + '<textarea oninput="fcEditCard('+i+',\'front\',this.value)">'+esc(card.front||'')+'</textarea>'
+      + '<label>Back (definition / answer)</label>'
+      + '<textarea oninput="fcEditCard('+i+',\'back\',this.value)">'+esc(card.back||'')+'</textarea>'
+      + '</div>';
+  });
+  if (!(cat.cards||[]).length) html += '<div class="sm-empty">No cards yet. Click "Add card".</div>';
+  body.innerHTML = html;
+}
+
+// ---- editing ops ----
+function fcSlug(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,7); }
+
+function fcAddSection(){
+  const name = prompt('Section name (e.g. "Basic Indoctrination"):'); if(!name) return;
+  const eyebrow = prompt('Section label (e.g. "Section 1"):') || '';
+  const key = fcSlug('sec');
+  fcData[key] = { title:name, eyebrow:eyebrow, modules:{} };
+  fcMarkDirty(); fcRender();
+}
+function fcDeleteSection(sk){
+  if(!confirm('Delete section "'+(fcData[sk].title||sk)+'" and everything in it?')) return;
+  delete fcData[sk]; fcMarkDirty(); fcRender();
+}
+function fcAddModule(){
+  const name = prompt('Module name (e.g. "Module 1"):'); if(!name) return;
+  const key = fcSlug('mod');
+  fcData[fcNav.section].modules[key] = { title:name, categories:{} };
+  fcMarkDirty(); fcRender();
+}
+function fcDeleteModule(mk){
+  if(!confirm('Delete module "'+(fcData[fcNav.section].modules[mk].title||mk)+'" and everything in it?')) return;
+  delete fcData[fcNav.section].modules[mk]; fcMarkDirty(); fcRender();
+}
+function fcAddCategory(){
+  const name = prompt('Category name (e.g. "Definitions"):'); if(!name) return;
+  const key = fcSlug('cat');
+  fcData[fcNav.section].modules[fcNav.module].categories[key] = { title:name, cards:[] };
+  fcMarkDirty(); fcRender();
+}
+function fcDeleteCategory(ck){
+  if(!confirm('Delete category "'+(fcData[fcNav.section].modules[fcNav.module].categories[ck].title||ck)+'" and its cards?')) return;
+  delete fcData[fcNav.section].modules[fcNav.module].categories[ck]; fcMarkDirty(); fcRender();
+}
+function fcAddCard(){
+  fcData[fcNav.section].modules[fcNav.module].categories[fcNav.category].cards.push({front:'',back:''});
+  fcMarkDirty(); fcRenderCards(document.getElementById('fc-editor-body'));
+}
+function fcDeleteCard(i){
+  fcData[fcNav.section].modules[fcNav.module].categories[fcNav.category].cards.splice(i,1);
+  fcMarkDirty(); fcRenderCards(document.getElementById('fc-editor-body'));
+}
+function fcEditCard(i,field,val){
+  fcData[fcNav.section].modules[fcNav.module].categories[fcNav.category].cards[i][field] = val;
+  fcMarkDirty();
+}
+
+// ---- save: flatten nested data to rows ----
+function saveFlashcards(){
+  const rows = [];
+  Object.keys(fcData).forEach(function(sk){
+    const sec = fcData[sk];
+    Object.keys(sec.modules).forEach(function(mk){
+      const mod = sec.modules[mk];
+      Object.keys(mod.categories).forEach(function(ck){
+        const cat = mod.categories[ck];
+        (cat.cards||[]).forEach(function(card,idx){
+          rows.push([sk, sec.title||'', sec.eyebrow||'', mk, mod.title||'', ck, cat.title||'', idx+1, card.front||'', card.back||'']);
+        });
+      });
+    });
+  });
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  postData({ action:'saveFlashcards', rows: rows }, function(){
+    btn.disabled = false; btn.textContent = 'Save flashcards';
+    fcDirty = false;
+    document.getElementById('savebar').classList.remove('show');
+    toast('Flashcards saved', 'ok');
+  });
+}
 
 loadData();
 </script>
