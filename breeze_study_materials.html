@@ -2238,9 +2238,11 @@ document.addEventListener('keydown', function(e){
 
 
 // Drew peek-a-boo — slowly rises to his mouth, holds, then slowly sinks and disappears
-(function(){
+function startDrewPeek(){
   var el = document.getElementById('drew-peek');
-  if (!el) return;
+  if (!el) { setTimeout(startDrewPeek, 1000); return; }   // retry if not in DOM yet
+  if (el.dataset.peekRunning === '1') return;             // never start twice
+  el.dataset.peekRunning = '1';
 
   var RISE_MS = 3400;   // rise duration
   var SINK_MS = 3400;   // sink duration
@@ -2265,7 +2267,14 @@ document.addEventListener('keydown', function(e){
   }
 
   schedule();
-})();
+}
+
+// Start once the page is fully loaded (covers the case where the script runs before the element exists)
+if (document.readyState === 'complete') {
+  startDrewPeek();
+} else {
+  window.addEventListener('load', startDrewPeek);
+}
 
 </script>
 
