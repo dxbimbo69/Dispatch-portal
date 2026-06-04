@@ -200,19 +200,13 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--surface);color:va
 </div>
 
 <!-- Study Materials content editor -->
-<div id="content-view" style="max-width:900px;margin:0 auto;padding:2rem;">
-  <div class="sm-toolbar" style="margin-bottom:1rem;">
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--navy);">Custom Sections</span>
-    <span id="sec-status" style="font-size:12px;color:var(--ink3);margin-left:auto;">Loading…</span>
+<div id="content-view" style="padding:0;">
+  <div class="sm-toolbar" style="max-width:none;margin:0;padding:.8rem 2rem;border-bottom:1.5px solid var(--gray);background:var(--white);position:sticky;top:0;z-index:20;">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--navy);">Live Study Materials</span>
+    <span style="font-size:12px;color:var(--ink3);">Click any text to edit · hover a box for its Delete button</span>
+    <span id="sm-load-status" style="font-size:12px;color:var(--ink3);margin-left:auto;">Loading…</span>
   </div>
-  <p style="font-size:13px;color:var(--ink3);margin-bottom:1.25rem;line-height:1.6;">Add your own notes, reference tables, lists, and definitions. They appear on the study materials page under "Notes &amp; References."</p>
-  <div id="sec-list"></div>
-  <div style="margin-top:1.25rem;display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="btn" onclick="secAdd('notes')">+ Notes section</button>
-    <button class="btn" onclick="secAdd('table')">+ Table</button>
-    <button class="btn" onclick="secAdd('list')">+ List</button>
-    <button class="btn" onclick="secAdd('definitions')">+ Definitions</button>
-  </div>
+  <iframe id="sm-frame" style="width:100%;height:calc(100vh - 150px);border:none;display:block;background:#fff;"></iframe>
 </div>
 
 <!-- Flashcards editor -->
@@ -569,15 +563,19 @@ function esc(s){ return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;
 let toastTimer;
 function toast(msg,kind){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+(kind||''); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
 
-window.addEventListener('beforeunload', function(e){ if(dirty || secDirty || fcDirty){ e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload', function(e){ if(dirty || smDirty || fcDirty){ e.preventDefault(); e.returnValue=''; } });
 
 // ════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
-//  STUDY MATERIALS — custom section builder
+//  STUDY MATERIALS — in-place live editor (edit text, cells, delete boxes)
 // ════════════════════════════════════════════════════════════════
-let secData = [];        // [{id,type,title,icon,order,content}]
-let secLoaded = false;
-let secDirty = false;
+const SM_PAGE_URL = 'breeze_study_materials.html';
+let smLoaded = false;
+let smDirty = false;
+let smOverrides = {};   // saved text overrides (id -> text) and DEL: markers
+let smOriginals = {};   // id -> original text from page
+let smDeleted = {};     // boxid -> true
+let smFrameDoc = null;
 
 function switchMode(mode) {
   ['questions','content','flashcards'].forEach(function(m){
@@ -590,117 +588,154 @@ function switchMode(mode) {
   const btn = document.getElementById('save-btn');
   bar.classList.remove('show');
   if (mode==='questions') {
-    btn.setAttribute('onclick','saveCurrentQuiz()');
-    btn.textContent = 'Save to sheet';
+    btn.setAttribute('onclick','saveCurrentQuiz()'); btn.textContent='Save to sheet';
     if (dirty) updateBar();
   } else if (mode==='content') {
-    if (!secLoaded) loadSections();
-    else updateSecBar();
+    if (!smLoaded) loadSmEditor(); else updateSmBar();
   } else if (mode==='flashcards') {
-    if (!fcLoaded) loadFlashcards();
-    else updateFcBar();
+    if (!fcLoaded) loadFlashcards(); else updateFcBar();
   }
 }
 
-function loadSections() {
-  document.getElementById('sec-status').textContent = 'Loading…';
-  jsonp(QUESTIONS_URL + '?mode=sections', function(res){
-    secData = (res && res.status==='ok' && res.sections) ? res.sections : [];
-    secLoaded = true;
-    document.getElementById('sec-status').textContent = '● Connected';
-    renderSections();
-  }, function(){ secData = []; secLoaded = true; document.getElementById('sec-status').textContent='⚠ error'; renderSections(); });
+// Same deterministic walk the page uses, so ids match.
+function smAssignIdsIn(doc) {
+  const root = doc.querySelector('.content');
+  if (!root) return;
+  let t = 0;
+  root.querySelectorAll('h1,h2,h3,h4,p,li,td,th,span,div').forEach(function(el){
+    if (el.children.length === 0) {
+      const txt = (el.textContent||'').trim();
+      if (txt.length >= 1) el.setAttribute('data-smid', 't' + (t++));
+    }
+  });
+  let b = 0;
+  root.querySelectorAll('.step-item, .guide-card, .step-group, tr, .decode-box').forEach(function(el){
+    el.setAttribute('data-smbox', 'b' + (b++));
+  });
 }
 
-function secMarkDirty(){ secDirty = true; updateSecBar(); }
+function loadSmEditor() {
+  document.getElementById('sm-load-status').textContent = 'Loading…';
+  jsonp(QUESTIONS_URL + '?mode=content', function(res){
+    smOverrides = {}; smDeleted = {};
+    if (res && res.status==='ok' && res.content) {
+      res.content.forEach(function(r){
+        if (!r.id) return;
+        if (r.id.indexOf('DEL:')===0) smDeleted[r.id.slice(4)] = true;
+        else smOverrides[r.id] = r.text;
+      });
+    }
+    injectSmFrame();
+  }, function(){ injectSmFrame(); });
+}
 
-function updateSecBar() {
+function injectSmFrame() {
+  const frame = document.getElementById('sm-frame');
+  fetch(SM_PAGE_URL + '?t=' + Date.now())
+    .then(function(r){ return r.text(); })
+    .then(function(html){
+      html = html.replace('loadContentOverrides();', '/* editor disabled */');
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      doc.open(); doc.write(html); doc.close();
+      setTimeout(function(){ wireSmEditing(doc); }, 500);
+    })
+    .catch(function(){ document.getElementById('sm-load-status').textContent = 'Could not load page'; });
+}
+
+function wireSmEditing(doc) {
+  smFrameDoc = doc;
+  smAssignIdsIn(doc);
+  smOriginals = {};
+  // editor chrome inside the iframe
+  const style = doc.createElement('style');
+  style.textContent =
+    '[data-smid]{outline:1px dashed rgba(14,165,196,.35);outline-offset:2px;cursor:text;border-radius:3px;}' +
+    '[data-smid]:hover{background:rgba(14,165,196,.08);}' +
+    '[data-smid]:focus{outline:2px solid #0EA5C4;background:rgba(14,165,196,.12);}' +
+    '[data-smid][data-smchg="1"]{background:rgba(14,165,196,.16);}' +
+    '[data-smbox]{position:relative;}' +
+    '[data-smbox]:hover{box-shadow:0 0 0 2px rgba(240,69,122,.4);border-radius:6px;}' +
+    '.sm-del-btn{position:absolute;top:4px;right:4px;z-index:9999;background:#F0457A;color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;display:none;font-family:sans-serif;}' +
+    '[data-smbox]:hover > .sm-del-btn{display:block;}' +
+    '[data-smdeleted="1"]{opacity:.35;outline:2px dashed #F0457A !important;}';
+  doc.head.appendChild(style);
+
+  // text editing
+  doc.querySelectorAll('[data-smid]').forEach(function(el){
+    const id = el.getAttribute('data-smid');
+    smOriginals[id] = el.textContent.trim();
+    if (smOverrides[id] !== undefined && smOverrides[id] !== '') el.textContent = smOverrides[id];
+    el.setAttribute('contenteditable','true');
+    el.addEventListener('input', function(){
+      el.setAttribute('data-smchg', el.textContent.trim() !== smOriginals[id] ? '1' : '0');
+      smDirty = true; updateSmBar();
+    });
+    el.addEventListener('click', function(e){ e.stopPropagation(); });
+  });
+
+  // delete buttons on boxes
+  doc.querySelectorAll('[data-smbox]').forEach(function(box){
+    const bid = box.getAttribute('data-smbox');
+    if (smDeleted[bid]) box.setAttribute('data-smdeleted','1');
+    const btn = doc.createElement('button');
+    btn.className = 'sm-del-btn';
+    btn.textContent = smDeleted[bid] ? 'Undo' : 'Delete';
+    btn.addEventListener('click', function(e){
+      e.stopPropagation(); e.preventDefault();
+      if (smDeleted[bid]) { delete smDeleted[bid]; box.removeAttribute('data-smdeleted'); btn.textContent='Delete'; }
+      else { smDeleted[bid] = true; box.setAttribute('data-smdeleted','1'); btn.textContent='Undo'; }
+      smDirty = true; updateSmBar();
+    });
+    box.insertBefore(btn, box.firstChild);
+  });
+
+  smLoaded = true;
+  document.getElementById('sm-load-status').textContent = '● Ready to edit';
+  updateSmBar();
+}
+
+function smCollect() {
+  const out = [];
+  if (smFrameDoc) {
+    smFrameDoc.querySelectorAll('[data-smid]').forEach(function(el){
+      const id = el.getAttribute('data-smid');
+      const now = el.textContent.trim();
+      if (now !== smOriginals[id]) out.push({ id:id, text:now });
+    });
+  }
+  Object.keys(smDeleted).forEach(function(bid){ out.push({ id:'DEL:'+bid, text:'1' }); });
+  return out;
+}
+
+function updateSmBar() {
+  const changes = smCollect();
   const bar = document.getElementById('savebar');
   const btn = document.getElementById('save-btn');
-  if (document.getElementById('content-view').classList.contains('active') && secDirty) {
+  if (document.getElementById('content-view').classList.contains('active') && changes.length>0) {
     bar.classList.add('show');
-    document.getElementById('savebar-text').innerHTML = '<span class="dirty">●</span> Unsaved section changes';
-    btn.setAttribute('onclick','saveSections()');
-    btn.textContent = 'Save sections';
+    const txt = changes.filter(function(c){return c.id.indexOf('DEL:')!==0;}).length;
+    const del = changes.length - txt;
+    document.getElementById('savebar-text').innerHTML = '<span class="dirty">●</span> ' + txt + ' text edit' + (txt===1?'':'s') + (del? ' · '+del+' deletion'+(del===1?'':'s'):'');
+    btn.setAttribute('onclick','saveSmContent()'); btn.textContent='Save study materials';
   } else if (!dirty && !fcDirty) {
     bar.classList.remove('show');
   }
 }
 
-const SEC_TYPE_LABEL = { notes:'Notes', table:'Table', list:'List', definitions:'Definitions' };
-
-function renderSections() {
-  const wrap = document.getElementById('sec-list');
-  if (!secData.length) { wrap.innerHTML = '<div class="sm-empty">No custom sections yet. Add one below.</div>'; return; }
-  wrap.innerHTML = secData.map(function(sec, i){ return secCard(sec, i); }).join('');
-}
-
-function secCard(sec, i) {
-  let body = '';
-  const c = sec.content || {};
-  if (sec.type === 'notes') {
-    body = '<label>Body text</label><textarea rows="5" oninput="secSet('+i+',\'body\',this.value)">'+esc(c.body||'')+'</textarea>';
-  } else if (sec.type === 'list') {
-    body = '<label>Items (one per line)</label><textarea rows="5" oninput="secSetList('+i+',this.value)">'+esc((c.items||[]).join('\n'))+'</textarea>';
-  } else if (sec.type === 'definitions') {
-    body = '<label>Definitions</label>' + (c.pairs||[]).map(function(p,pi){
-      return '<div style="display:flex;gap:8px;margin-bottom:6px;">'
-        + '<input style="flex:1;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;" placeholder="Term" value="'+esc(p.term)+'" oninput="secSetDef('+i+','+pi+',\'term\',this.value)">'
-        + '<input style="flex:2;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;" placeholder="Definition" value="'+esc(p.def)+'" oninput="secSetDef('+i+','+pi+',\'def\',this.value)">'
-        + '<button class="btn btn-sm btn-danger" onclick="secDelDef('+i+','+pi+')">×</button></div>';
-    }).join('') + '<button class="btn btn-sm" onclick="secAddDef('+i+')">+ Add pair</button>';
-  } else if (sec.type === 'table') {
-    const cols = c.columns||[];
-    body = '<label>Column headers (comma-separated)</label>'
-      + '<input style="width:100%;padding:7px 9px;border:1.5px solid var(--gray);border-radius:7px;margin-bottom:8px;" value="'+esc(cols.join(', '))+'" oninput="secSetCols('+i+',this.value)">'
-      + '<label>Rows</label>'
-      + (c.rows||[]).map(function(r,ri){
-          return '<div style="display:flex;gap:6px;margin-bottom:6px;">'
-            + cols.map(function(_,ci){ return '<input style="flex:1;padding:6px 8px;border:1.5px solid var(--gray);border-radius:6px;font-size:12px;" value="'+esc(r[ci]||'')+'" oninput="secSetCell('+i+','+ri+','+ci+',this.value)">'; }).join('')
-            + '<button class="btn btn-sm btn-danger" onclick="secDelRow('+i+','+ri+')">×</button></div>';
-        }).join('')
-      + '<button class="btn btn-sm" onclick="secAddRow('+i+')">+ Add row</button>';
-  }
-  return '<div class="fc-card-edit">'
-    + '<div class="fc-card-top">'
-    + '<input style="font-family:\'Syne\',sans-serif;font-weight:800;font-size:14px;color:var(--navy);border:none;background:transparent;flex:1;" value="'+esc(sec.title)+'" oninput="secSet('+i+',\'title\',this.value)" placeholder="Section title">'
-    + '<span class="fc-card-num">'+(SEC_TYPE_LABEL[sec.type]||sec.type)+'</span> '
-    + '<button class="btn btn-sm" onclick="secMove('+i+',-1)">↑</button>'
-    + '<button class="btn btn-sm" onclick="secMove('+i+',1)">↓</button>'
-    + '<button class="btn btn-sm btn-danger" onclick="secDel('+i+')">Delete</button>'
-    + '</div>' + body + '</div>';
-}
-
-function secSlug(){ return 'sec_' + Math.random().toString(36).slice(2,7); }
-function secAdd(type){
-  const base = { notes:{body:''}, list:{items:[]}, definitions:{pairs:[]}, table:{columns:['Column 1','Column 2'],rows:[]} };
-  secData.push({ id:secSlug(), type:type, title:'New '+(SEC_TYPE_LABEL[type]||type), icon:'', order:(secData.length+1)*10, content:base[type] });
-  secMarkDirty(); renderSections();
-}
-function secSet(i,k,v){ if(k==='title') secData[i].title=v; else { secData[i].content[k]=v; } secMarkDirty(); }
-function secSetList(i,v){ secData[i].content.items = v.split('\n').map(function(x){return x.trim();}).filter(Boolean); secMarkDirty(); }
-function secAddDef(i){ secData[i].content.pairs=secData[i].content.pairs||[]; secData[i].content.pairs.push({term:'',def:''}); secMarkDirty(); renderSections(); }
-function secDelDef(i,pi){ secData[i].content.pairs.splice(pi,1); secMarkDirty(); renderSections(); }
-function secSetDef(i,pi,k,v){ secData[i].content.pairs[pi][k]=v; secMarkDirty(); }
-function secSetCols(i,v){ secData[i].content.columns = v.split(',').map(function(x){return x.trim();}).filter(Boolean); secMarkDirty(); renderSections(); }
-function secAddRow(i){ secData[i].content.rows=secData[i].content.rows||[]; secData[i].content.rows.push([]); secMarkDirty(); renderSections(); }
-function secDelRow(i,ri){ secData[i].content.rows.splice(ri,1); secMarkDirty(); renderSections(); }
-function secSetCell(i,ri,ci,v){ secData[i].content.rows[ri][ci]=v; secMarkDirty(); }
-function secMove(i,dir){ const j=i+dir; if(j<0||j>=secData.length)return; const t=secData[i]; secData[i]=secData[j]; secData[j]=t; secData.forEach(function(s,idx){s.order=(idx+1)*10;}); secMarkDirty(); renderSections(); }
-function secDel(i){ if(!confirm('Delete section "'+(secData[i].title||'')+'"?'))return; secData.splice(i,1); secMarkDirty(); renderSections(); }
-
-function saveSections(){
-  secData.forEach(function(s,idx){ s.order=(idx+1)*10; });
+function saveSmContent() {
+  const changes = smCollect();
+  if (!changes.length) return;
   const btn = document.getElementById('save-btn');
   btn.disabled=true; btn.textContent='Saving…';
-  postData({ action:'saveSections', rows: secData.map(function(s){ return {id:s.id,type:s.type,title:s.title,icon:s.icon||'',order:s.order,content:s.content||{}}; }) }, function(){
-    btn.disabled=false; btn.textContent='Save sections';
-    secDirty=false;
+  postData({ action:'saveContent', content: changes }, function(){
+    btn.disabled=false; btn.textContent='Save study materials';
+    smDirty=false;
+    changes.forEach(function(c){ if(c.id.indexOf('DEL:')!==0) smOverrides[c.id]=c.text; });
+    if (smFrameDoc) smFrameDoc.querySelectorAll('[data-smchg="1"]').forEach(function(el){ el.setAttribute('data-smchg','0'); });
     document.getElementById('savebar').classList.remove('show');
-    toast('Sections saved','ok');
+    toast('Study materials saved','ok');
   });
 }
-
 // ════════════════════════════════════════════════════════════════
 //  FLASHCARDS EDITOR
 // ════════════════════════════════════════════════════════════════
@@ -732,7 +767,7 @@ function updateFcBar() {
     document.getElementById('savebar-text').innerHTML = '<span class="dirty">●</span> Unsaved flashcard changes';
     btn.setAttribute('onclick','saveFlashcards()');
     btn.textContent = 'Save flashcards';
-  } else if (!dirty && !secDirty) {
+  } else if (!dirty && !smDirty) {
     bar.classList.remove('show');
   }
 }

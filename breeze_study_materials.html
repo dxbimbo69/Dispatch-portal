@@ -1614,18 +1614,48 @@ buildChecklist();
 // ── Study-materials content overrides (loaded from the sheet) ──────────────────
 const SM_CONTENT_URL = 'https://script.google.com/macros/s/AKfycbxO1FIbW4oaaHTfOEqbSN4eMDzRXuyxNz7bFLHYBmAkpBpifVkHeQRDQOlfFVXW5qF2/exec';
 
+// Deterministic ID assignment — walks the content area in document order and
+// stamps every editable text element + every "box" with a stable id. The editor
+// runs the SAME walk, so ids line up on both sides without pre-tagging.
+function smAssignIds(rootDoc) {
+  const root = rootDoc.querySelector('.content');
+  if (!root) return;
+  // text-bearing elements
+  const TEXT_SEL = 'h1,h2,h3,h4,p,li,td,th,span,div';
+  let t = 0;
+  root.querySelectorAll(TEXT_SEL).forEach(function(el){
+    // only leaf-ish text nodes: has text, no child elements
+    if (el.children.length === 0) {
+      const txt = (el.textContent||'').trim();
+      if (txt.length >= 1) { el.setAttribute('data-smid', 't' + (t++)); }
+    }
+  });
+  // "box" units that can be deleted
+  let b = 0;
+  root.querySelectorAll('.step-item, .guide-card, .step-group, tr, .decode-box').forEach(function(el){
+    el.setAttribute('data-smbox', 'b' + (b++));
+  });
+}
+
 function applyContentOverrides(map) {
   if (!map) return;
+  smAssignIds(document);
   Object.keys(map).forEach(function(id){
-    const el = document.querySelector('[data-sm-edit="' + id + '"]');
-    if (el && typeof map[id] === 'string' && map[id].length) {
-      el.textContent = map[id];
+    const val = map[id];
+    if (id.indexOf('DEL:') === 0) {
+      // deletion marker: DEL:<boxid>
+      const boxId = id.slice(4);
+      const box = document.querySelector('[data-smbox="' + boxId + '"]');
+      if (box) box.style.display = 'none';
+    } else {
+      const el = document.querySelector('[data-smid="' + id + '"]');
+      if (el && typeof val === 'string' && val.length) el.textContent = val;
     }
   });
 }
 
 function loadContentOverrides() {
-  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) return;
+  if (!SM_CONTENT_URL || SM_CONTENT_URL.indexOf('PASTE_') === 0) { smAssignIds(document); return; }
   const cb = 'smcb_' + Math.random().toString(36).slice(2);
   const s = document.createElement('script');
   let done = false;
@@ -1633,18 +1663,18 @@ function loadContentOverrides() {
   window[cb] = function(res){
     done = true;
     try {
+      const map = {};
       if (res && res.status === 'ok' && res.content) {
-        const map = {};
         (res.content || []).forEach(function(row){ if (row.id) map[row.id] = row.text; });
-        applyContentOverrides(map);
       }
-    } catch(e){}
+      applyContentOverrides(map);
+    } catch(e){ smAssignIds(document); }
     cleanup();
   };
-  s.onerror = function(){ if(!done) cleanup(); };
+  s.onerror = function(){ if(!done){ smAssignIds(document); cleanup(); } };
   s.src = SM_CONTENT_URL + (SM_CONTENT_URL.indexOf('?')>-1?'&':'?') + 'mode=content&callback=' + cb + '&t=' + Date.now();
   document.body.appendChild(s);
-  setTimeout(function(){ if(!done) cleanup(); }, 12000);
+  setTimeout(function(){ if(!done){ smAssignIds(document); cleanup(); } }, 12000);
 }
 
 // ── Section Flashcards ────────────────────────────────────────────────────────
