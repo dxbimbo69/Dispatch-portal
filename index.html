@@ -142,6 +142,13 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--navy-dk);color:va
 .home-card-practice::before{background:linear-gradient(135deg,#B0285A,#F0457A);}
 .home-card-practice:hover{border-color:#F0457A;box-shadow:0 12px 32px rgba(240,69,122,.15);}
 .home-card-practice .home-card-arrow{color:#F0457A;}
+.practice-launch{display:flex;align-items:center;gap:1rem;background:var(--white);border:2px solid var(--gray);border-left:5px solid #F0457A;border-radius:14px;padding:1.1rem 1.4rem;margin-bottom:1.75rem;cursor:pointer;transition:all .2s;}
+.practice-launch:hover{border-color:#F0457A;border-left-color:#F0457A;transform:translateY(-2px);box-shadow:0 10px 26px rgba(240,69,122,.15);}
+.practice-launch-icon{font-size:26px;color:#F0457A;flex-shrink:0;}
+.practice-launch-text{flex:1;}
+.practice-launch-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--navy);}
+.practice-launch-sub{font-size:12.5px;color:var(--ink3);line-height:1.5;margin-top:2px;}
+.practice-launch-arrow{font-size:20px;font-weight:700;color:#F0457A;flex-shrink:0;}
 .home-card-icon{font-size:36px;margin-bottom:1rem;}
 .home-card-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy);margin-bottom:.6rem;transition:color .2s;}
 .home-card-sub{font-size:13px;color:var(--ink3);line-height:1.6;flex:1;transition:color .2s;}
@@ -429,12 +436,6 @@ tbody tr:hover td{background:#FAFAF7;}
         <div class="home-card-sub">Reference guides, module notes, and training resources. Coming soon.</div>
         <div class="home-card-arrow">&#8594;</div>
       </div>
-      <div class="home-card home-card-practice" onclick="showPortalSection('practice')">
-        <div class="home-card-icon">&#9998;</div>
-        <div class="home-card-title">Practice Scenarios &amp; Worksheets</div>
-        <div class="home-card-sub">Hands-on dispatch scenarios, fuel and weather worksheets, and practice exercises. Coming soon.</div>
-        <div class="home-card-arrow">&#8594;</div>
-      </div>
     </div>
 
     <!-- Quiz / test content (hidden until card clicked) -->
@@ -455,7 +456,7 @@ tbody tr:hover td{background:#FAFAF7;}
 
     <!-- Practice Scenarios & Worksheets (hidden until card clicked) -->
     <div id="portal-practice" style="display:none;">
-      <button class="back-home-btn" onclick="showPortalHome()">&#8592; Back to home</button>
+      <button class="back-home-btn" onclick="showPortalSection('kc')">&#8592; Back to Knowledge Checks</button>
       <div id="practice-section-container"></div>
     </div>
   </div>
@@ -919,7 +920,16 @@ const QUIZZES_FALLBACK = [
   {id:'mod20kc',mod:'Module 20',name:'Flight Planning Knowledge Check',sub:'Emergency procedures · ERM · §121.557 · MedLink',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'The Emergency Response Manual (ERM) and the IOCM are the two primary reference documents for dispatcher emergency procedures at Breeze Airways.',options:['True','False'],correct:0,cite:'Module 21 slides 4-5'},{n:2,pts:10,text:'Per § 121.557, a dispatcher who cannot communicate with the pilot during an in-flight emergency must wait for the pilot to declare the emergency before taking any independent action.',options:['True','False'],correct:1,cite:'§ 121.557(b)'},{n:3,pts:10,text:'Per the IOCM, which of the following events requires an emergency notification from the dispatcher?',options:['A minor gate delay due to catering','A diversion, engine shutdown, or declared emergency','A crew scheduling change','A fuel uplift above planned ramp fuel'],correct:1,cite:'IOCM Chapter 14'},{n:4,pts:10,text:'After a dispatcher or pilot exercises emergency authority and deviates from regulations, when must the dispatcher submit a written report?',options:['Within 24 hours','Within 5 days','Within 10 days of the emergency','Within 30 days'],correct:2,cite:'§ 121.557(c)'},{n:5,pts:10,text:'Per the IOCM, what is the dispatcher\'s role when a flight declares a medical emergency involving a passenger?',options:['Contact crew scheduling and wait for updates','Coordinate with MOC, notify relevant parties per IOCM emergency procedures, and assist in coordinating MedLink if needed via the SATCOM/phone conference procedure','Immediately divert the aircraft to the nearest airport','File a safety report and continue monitoring'],correct:1,cite:'IOCM Chapter 14 / Module 21'},{n:6,pts:10,text:'Which of the following is the correct definition of \'Minimum Fuel\' in the context of an inflight fuel emergency?',options:['Fuel equal to the planned alternate fuel','45 minutes of reserve fuel remaining — the point at which the crew must notify ATC and prioritize landing','30 minutes or less of fuel remaining — declared as an emergency','60 minutes of fuel remaining — Breeze company minimum landing fuel'],correct:1,cite:'Module 20 slide 16'},{n:7,pts:10,text:'In the event of an engine failure inflight, what N-FP speed profile should the dispatcher select to run an accurate fuel burn calculation?',options:['Normal cruise speed — no change needed','1EO (One Engine Out) burn calculation in the speed profile on the N-FP Plan screen','Emergency descent speed profile','Holding speed at 1,500 ft AGL'],correct:1,cite:'Module 20 slide 34'},{n:8,pts:10,text:'A flight you are dispatching sends an ACARS message: \'Smoke in cabin. Descending. Advise.\' What are your immediate responsibilities?',options:['Wait for the crew to land before taking action','Immediately advise the crew of the nearest suitable airport, coordinate with MOC and relevant emergency services per IOCM procedures, and monitor the flight','Contact crew scheduling for a relief crew','File an ASAP report and notify the duty manager'],correct:1,cite:'IOCM Chapter 14 / Module 21'},{n:9,pts:10,text:'You are dispatching a flight over a mountainous area when the crew reports a rapid decompression and requests to divert. Using the DECIDE model, what is your first action as the dispatcher?',options:['Immediately reroute the aircraft in N-FP','Detect and acknowledge the emergency situation, then Estimate the significance — assess divert options, nearest suitable airport, fuel state, and oxygen limitations — before communicating a recommendation to the crew','Declare an emergency with ATC on behalf of the crew','Contact MOC and wait for guidance'],correct:1,cite:'Module 21 / DECIDE model / Module 20'},{n:10,pts:10,text:'Which Breeze manual serves as the primary reference for company emergency response procedures, escalation chains, and notification requirements beyond what is in the IOCM?',options:['The DTM — Dispatch Training Manual','The GOM — General Operations Manual','The ERM — Emergency Response Manual','The AAG — Airline Administrative Guide'],correct:2,cite:'Module 21 slide 4'}]},
   {id:'mod21kc',mod:'Module 21',name:'Emergency Procedures Knowledge Check',sub:'MEL · CDL · NEF · ACI · N-OC · Aerodata · SFP',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the procedures and conditions listed in the MEL are followed.',options:['True','False'],correct:0,cite:'IOCM / Module 6 MEL/CDL Dispatch Procedures'},{n:2,pts:10,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it is essentially the same as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural external parts of the aircraft (e.g., fairings, '},{n:3,pts:10,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s immediate first step in Aerodata?',options:['Revise the dispatch release immediately','Block the FDP so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL implications','Notify crew scheduling of a potential delay'],correct:1,cite:'Module 6 slide 26 / IOCC-INFO-05'},{n:4,pts:10,text:'An MEL amendment is considered complete only when:',options:['The dispatcher sends it via ACARS','The PIC replies via ACARS acknowledging the amendment with time and initials','MOC confirms the MEL has been applied in the maintenance log','The supervisor approves the amendment in N-FP'],correct:1,cite:'Module 6 slide 34'},{n:5,pts:10,text:'What is a NEF (Non-Essential Furnishing)?',options:['A missing structural part that requires a CDL','An item that, if inoperative or missing, has no effect on safe aircraft operation; does not need to appear on the release but is tracked in the maintenance log','An FAA-required item that must be listed on every dispatch release','A type of MEL that requires dispatch concurrence before flight'],correct:1,cite:'Module 6 slide 22'},{n:6,pts:10,text:'What color designation in N-OC indicates an aircraft is Out of Service (OOS) and not airworthy?',options:['Purple','Yellow','Red','Orange'],correct:2,cite:'Module 6 slide 5'},{n:7,pts:10,text:'A Special Flight Permit (SFP) requires a signature. Per the updated IOCM procedure, who must sign the SFP?',options:['The Captain only','The Manager of Flight Dispatch, or their designee (typically the dispatcher)','The Director of Maintenance','Both the Captain and the Dispatcher'],correct:1,cite:'IOCM / Module 6 slide 38'},{n:8,pts:10,text:'MOC calls to inform you that an E190 has an MEL applied that restricts the flight to FL310 or below. The current release is planned at FL350. What must you do?',options:['Nothing — the crew will manage the altitude restriction on their own','Block the FDP, revise the release with the MEL applied and a cruise altitude at or below FL310, then unblock FDP once the crew acknowledges','Amend the release only — no FDP block needed for an altitude restriction','Cancel the flight until the MEL is resolved'],correct:1,cite:'IOCM / Module 6 MEL procedures'},{n:9,pts:10,text:'A crew sends an ACARS message mid-flight reporting an EICAS caution message. Who should the dispatcher coordinate with first, alongside communicating with the crew?',options:['Crew scheduling','The station manager at the destination','Maintenance Operations Control (MOC)','The FAA Flight Standards office'],correct:2,cite:'Module 6 slide 8'},{n:10,pts:10,text:'What is the key difference between an ACI (Administrative Control Item) and a standard MEL item?',options:['An ACI allows the aircraft to fly with reduced performance; an MEL does not','An ACI is listed for tracking and informational purposes only — no operational relief is granted. A MEL item grants specific operational relief.','An ACI applies only to cabin items; a MEL applies to flight-critical systems','They are functionally identical'],correct:1,cite:'Module 6 slide 20'}]},
   {id:'group2_final',externalUrl:'breeze_test_group2_final.html',mod:'Section Final',name:'Group II Aircraft Section Final',sub:'Modules 6, 16–21 · All Group II content',section:'Group II Aircraft',type:'test',totalQuestions:10,questions:[{n:1,pts:10,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:2,pts:10,text:'The fuselage is considered a critical surface and must always be deiced before flight in winter conditions.',options:['True','False'],correct:1,cite:'Module 17 slide 9'},{n:3,pts:10,text:'Which of the following are the critical surfaces that must be free of contamination before takeoff under the Clean Aircraft Concept?',options:['Fuselage, wings, and nose','Wings, horizontal stabilizers, vertical stabilizers, control surfaces, and engine inlets','Wings, cockpit windows, and landing gear','Wings, control surfaces, and antennas'],correct:1,cite:'Module 17 slide 8 / GDAP'},{n:4,pts:10,text:'What is the key difference between deicing and anti-icing fluids?',options:['Deicing prevents ice formation; anti-icing removes existing ice','Deicing removes existing frost, ice, or snow; anti-icing prevents formation or accumulation after application','They are the same fluid applied at different temperatures','Anti-icing is only used on critical surfaces; deicing is for the fuselage'],correct:1,cite:'Module 17 slide 12 / GDAP 4.1.3'},{n:5,pts:10,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from gate departure to takeoff; begins at pushback','The estimated time anti-icing fluid will prevent frost or ice formation; begins when the final application of fluid commences','The maximum time an aircraft can hold on the taxiway in winter conditions','The time limit for completing the deicing process before the fluid must be reapplied'],correct:1,cite:'Module 17 / GDAP'},{n:6,pts:10,text:'Per 14 CFR 121.629 (the Clean Aircraft Concept), when may a dispatcher release or an aircraft take off?',options:['Only when conditions are below 0°C and precipitation has stopped','Only when the approved deicing/anti-icing program is followed if frost, ice, or snow may reasonably be expected to adhere to critical surfaces','Whenever the crew performs a visual inspection and finds no contamination','At the captain\'s discretion during winter operations'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:7,pts:10,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement must dispatch verify and how?',options:['No additional requirement — standard landing field length applies','The effective runway length must be at least 115% of the required landing field length; verified using the RWA section in N-FP','The crew must conduct a visual inspection of the runway before landing','An alternate must be added regardless of existing alternate requirements'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17 slide 57'},{n:8,pts:10,text:'Your flight to BDL is departing in 90 minutes. OAT is -5°C and light snow is falling. The crew will be deiced with Type IV anti-icing fluid. What is the dispatcher\'s primary responsibility regarding holdover time?',options:['Nothing — holdover time is the crew\'s responsibility','Ensure the crew is aware of the HOT for the conditions and fluid type, and that they understand HOT begins at the final fluid application — not at takeoff','Ensure the aircraft is deiced no more than 10 minutes before pushback','Add 30 minutes of hold fuel for winter operations'],correct:1,cite:'Module 17 / GDAP'},{n:9,pts:10,text:'You are planning a flight to SBN in January. The destination TAF shows -8°C and moderate snow at ETA with reported braking action POOR. What must dispatch assess before releasing the flight?',options:['Only whether fuel minimums are met','Whether the destination runway meets landing performance requirements under contaminated runway conditions, including the 115% field length check if visibility is also below ¾ SM','Whether the crew has been trained for winter operations','Whether the station has a deice truck available'],correct:1,cite:'Module 17 / OpSpec C054 / § 121.195'},{n:10,pts:10,text:'The Air Florida Flight 90 case study in Module 17 is used to illustrate which core dispatch lesson?',options:['The importance of fuel planning in winter operations','The catastrophic consequences of failing to properly deice and the critical importance of the Clean Aircraft Concept','How dispatchers should calculate holdover times','The danger of tailwind operations in cold weather'],correct:1,cite:'Module 17 slide 11'}]},
-  {id:'comp_final',externalUrl:'breeze_test_comprehensive_final.html',mod:'Comprehensive Final',name:'Comprehensive Final Exam',sub:'All sections · 80% to pass · Closed book',section:'All Sections',type:'test',totalQuestions:15,questions:[{n:1,pts:7,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the conditions and procedures in the MEL are followed.',options:['True','False'],correct:0,cite:'Module 6 / IOCM MEL/CDL procedures'},{n:2,pts:7,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it functions the same way as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural EXTERNAL parts of the aircraft (e.g., fairings, '},{n:3,pts:7,text:'On both the A220 and E190, the maximum tailwind component for takeoff and landing is 10 knots.',options:['True','False'],correct:0,cite:'Both the A220 and E190 AFMs limit tailwind operations to 10 knots for takeoff and landing.'},{n:4,pts:7,text:'Ballast fuel on the E190/195 is considered usable fuel and does not need to be remarked on the dispatch release.',options:['True','False'],correct:1,cite:'Module 20 slide 5'},{n:5,pts:7,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:6,pts:7,text:'Breeze plans for a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW of:',options:['1,000 lbs','2,000 lbs','3,000 lbs','4,000 lbs'],correct:1,cite:'Module 16/18/19 W&B policy'},{n:7,pts:7,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s FIRST action in Aerodata?',options:['Revise the dispatch release with the MEL applied','Block the FDP immediately so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL','File a safety report in Ideagen'],correct:1,cite:'Module 6 / IOCC-INFO-05'},{n:8,pts:7,text:'When is ballast fuel required on the E190/195, and how much?',options:['Always required — 3,000 lbs minimum','When there are 15 or fewer passengers onboard — 5,000 lbs','When the aircraft is below MZFW — amount determined by W&B','Ballast fuel is not required on the E190'],correct:1,cite:'Module 20 slide 5'},{n:9,pts:7,text:'Which of the following correctly describes the Clean Aircraft Concept under 14 CFR 121.629?',options:['The dispatcher must confirm the aircraft has been washed before winter operations','Dispatch, release, or takeoff is prohibited when frost, ice, or snow may reasonably adhere to critical surfaces unless the approved deicing/anti-icing program is followed','The crew must perform a visual inspection of the aircraft before every winter departure','Anti-icing fluid must be applied at all temperatures below 10°C'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:10,pts:7,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The minimum fuel for landing; equal to company landing fuel minimums','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less of fuel remaining','Total fuel planned for the flight including all reserves and contingency'],correct:1,cite:'Module 20 slide 17'},{n:11,pts:6,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of the required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','A destination alternate must always be added regardless of the 1-2-3 rule'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17'},{n:12,pts:6,text:'A MEL amendment is considered complete only when:',options:['The dispatcher sends the revised release via ACARS','MOC confirms the MEL has been entered in the maintenance log','The PIC replies via ACARS acknowledging the amendment with time and initials','The supervisor approves the amendment in N-FP'],correct:2,cite:'Module 6 slide 34'},{n:13,pts:6,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from deicing completion to takeoff; begins at wheels-up','The estimated time anti-icing fluid prevents contamination formation; begins when the FINAL application of fluid commences','The maximum allowed taxi time in winter conditions; begins at pushback','The time limit to complete the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},{n:16,pts:6,text:'Briefly describe what the GDAP (Ground Deice/Anti-Icing Program) contains and why it matters to dispatch. Cite the applicable regulation. Answer + Citation:',options:['Yes — drizzle and mist are not icing conditions','No — OAT is 09°C which is above freezing; icing is not a factor','No — temperature/dewpoint spread of 0°C with visible moisture (BR/mist) at 9°C meets the definition of icing conditions (≤10°C with visible moisture), and drizzle is a form of precipitation that can freeze on cold-soaked surfaces','Yes — the MEL only restricts known icing, and this METAR does not show ice pellets or freezing drizzle'],correct:2,cite:'OAT 9°C with visible moisture (mist/drizzle) meets Breeze icing conditions criteria (≤10°C with visi'},{n:22,pts:6,text:'You are dispatching an E190 with 13 passengers from BNA to PVD. What fuel planning action is required and what must appear on the release?',options:['No special action — normal fuel planning applies for any passenger count','Add 5,000 lbs of ballast fuel (considered unusable) and remark the release — required for 15 or fewer passengers on the E190/195','Reduce planned fuel by 5,000 lbs to compensate for the light load','Contact MOC to confirm weight and balance before releasing'],correct:1,cite:'Module 20 slide 5'}]}
+  {id:'comp_final',externalUrl:'breeze_test_comprehensive_final.html',mod:'Comprehensive Final',name:'Comprehensive Final Exam',sub:'All sections · 80% to pass · Closed book',section:'All Sections',type:'test',totalQuestions:15,questions:[{n:1,pts:7,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the conditions and procedures in the MEL are followed.',options:['True','False'],correct:0,cite:'Module 6 / IOCM MEL/CDL procedures'},{n:2,pts:7,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it functions the same way as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural EXTERNAL parts of the aircraft (e.g., fairings, '},{n:3,pts:7,text:'On both the A220 and E190, the maximum tailwind component for takeoff and landing is 10 knots.',options:['True','False'],correct:0,cite:'Both the A220 and E190 AFMs limit tailwind operations to 10 knots for takeoff and landing.'},{n:4,pts:7,text:'Ballast fuel on the E190/195 is considered usable fuel and does not need to be remarked on the dispatch release.',options:['True','False'],correct:1,cite:'Module 20 slide 5'},{n:5,pts:7,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:6,pts:7,text:'Breeze plans for a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW of:',options:['1,000 lbs','2,000 lbs','3,000 lbs','4,000 lbs'],correct:1,cite:'Module 16/18/19 W&B policy'},{n:7,pts:7,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s FIRST action in Aerodata?',options:['Revise the dispatch release with the MEL applied','Block the FDP immediately so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL','File a safety report in Ideagen'],correct:1,cite:'Module 6 / IOCC-INFO-05'},{n:8,pts:7,text:'When is ballast fuel required on the E190/195, and how much?',options:['Always required — 3,000 lbs minimum','When there are 15 or fewer passengers onboard — 5,000 lbs','When the aircraft is below MZFW — amount determined by W&B','Ballast fuel is not required on the E190'],correct:1,cite:'Module 20 slide 5'},{n:9,pts:7,text:'Which of the following correctly describes the Clean Aircraft Concept under 14 CFR 121.629?',options:['The dispatcher must confirm the aircraft has been washed before winter operations','Dispatch, release, or takeoff is prohibited when frost, ice, or snow may reasonably adhere to critical surfaces unless the approved deicing/anti-icing program is followed','The crew must perform a visual inspection of the aircraft before every winter departure','Anti-icing fluid must be applied at all temperatures below 10°C'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:10,pts:7,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The minimum fuel for landing; equal to company landing fuel minimums','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less of fuel remaining','Total fuel planned for the flight including all reserves and contingency'],correct:1,cite:'Module 20 slide 17'},{n:11,pts:6,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of the required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','A destination alternate must always be added regardless of the 1-2-3 rule'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17'},{n:12,pts:6,text:'A MEL amendment is considered complete only when:',options:['The dispatcher sends the revised release via ACARS','MOC confirms the MEL has been entered in the maintenance log','The PIC replies via ACARS acknowledging the amendment with time and initials','The supervisor approves the amendment in N-FP'],correct:2,cite:'Module 6 slide 34'},{n:13,pts:6,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from deicing completion to takeoff; begins at wheels-up','The estimated time anti-icing fluid prevents contamination formation; begins when the FINAL application of fluid commences','The maximum allowed taxi time in winter conditions; begins at pushback','The time limit to complete the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},{n:16,pts:6,text:'Briefly describe what the GDAP (Ground Deice/Anti-Icing Program) contains and why it matters to dispatch. Cite the applicable regulation. Answer + Citation:',options:['Yes — drizzle and mist are not icing conditions','No — OAT is 09°C which is above freezing; icing is not a factor','No — temperature/dewpoint spread of 0°C with visible moisture (BR/mist) at 9°C meets the definition of icing conditions (≤10°C with visible moisture), and drizzle is a form of precipitation that can freeze on cold-soaked surfaces','Yes — the MEL only restricts known icing, and this METAR does not show ice pellets or freezing drizzle'],correct:2,cite:'OAT 9°C with visible moisture (mist/drizzle) meets Breeze icing conditions criteria (≤10°C with visi'},{n:22,pts:6,text:'You are dispatching an E190 with 13 passengers from BNA to PVD. What fuel planning action is required and what must appear on the release?',options:['No special action — normal fuel planning applies for any passenger count','Add 5,000 lbs of ballast fuel (considered unusable) and remark the release — required for 15 or fewer passengers on the E190/195','Reduce planned fuel by 5,000 lbs to compensate for the light load','Contact MOC to confirm weight and balance before releasing'],correct:1,cite:'Module 20 slide 5'}]},
+  {id:'practice_sheet1',mod:'Sheet 1',name:'Practice Knowledge Check — Sheet 1',sub:'Practice scenarios · Placeholder content',section:'Practice',type:'kc',totalQuestions:2,questions:[
+  {n:1,pts:50,text:'Placeholder question — replace this in the Question Editor. The dispatcher and pilot in command share joint responsibility for preflight planning, delay, and the dispatch release of each flight.',options:['True','False'],correct:0,cite:'Placeholder — § 121.533(b)'},
+  {n:2,pts:50,text:'Placeholder question — replace this in the Question Editor. Which is the dispatcher\'s sole responsibility under § 121.533(c)?',options:['Sign the release','Monitor the progress of each flight','Fuel the aircraft','File the flight plan'],correct:1,cite:'Placeholder — § 121.533(c)'}]},
+  {id:'practice_sheet2',mod:'Sheet 2',name:'Practice Knowledge Check — Sheet 2',sub:'Practice scenarios · Placeholder content',section:'Practice',type:'kc',totalQuestions:2,questions:[
+  {n:1,pts:50,text:'Placeholder question — replace this in the Question Editor.',options:['True','False'],correct:0,cite:'Placeholder'},
+  {n:2,pts:50,text:'Placeholder question — replace this in the Question Editor.',options:['Option A','Option B','Option C','Option D'],correct:0,cite:'Placeholder'}]},
+  {id:'practice_sheet3',mod:'Sheet 3',name:'Practice Knowledge Check — Sheet 3',sub:'Practice scenarios · Placeholder content',section:'Practice',type:'kc',totalQuestions:2,questions:[
+  {n:1,pts:50,text:'Placeholder question — replace this in the Question Editor.',options:['True','False'],correct:0,cite:'Placeholder'},
+  {n:2,pts:50,text:'Placeholder question — replace this in the Question Editor.',options:['Option A','Option B','Option C','Option D'],correct:0,cite:'Placeholder'}]}
 ];;
 
 // ── Live quiz data: starts as fallback, replaced by sheet on load ──────────────
@@ -1091,9 +1101,12 @@ function renderPortal() {
     quizzesBySection[q.section][q.type === 'test' ? 'test' : 'kc'].push(q);
   });
 
-  // Count totals
+  // Count totals (exclude the Practice section — it has its own launcher)
   let totalKC = 0, totalTests = 0;
-  QUIZZES.forEach(q => { if(q.type==='test') totalTests++; else totalKC++; });
+  QUIZZES.forEach(q => {
+    if (q.section === 'Practice') return;
+    if(q.type==='test') totalTests++; else totalKC++;
+  });
 
   const container = document.getElementById('quiz-grid');
   const sectionContainer = document.getElementById('quiz-section-container');
@@ -1107,6 +1120,19 @@ function renderPortal() {
       &#9654; Tests &amp; Finals <span class="tab-count">${totalTests}</span>
     </button>
   </div>`;
+
+  // Practice Knowledge Checks launcher — shown within the Knowledge Checks tab
+  if (activeTab === 'kc') {
+    const practiceCount = QUIZZES.filter(q => q.section === 'Practice').length;
+    html += `<div class="practice-launch" onclick="showPortalSection('practice')">
+      <div class="practice-launch-icon">&#9998;</div>
+      <div class="practice-launch-text">
+        <div class="practice-launch-title">Practice Knowledge Checks <span class="tab-count">${practiceCount}</span></div>
+        <div class="practice-launch-sub">Practice scenario sheets — Sheet 1, Sheet 2, and more. Scored and tracked like any knowledge check.</div>
+      </div>
+      <div class="practice-launch-arrow">&#8594;</div>
+    </div>`;
+  }
 
   sectionOrder.forEach(section => {
     const items = quizzesBySection[section][activeTab];
@@ -1158,7 +1184,6 @@ function showPortalSection(tab) {
   if (tab === 'study') {
     document.getElementById('portal-study').style.display = 'block';
   } else if (tab === 'practice') {
-    if (!window._practiceTab) window._practiceTab = 'kc';
     renderPractice();
     document.getElementById('portal-practice').style.display = 'block';
   } else {
@@ -1175,70 +1200,37 @@ function showPortalHome() {
   document.getElementById('portal-practice').style.display = 'none';
 }
 
-function setPracticeTab(tab) {
-  window._practiceTab = tab;
-  renderPractice();
-}
-
-// ── Render Practice Scenarios & Worksheets (placeholder content) ───────────────
+// ── Render Practice Knowledge Checks (real, graded quizzes; single list) ───────
 function renderPractice() {
-  if (!window._practiceTab) window._practiceTab = 'kc';
-  const activeTab = window._practiceTab;
+  const scores = getScores(currentUser);
+  const items = QUIZZES.filter(q => q.section === 'Practice');
 
-  // Placeholder items per sub-section. Replace these with real content later.
-  const PRACTICE = {
-    kc: [
-      {mod:'Scenario 1', name:'Fuel Planning Walkthrough', sub:'Placeholder — practice knowledge check coming soon'},
-      {mod:'Scenario 2', name:'Alternate Selection Drill', sub:'Placeholder — practice knowledge check coming soon'}
-    ],
-    test: [
-      {mod:'Worksheet A', name:'Weather Minimums Worksheet', sub:'Placeholder — practice test coming soon'},
-      {mod:'Worksheet B', name:'MEL/CDL Application Worksheet', sub:'Placeholder — practice test coming soon'}
-    ],
-    study: [
-      {mod:'Reference', name:'Scenario Library', sub:'Placeholder — practice study materials coming soon'}
-    ]
-  };
-
-  const tabMeta = [
-    {key:'kc',    label:'&#9642; Knowledge Checks'},
-    {key:'test',  label:'&#9654; Tests &amp; Finals'},
-    {key:'study', label:'&#128218; Study Materials'}
-  ];
-
-  let html = `<div class="tab-bar">`;
-  tabMeta.forEach(t => {
-    const items = PRACTICE[t.key] || [];
-    html += `<button class="tab-btn ${activeTab===t.key?'active':''}" onclick="setPracticeTab('${t.key}')">
-      ${t.label} <span class="tab-count">${items.length}</span>
-    </button>`;
-  });
-  html += `</div>`;
-
-  const items = PRACTICE[activeTab] || [];
-  const sectionLabel = activeTab === 'kc' ? 'Practice Knowledge Checks'
-                     : activeTab === 'test' ? 'Practice Tests & Finals'
-                     : 'Practice Study Materials';
-
-  html += `<div class="quiz-section-group">
-    <div class="module-section-label">${sectionLabel}</div>
+  let html = `<div class="quiz-section-group">
+    <div class="module-section-label">Practice Knowledge Checks</div>
     <div class="quiz-grid">`;
 
   if (!items.length) {
-    html += `<div class="qc-sub" style="padding:1rem;">Placeholder content coming soon.</div>`;
+    html += `<div class="qc-sub" style="padding:1rem;">No practice sheets yet. Add quizzes with section "Practice" in the Question Editor.</div>`;
   } else {
-    items.forEach(it => {
-      html += `<div class="quiz-card">
-        <div class="qc-mod">${it.mod}</div>
-        <div class="qc-name">${it.name}</div>
-        <div class="qc-sub">${it.sub}</div>
+    items.forEach(q => {
+      const sc = scores[q.id];
+      const done = !!sc;
+      const passClass = done ? (sc.pass ? 'pass' : 'fail') : 'pending';
+      const scoreLabel = done ? sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') : 'Not attempted';
+      html += `<div class="quiz-card ${done ? 'completed' : ''}" id="card-${q.id}">
+        <div class="qc-mod">${q.mod}</div>
+        <div class="qc-name">${q.name}</div>
+        <div class="qc-sub">${q.sub}</div>
         <div class="qc-meta">
-          <span class="qc-badge">Placeholder</span>
-          <span class="qc-score pending">Not available yet</span>
+          <span class="qc-badge">${q.totalQuestions} questions</span>
+          <span class="qc-badge">80% to pass</span>
+          <span class="qc-score ${passClass}">${scoreLabel}</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;">
           <span class="type-badge type-kc">&#9998; Practice</span>
-          <button class="start-btn" disabled style="opacity:.5;cursor:not-allowed;">&#9654; Coming soon</button>
+          <button class="start-btn ${done ? 'retake' : ''}" onclick="startQuiz('${q.id}')">
+            ${done ? '&#8635; Retake' : '&#9654; Start'}
+          </button>
         </div>
       </div>`;
     });
