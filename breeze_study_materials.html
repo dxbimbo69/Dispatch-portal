@@ -2241,36 +2241,29 @@ document.addEventListener('keydown', function(e){
 (function(){
   var el = document.getElementById('drew-peek');
   if (!el) return;
-  var busy = false;
 
-  function rise(){
-    busy = true;
-    el.style.transition = 'transform 3.4s ease-out';
-    el.style.transform = 'translateY(58%)';            // up to about his mouth
-  }
-  function sink(){
-    el.style.transition = 'transform 3.4s ease-in';
-    el.style.transform = 'translateY(105%)';           // back down, out of view
-  }
+  var RISE_MS = 3400;   // rise duration
+  var SINK_MS = 3400;   // sink duration
 
-  // Drive the next step off the actual end of each transition (robust vs. timer throttling)
-  el.addEventListener('transitionend', function(){
-    if (!busy) return;
-    if (el.style.transform.indexOf('58%') !== -1) {
-      // finished rising -> hold, then sink
-      var hold = 1400 + Math.random()*1000;
-      setTimeout(sink, hold);
-    } else {
-      // finished sinking -> done, schedule next appearance
-      busy = false;
-      schedule();
-    }
-  });
+  function cycle(){
+    // 1) slow rise
+    el.style.transition = 'transform ' + RISE_MS + 'ms ease-out';
+    el.style.transform = 'translateY(58%)';                 // up to about his mouth
+    // 2) after the rise finishes + a hold, slowly sink
+    var hold = 1400 + Math.random()*1000;
+    setTimeout(function(){
+      el.style.transition = 'transform ' + SINK_MS + 'ms ease-in';
+      el.style.transform = 'translateY(105%)';              // back down, out of view
+      // 3) after the sink finishes, schedule the next appearance
+      setTimeout(schedule, SINK_MS + 200);
+    }, RISE_MS + hold);
+  }
 
   function schedule(){
-    var wait = 18000 + Math.random()*22000;            // next peek in ~18-40s
-    setTimeout(function(){ rise(); }, wait);
+    var wait = 18000 + Math.random()*22000;                 // next peek in ~18-40s
+    setTimeout(cycle, wait);
   }
+
   schedule();
 })();
 
