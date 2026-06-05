@@ -223,6 +223,8 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--navy-dk);color:va
 .fb-score.fail{background:var(--red-lt);color:var(--red);}
 .fb-note{border-left:3px solid var(--blue);background:var(--surface);padding:.7rem .9rem;border-radius:0 8px 8px 0;margin-bottom:.6rem;}
 .fb-note-q{font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:.35rem;}
+.fb-pts{display:inline-block;background:var(--blue-lt);color:var(--blue);font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;margin-left:6px;}
+.fb-your-ans{font-size:12.5px;color:var(--ink2);line-height:1.55;margin-bottom:.35rem;}
 .fb-note-text{font-size:13px;color:var(--ink2);line-height:1.55;}
 .fb-note-empty{color:var(--ink3);font-size:13px;padding:1rem 0;}
 .start-btn{
@@ -1167,6 +1169,9 @@ function mergeSheetScoresForUser(uid) {
       if (r.gradeNotes && typeof r.gradeNotes === 'object') {
         grades[quiz.id + '_notes'] = r.gradeNotes;
       }
+      if (r.gradePoints && typeof r.gradePoints === 'object') {
+        grades[quiz.id] = r.gradePoints;
+      }
     }
   });
   try { localStorage.setItem('bz_scores_' + uid, JSON.stringify(scores)); } catch(e){}
@@ -1331,23 +1336,41 @@ function showScreen(id) {
 function viewFeedback(quizId) {
   const quiz = QUIZZES.find(q => q.id === quizId);
   const sc = getScores(currentUser)[quizId] || {};
-  const notes = (getSAGrades(currentUser)[quizId + '_notes']) || {};
+  const allGrades = getSAGrades(currentUser);
+  const notes = (allGrades[quizId + '_notes']) || {};
+  const points = (allGrades[quizId]) || {};                 // {qn: ptsAwarded}
+  const answers = getSAAnswers(currentUser, quizId);        // {qn: studentAnswer}
   const qLookup = {};
   if (quiz) (quiz.questions||[]).forEach(qq => qLookup[qq.n] = qq);
+
+  // Show every written question that has either a grade or a note
+  const qns = {};
+  Object.keys(notes).forEach(n => qns[n] = true);
+  Object.keys(points).forEach(n => qns[n] = true);
+  const keys = Object.keys(qns).sort((a,b)=>Number(a)-Number(b));
 
   let body = `<div class="fb-head">
       <div class="fb-title">${quiz ? quiz.mod + ' — ' + quiz.name : 'Quiz'}</div>
       <div class="fb-score ${sc.pass?'pass':'fail'}">${sc.score!=null?sc.score+'% · '+(sc.pass?'Pass':'Fail'):'—'}</div>
     </div>`;
-  const keys = Object.keys(notes);
   if (!keys.length) {
     body += `<div class="fb-note-empty">No written feedback was left for this quiz.</div>`;
   } else {
     body += keys.map(n => {
       const qq = qLookup[n] || {};
+      const awarded = points[n];
+      const maxPts = qq.pts != null ? qq.pts : '';
+      const ptsLabel = (awarded != null && maxPts !== '')
+        ? `<span class="fb-pts">${awarded}/${maxPts} pts</span>` : '';
+      const studentAns = answers[n];
+      const ansBlock = studentAns
+        ? `<div class="fb-your-ans"><strong>Your answer:</strong> ${String(studentAns).replace(/</g,'&lt;')}</div>` : '';
+      const noteBlock = notes[n]
+        ? `<div class="fb-note-text"><strong>Feedback:</strong> ${String(notes[n]).replace(/</g,'&lt;')}</div>` : '';
       return `<div class="fb-note">
-        <div class="fb-note-q">Q${n}${qq.text ? '. ' + qq.text : ''}</div>
-        <div class="fb-note-text">${String(notes[n]).replace(/</g,'&lt;')}</div>
+        <div class="fb-note-q">Q${n}${qq.text ? '. ' + qq.text : ''} ${ptsLabel}</div>
+        ${ansBlock}
+        ${noteBlock}
       </div>`;
     }).join('');
   }
@@ -2471,7 +2494,7 @@ function saveGrades(uid, quizId) {
       score: finalScore, pass: pass?'Pass':'Fail', status:'finalized',
       mcEarned: mcEarned, totalPossible: totalPossible, writtenPending: 0,
       exam: testInfo.name, submittedAt: new Date().toISOString(),
-      gradeNotes: quizNotes, saScore: saTotal
+      gradeNotes: quizNotes, gradePoints: quizGrades, saScore: saTotal
     });
     form.appendChild(inp);
     const ifr = document.createElement('iframe'); ifr.name='gradehf'; ifr.style.display='none';
