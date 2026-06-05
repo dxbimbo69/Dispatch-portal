@@ -1998,9 +1998,7 @@ function renderAdmin() {
       const quizCells = QUIZZES.map(q => {
         const sc = scores[q.id];
         if (!sc) return `<td><span class="badge badge-pending">—</span></td>`;
-        const writtenInfo = getWrittenQuestions(q.id);
-        const hasWritten = !!writtenInfo;
-        const gradeBtn = hasWritten ? `<button onclick="openGrading('${uid}','${q.id}')" style="margin-left:4px;font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid var(--blue);background:var(--blue-lt);color:var(--blue);cursor:pointer;font-weight:600;">✎ View answers</button>` : '';
+        const gradeBtn = `<button onclick="openGrading('${uid}','${q.id}')" style="margin-left:4px;font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid var(--blue);background:var(--blue-lt);color:var(--blue);cursor:pointer;font-weight:600;">✎ View answers</button>`;
         return `<td><span class="badge ${sc.pass ? 'badge-pass' : 'badge-fail'}">${sc.score}%</span>${gradeBtn}<div style="font-size:10px;color:var(--ink3);">${sc.date||''}</div></td>`;
       }).join('');
       return `<tr>
@@ -2443,11 +2441,14 @@ function getWrittenAnswersFromSheet(uid, quizId) {
 }
 
 function openGrading(uid, quizId) {
-  const testInfo = getWrittenQuestions(quizId);
-  if (!testInfo || !testInfo.questions || !testInfo.questions.length) {
-    alert('No written answers to view for this quiz.');
-    return;
-  }
+  const quizForTitle = QUIZZES.find(q => q.id === quizId);
+  const writtenInfo = getWrittenQuestions(quizId);
+  // testInfo always has a name + a (possibly empty) questions list, so MC-only quizzes work too.
+  const testInfo = writtenInfo || {
+    name: quizForTitle ? (quizForTitle.mod + ' — ' + quizForTitle.name) : 'Quiz',
+    questions: []
+  };
+  const hasWritten = testInfo.questions.length > 0;
 
   const grades = getSAGrades(uid);
   const quizGrades = grades[quizId] || {};
@@ -2480,7 +2481,9 @@ function openGrading(uid, quizId) {
     <strong>Multiple-choice earned:</strong> ${scMcEarned} pts &nbsp;·&nbsp;
     <strong>Written questions:</strong> ${testInfo.questions.length} &nbsp;·&nbsp;
     <strong>Total possible:</strong> ${scTotalPossible || '—'} pts<br>
-    <em>Award written points and add notes below. Saving finalizes the combined score (MC + written) and the student can then see it with your notes.</em>
+    <em>${hasWritten
+      ? 'Award written points and add notes below. Saving finalizes the combined score (MC + written) and the student can then see it with your notes.'
+      : 'This quiz is multiple-choice only — answers shown below for review. It was scored automatically.'}</em>
   </div>`;
 
   // Multiple-choice review (read-only) — pulled from this student's most recent sheet attempt
@@ -2495,7 +2498,9 @@ function openGrading(uid, quizId) {
         ${!right ? `<div class="grade-mc-correct"><strong>Correct:</strong> ${a.correct!=null?String(a.correct).replace(/</g,'&lt;'):''}</div>` : ''}
       </div>`;
     });
-    html += `<div class="grade-mc-title" style="margin-top:1.25rem;">Written answers — grade below</div>`;
+    if (hasWritten) html += `<div class="grade-mc-title" style="margin-top:1.25rem;">Written answers — grade below</div>`;
+  } else if (!hasWritten) {
+    html += `<div class="grade-mc-title">No per-question detail was recorded for this attempt.</div>`;
   }
 
   testInfo.questions.forEach(q => {
@@ -2522,8 +2527,8 @@ function openGrading(uid, quizId) {
   });
 
   html += `<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray);">
-    <button onclick="closeGrading()" style="padding:9px 20px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:13px;cursor:pointer;">Cancel</button>
-    <button class="grade-btn" onclick="saveGrades('${uid}','${quizId}')">&#10003; Save grades</button>
+    <button onclick="closeGrading()" style="padding:9px 20px;border:1.5px solid var(--gray);border-radius:8px;background:var(--white);font-size:13px;cursor:pointer;">${hasWritten ? 'Cancel' : 'Close'}</button>
+    ${hasWritten ? `<button class="grade-btn" onclick="saveGrades('${uid}','${quizId}')">&#10003; Save grades</button>` : ''}
   </div>`;
 
   document.getElementById('grading-body').innerHTML = html;
