@@ -213,6 +213,18 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--navy-dk);color:va
 .qc-score.pass{background:var(--green-lt);color:var(--green);}
 .qc-score.fail{background:var(--red-lt);color:var(--red);}
 .qc-score.pending{background:var(--gray);color:var(--ink3);}
+.qc-score.await{background:var(--blue-lt);color:var(--blue);}
+.qc-feedback-btn{margin-top:.6rem;width:100%;background:var(--blue-lt);border:1.5px solid var(--blue);color:var(--blue);font-size:12px;font-weight:600;padding:7px;border-radius:8px;cursor:pointer;font-family:'Instrument Sans',sans-serif;}
+.qc-feedback-btn:hover{background:var(--blue);color:#fff;}
+.fb-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid var(--gray);padding-bottom:1rem;margin-bottom:1rem;gap:1rem;}
+.fb-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy);}
+.fb-score{font-weight:700;font-size:14px;padding:4px 12px;border-radius:20px;}
+.fb-score.pass{background:var(--green-lt);color:var(--green);}
+.fb-score.fail{background:var(--red-lt);color:var(--red);}
+.fb-note{border-left:3px solid var(--blue);background:var(--surface);padding:.7rem .9rem;border-radius:0 8px 8px 0;margin-bottom:.6rem;}
+.fb-note-q{font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:.35rem;}
+.fb-note-text{font-size:13px;color:var(--ink2);line-height:1.55;}
+.fb-note-empty{color:var(--ink3);font-size:13px;padding:1rem 0;}
 .start-btn{
   display:inline-flex;align-items:center;gap:6px;
   margin-top:1rem;padding:8px 16px;
@@ -299,6 +311,9 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--navy-dk);color:va
 .result-banner{border-radius:16px;padding:2.5rem;text-align:center;margin-bottom:2rem;}
 .result-banner.pass{background:linear-gradient(135deg,#0F4C24,#1A7A3C);}
 .result-banner.fail{background:linear-gradient(135deg,#7F1D1D,#B91C1C);}
+.result-banner.pending{background:linear-gradient(135deg,#1F74DE,#2566CC);}
+.grade-note-input{width:100%;border:1.5px solid var(--gray);border-radius:8px;padding:8px 10px;font-size:13px;font-family:'Open Sans',sans-serif;min-height:60px;resize:vertical;outline:none;}
+.grade-note-input:focus{border-color:var(--blue);}
 .result-icon{font-size:52px;margin-bottom:.75rem;}
 .result-verdict{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:.4rem;}
 .result-score{font-size:48px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1;}
@@ -608,6 +623,15 @@ tbody tr:hover td{background:#FAFAF7;}
   <div class="tr-panel">
     <button class="tr-close" onclick="closeTrainee()">&times;</button>
     <div id="trainee-body"></div>
+  </div>
+</div>
+
+<!-- ══ STUDENT FEEDBACK MODAL ════════════════════════════════════ -->
+<div id="feedback-modal" style="display:none;">
+  <div class="tr-overlay" onclick="closeFeedback()"></div>
+  <div class="tr-panel" style="max-width:600px;">
+    <button class="tr-close" onclick="closeFeedback()">&times;</button>
+    <div id="feedback-body"></div>
   </div>
 </div>
 
@@ -1112,6 +1136,42 @@ function loadResults(done) {
   setTimeout(function(){ finish(false); }, 12000);
 }
 
+// Bring this user's finalized scores + instructor notes (from the sheet) onto their device,
+// so a student sees their graded result and feedback after the instructor evaluates.
+function mergeSheetScoresForUser(uid) {
+  const U = String(uid).toUpperCase();
+  const mine = SHEET_RESULTS.filter(r => String(r.id||'').toUpperCase() === U);
+  if (!mine.length) return;
+  const scores = getScores(uid);
+  const grades = getSAGrades(uid);
+  const byExam = {};
+  mine.forEach(r => {
+    const k = r.exam || '';
+    if (!byExam[k] || (r.submittedAt||'') > (byExam[k].submittedAt||'')) byExam[k] = r;
+  });
+  Object.keys(byExam).forEach(k => {
+    const r = byExam[k];
+    const quiz = QUIZZES.find(q => (q.mod + ' — ' + q.name) === r.exam);
+    if (!quiz) return;
+    const status = String(r.status||'').toLowerCase();
+    const passStr = String(r.pass||'').toLowerCase();
+    if (status === 'finalized' || passStr === 'pass' || passStr === 'fail') {
+      scores[quiz.id] = Object.assign({}, scores[quiz.id]||{}, {
+        score: Number(r.score)||0,
+        pass: passStr === 'pass',
+        status: 'finalized',
+        graded: true,
+        date: r.date || (scores[quiz.id] && scores[quiz.id].date) || ''
+      });
+      if (r.gradeNotes && typeof r.gradeNotes === 'object') {
+        grades[quiz.id + '_notes'] = r.gradeNotes;
+      }
+    }
+  });
+  try { localStorage.setItem('bz_scores_' + uid, JSON.stringify(scores)); } catch(e){}
+  saveSAGrades(uid, grades);
+}
+
 // Merge sheet results into a {uid: {quizId: {score,pass,date,...}}} structure,
 // keyed by employee ID. Also records names and written answers.
 function buildStudentsFromSheet() {
@@ -1166,6 +1226,12 @@ function setScore(uid, quizId, score, pass) {
   const s = getScores(uid);
   s[quizId] = { score, pass, date: new Date().toISOString().slice(0,10) };
   localStorage.setItem('bz_scores_' + uid, JSON.stringify(s));
+}
+
+function setScoreFull(uid, quizId, rec) {
+  const s = getScores(uid);
+  s[quizId] = Object.assign({}, s[quizId] || {}, rec);
+  try { localStorage.setItem('bz_scores_' + uid, JSON.stringify(s)); } catch(e) {}
 }
 
 // ── Login ────────────────────────────────────────────────────────────────────
@@ -1225,6 +1291,8 @@ function enterStudentPortal(val, first, last) {
     document.getElementById('portal-welcome-msg').textContent = 'Welcome, ' + first + '!';
     setName(val, first, last);
     renderPortal();
+    // Pull this student's finalized results/notes from the sheet, then refresh
+    loadResults(function(){ try { mergeSheetScoresForUser(val); renderPortal(); } catch(e){} });
   } catch(e) { console.error('portal render error:', e); }
 }
 
@@ -1258,6 +1326,44 @@ function showScreen(id) {
 }
 
 // ── Portal ────────────────────────────────────────────────────────────────────
+// Student view of instructor feedback for a graded quiz.
+function viewFeedback(quizId) {
+  const quiz = QUIZZES.find(q => q.id === quizId);
+  const sc = getScores(currentUser)[quizId] || {};
+  const notes = (getSAGrades(currentUser)[quizId + '_notes']) || {};
+  const qLookup = {};
+  if (quiz) (quiz.questions||[]).forEach(qq => qLookup[qq.n] = qq);
+
+  let body = `<div class="fb-head">
+      <div class="fb-title">${quiz ? quiz.mod + ' — ' + quiz.name : 'Quiz'}</div>
+      <div class="fb-score ${sc.pass?'pass':'fail'}">${sc.score!=null?sc.score+'% · '+(sc.pass?'Pass':'Fail'):'—'}</div>
+    </div>`;
+  const keys = Object.keys(notes);
+  if (!keys.length) {
+    body += `<div class="fb-note-empty">No written feedback was left for this quiz.</div>`;
+  } else {
+    body += keys.map(n => {
+      const qq = qLookup[n] || {};
+      return `<div class="fb-note">
+        <div class="fb-note-q">Q${n}${qq.text ? '. ' + qq.text : ''}</div>
+        <div class="fb-note-text">${String(notes[n]).replace(/</g,'&lt;')}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('feedback-body').innerHTML = body;
+  document.getElementById('feedback-modal').style.display = 'flex';
+}
+function closeFeedback() {
+  document.getElementById('feedback-modal').style.display = 'none';
+}
+
+// Score badge label + class for a quiz card, handling the awaiting-evaluation state.
+function scoreBadge(sc) {
+  if (!sc) return { cls: 'pending', label: 'Not attempted' };
+  if (sc.status === 'pending') return { cls: 'await', label: '⏳ Awaiting evaluation' };
+  return { cls: sc.pass ? 'pass' : 'fail', label: sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') };
+}
+
 function renderPortal() {
   const scores = getScores(currentUser);
 
@@ -1317,8 +1423,9 @@ function renderPortal() {
     items.forEach(q => {
       const sc = scores[q.id];
       const done = !!sc;
-      const passClass = done ? (sc.pass ? 'pass' : 'fail') : 'pending';
-      const scoreLabel = done ? sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') : 'Not attempted';
+      const sb = scoreBadge(sc);
+      const notes = getSAGrades(currentUser)[q.id + '_notes'];
+      const hasNotes = notes && Object.keys(notes).length;
       const typeBadge = q.type === 'test'
         ? '<span class="type-badge type-test">&#9654; Test</span>'
         : '<span class="type-badge type-kc">&#9642; Knowledge Check</span>';
@@ -1329,8 +1436,9 @@ function renderPortal() {
         <div class="qc-meta">
           <span class="qc-badge">${q.totalQuestions} questions</span>
           <span class="qc-badge">80% to pass</span>
-          <span class="qc-score ${passClass}">${scoreLabel}</span>
+          <span class="qc-score ${sb.cls}">${sb.label}</span>
         </div>
+        ${hasNotes ? `<button class="qc-feedback-btn" onclick="viewFeedback('${q.id}')">&#128172; View instructor feedback</button>` : ''}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;">
           ${typeBadge}
           <button class="start-btn ${done ? 'retake' : ''}" onclick="startQuiz('${q.id}')">
@@ -1389,8 +1497,9 @@ function renderPractice() {
     items.forEach(q => {
       const sc = scores[q.id];
       const done = !!sc;
-      const passClass = done ? (sc.pass ? 'pass' : 'fail') : 'pending';
-      const scoreLabel = done ? sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') : 'Not attempted';
+      const sb = scoreBadge(sc);
+      const notes = getSAGrades(currentUser)[q.id + '_notes'];
+      const hasNotes = notes && Object.keys(notes).length;
       html += `<div class="quiz-card ${done ? 'completed' : ''}" id="card-${q.id}">
         <div class="qc-mod">${q.mod}</div>
         <div class="qc-name">${q.name}</div>
@@ -1398,8 +1507,9 @@ function renderPractice() {
         <div class="qc-meta">
           <span class="qc-badge">${q.totalQuestions} questions</span>
           <span class="qc-badge">80% to pass</span>
-          <span class="qc-score ${passClass}">${scoreLabel}</span>
+          <span class="qc-score ${sb.cls}">${sb.label}</span>
         </div>
+        ${hasNotes ? `<button class="qc-feedback-btn" onclick="viewFeedback('${q.id}')">&#128172; View instructor feedback</button>` : ''}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;">
           <span class="type-badge type-kc">&#9998; Practice</span>
           <button class="start-btn ${done ? 'retake' : ''}" onclick="startQuiz('${q.id}')">
@@ -1557,21 +1667,23 @@ async function submitExam() {
   const ua = q.questions.length - answeredCount;
   if (ua > 0 && !confirm(ua + ' question' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
 
-  let earned = 0;
-  let totalPts = 0;          // only auto-graded (MC) points count toward the score
+  let mcEarned = 0;
+  let mcPts = 0;             // total MC points possible
+  let writtenPts = 0;        // total written points possible
   let writtenCount = 0;
   const results = {};
   const writtenAnswers = {};
   q.questions.forEach(qu => {
     if (isWrittenQ(qu)) {
       writtenCount++;
+      writtenPts += (Number(qu.pts) || 0);
       writtenAnswers[qu.n] = (written[qu.n] || '');
       results[qu.n] = { written: true, answer: writtenAnswers[qu.n], model: qu.model || '' };
     } else {
-      totalPts += qu.pts;
+      mcPts += (Number(qu.pts) || 0);
       const a = examSelected[qu.n];
       const correct = a !== undefined && a === qu.correct;
-      if (correct) earned += qu.pts;
+      if (correct) mcEarned += (Number(qu.pts) || 0);
       results[qu.n] = { selected: a, correct };
     }
   });
@@ -1579,14 +1691,32 @@ async function submitExam() {
   // Persist written answers for instructor grading
   if (writtenCount > 0) saveSAAnswers(currentUser, q.id, writtenAnswers);
 
-  // Score reflects MC questions; if a quiz is entirely written, score is pending (0 until graded)
-  const pct = totalPts > 0 ? Math.round(earned / totalPts * 100) : 0;
+  const hasWritten = writtenCount > 0;
+  const totalPossible = mcPts + writtenPts;
+  // MC-only percentage (always shown so students see what they missed)
+  const mcPct = mcPts > 0 ? Math.round(mcEarned / mcPts * 100) : 0;
+
   examResults = results;
-  const pass = pct >= PASS_THRESHOLD;
   document.getElementById('submit-btn').disabled = true;
 
-  // Save locally
-  setScore(currentUser, q.id, pct, pass);
+  let pct, pass, status;
+  if (hasWritten) {
+    // Not finalized — awaits instructor evaluation. Store the pieces needed to finalize later.
+    pct = mcPct;            // provisional MC score for reference
+    pass = false;
+    status = 'pending';
+  } else {
+    pct = mcPct;
+    pass = pct >= PASS_THRESHOLD;
+    status = 'finalized';
+  }
+
+  // Save locally with full scoring context
+  setScoreFull(currentUser, q.id, {
+    score: pct, pass, status,
+    mcEarned, mcPts, writtenPts, totalPossible,
+    date: new Date().toISOString().slice(0,10)
+  });
 
   // Send to Google Sheets
   try {
@@ -1594,7 +1724,9 @@ async function submitExam() {
       action: 'submitResult',
       first: currentUserFirst, last: currentUserLast, id: currentUser,
       date: new Date().toISOString().slice(0,10),
-      score: pct, pass: pass ? 'Pass' : 'Fail',
+      score: pct, pass: hasWritten ? 'Pending' : (pass ? 'Pass' : 'Fail'),
+      status: status,
+      mcEarned: mcEarned, mcPts: mcPts, writtenPts: writtenPts, totalPossible: totalPossible,
       correct: q.questions.filter(qu => !isWrittenQ(qu) && results[qu.n].correct).length,
       total: q.questions.filter(qu => !isWrittenQ(qu)).length,
       writtenPending: writtenCount,
@@ -1637,28 +1769,45 @@ function showResults(score, pass, results) {
   const incorrect = mcQuestions.length - correct;
   const content = document.getElementById('exam-content');
 
-  const writtenNote = writtenQuestions.length
-    ? `<div class="result-sub" style="margin-top:.5rem;">${writtenQuestions.length} written ${writtenQuestions.length>1?'answers':'answer'} submitted for instructor grading. Score shown reflects multiple-choice questions only.</div>`
+  const hasWritten = writtenQuestions.length > 0;
+
+  let bannerClass, bannerIcon, verdict, scoreLine, metaThird;
+  if (hasWritten) {
+    bannerClass = 'pending';
+    bannerIcon = '⏳';
+    verdict = 'SUBMITTED';
+    scoreLine = `<div class="result-score" style="font-size:20px;">Awaiting instructor evaluation</div>`;
+    metaThird = `<div class="rmeta"><div class="rmeta-val">—</div><div class="rmeta-lbl">Final score</div></div>`;
+  } else {
+    bannerClass = pass ? 'pass' : 'fail';
+    bannerIcon = pass ? '✅' : '❌';
+    verdict = pass ? 'PASS' : 'FAIL';
+    scoreLine = `<div class="result-score">${score} / 100</div>`;
+    metaThird = `<div class="rmeta"><div class="rmeta-val">${score}%</div><div class="rmeta-lbl">Score</div></div>`;
+  }
+
+  const writtenNote = hasWritten
+    ? `<div class="result-sub" style="margin-top:.5rem;">Your multiple-choice answers are shown below so you can review what you missed. Your written ${writtenQuestions.length>1?'answers have':'answer has'} been sent to your instructor — your final score and feedback will appear here once it's been reviewed.</div>`
     : '';
 
   let html = `<div class="wrap">
-    <div class="result-banner ${pass ? 'pass' : 'fail'}">
-      <div class="result-icon">${pass ? '✅' : '❌'}</div>
-      <div class="result-verdict">${pass ? 'PASS' : 'FAIL'}</div>
-      <div class="result-score">${score} / 100</div>
+    <div class="result-banner ${bannerClass}">
+      <div class="result-icon">${bannerIcon}</div>
+      <div class="result-verdict">${verdict}</div>
+      ${scoreLine}
       <div class="result-sub">${currentUser} &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</div>
       ${writtenNote}
       <div class="result-meta">
-        <div class="rmeta"><div class="rmeta-val">${correct}</div><div class="rmeta-lbl">Correct</div></div>
-        <div class="rmeta"><div class="rmeta-val">${incorrect}</div><div class="rmeta-lbl">Incorrect</div></div>
-        <div class="rmeta"><div class="rmeta-val">${score}%</div><div class="rmeta-lbl">MC Score</div></div>
+        <div class="rmeta"><div class="rmeta-val">${correct}</div><div class="rmeta-lbl">MC Correct</div></div>
+        <div class="rmeta"><div class="rmeta-val">${incorrect}</div><div class="rmeta-lbl">MC Incorrect</div></div>
+        ${metaThird}
       </div>
     </div>
     <div class="result-actions">
       <button class="btn btn-primary" onclick="window.print()">&#128438; Print results</button>
       <button class="btn btn-green" onclick="backToPortal()">&#8592; Back to portal</button>
     </div>
-    <div class="review-title">Question review — with correct answers</div>`;
+    <div class="review-title">Question review</div>`;
 
   q.questions.forEach(qu => {
     const r = results[qu.n] || {};
@@ -2223,16 +2372,22 @@ function openGrading(uid, quizId) {
 
   document.getElementById('grading-title').textContent = uid + ' — ' + testInfo.name;
 
+  const savedNotes = (grades[quizId + '_notes'] || {});
+  const scTotalPossible = scores[quizId] ? (scores[quizId].totalPossible || 0) : 0;
+  const scMcEarned = scores[quizId] ? (scores[quizId].mcEarned || 0) : 0;
+
   let html = `<div style="background:var(--blue-lt);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--ink2);">
-    <strong>Auto-scored (multiple choice):</strong> ${mcScore}% &nbsp;·&nbsp;
-    <strong>Written answers:</strong> ${testInfo.questions.length} &nbsp;·&nbsp;
-    <em>Score these on your end — the points boxes below are optional.</em>
+    <strong>Multiple-choice earned:</strong> ${scMcEarned} pts &nbsp;·&nbsp;
+    <strong>Written questions:</strong> ${testInfo.questions.length} &nbsp;·&nbsp;
+    <strong>Total possible:</strong> ${scTotalPossible || '—'} pts<br>
+    <em>Award written points and add notes below. Saving finalizes the combined score (MC + written) and the student can then see it with your notes.</em>
   </div>`;
 
   testInfo.questions.forEach(q => {
     const savedGrade = quizGrades[q.n] !== undefined ? quizGrades[q.n] : '';
     const studentAns = saAnswers[q.n] || '';
     const hasGrade = savedGrade !== '';
+    const note = savedNotes[q.n] || '';
     html += `<div class="grade-q">
       <div class="grade-q-num">Q${q.n} — Short Answer &nbsp; ${hasGrade ? '<span class="grade-done-badge">✓ Graded: '+savedGrade+'/'+q.pts+' pts</span>' : '<span class="grade-pending-badge">⏳ Pending</span>'}</div>
       <div class="grade-q-text">${q.text}</div>
@@ -2243,6 +2398,10 @@ function openGrading(uid, quizId) {
         <label>Points awarded:</label>
         <input class="grade-score-input" type="number" min="0" max="${q.pts}" id="grade-input-${q.n}" value="${savedGrade}" placeholder="0">
         <span class="grade-max">/ ${q.pts} pts</span>
+      </div>
+      <div style="margin-top:.6rem;">
+        <label style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px;">Feedback / notes to student:</label>
+        <textarea class="grade-note-input" id="grade-note-${q.n}" placeholder="Optional feedback the student will see…">${note}</textarea>
       </div>
     </div>`;
   });
@@ -2257,46 +2416,75 @@ function openGrading(uid, quizId) {
 }
 
 function saveGrades(uid, quizId) {
-  const testInfo = SA_TESTS[quizId];
+  const testInfo = getWrittenQuestions(quizId);
+  if (!testInfo || !testInfo.questions) { closeGrading(); return; }
   const grades = getSAGrades(uid);
   const quizGrades = {};
+  const quizNotes = {};
   let saTotal = 0;
 
   testInfo.questions.forEach(q => {
     const input = document.getElementById('grade-input-' + q.n);
-    const val = input ? Math.min(q.pts, Math.max(0, parseInt(input.value) || 0)) : 0;
+    const pts = Number(q.pts) || 0;
+    const val = input ? Math.min(pts, Math.max(0, parseInt(input.value) || 0)) : 0;
     quizGrades[q.n] = val;
     saTotal += val;
+    const noteEl = document.getElementById('grade-note-' + q.n);
+    if (noteEl && noteEl.value.trim()) quizNotes[q.n] = noteEl.value.trim();
   });
 
   grades[quizId] = quizGrades;
+  grades[quizId + '_notes'] = quizNotes;
   saveSAGrades(uid, grades);
 
-  // Update the score to include SA points
+  // Combine MC + written into one final score = total earned ÷ total possible
   const existing = getScores(uid);
-  const mcScore = existing[quizId] ? (existing[quizId].mcScore || 0) : 0;
-  const mcPts = testInfo.mcPts;
-  const saPts = testInfo.questions.reduce((a,q)=>a+q.pts,0);
-  const totalPts = mcPts + saPts;
-  const finalScore = Math.round((mcScore + saTotal) / totalPts * 100);
-  const pass = finalScore >= 80;
+  const prior = existing[quizId] || {};
+  const mcEarned = prior.mcEarned != null ? prior.mcEarned : 0;
+  const totalPossible = prior.totalPossible != null && prior.totalPossible > 0
+    ? prior.totalPossible
+    : (mcEarned + testInfo.questions.reduce((a,q)=>a+(Number(q.pts)||0),0));
+  const finalScore = totalPossible > 0 ? Math.round((mcEarned + saTotal) / totalPossible * 100) : 0;
+  const pass = finalScore >= PASS_THRESHOLD;
 
-  existing[quizId] = {
+  existing[quizId] = Object.assign({}, prior, {
     score: finalScore,
-    pass,
-    date: existing[quizId]?.date || new Date().toISOString().slice(0,10),
-    mcScore,
+    pass: pass,
+    status: 'finalized',
     saScore: saTotal,
-    graded: true
-  };
-  localStorage.setItem('bz_scores_' + uid, JSON.stringify(existing));
+    graded: true,
+    gradedDate: new Date().toISOString().slice(0,10)
+  });
+  try { localStorage.setItem('bz_scores_' + uid, JSON.stringify(existing)); } catch(e) {}
+
+  // Push the finalized result back to the sheet so it's the record of truth
+  try {
+    const form = document.createElement('form');
+    form.method='POST'; form.action=SHEET_URL; form.target='gradehf'; form.style.display='none';
+    const inp = document.createElement('input');
+    inp.type='hidden'; inp.name='data';
+    inp.value=JSON.stringify({
+      action:'submitResult',
+      first: (getName(uid)||'').split(' ')[0] || '', last: (getName(uid)||'').split(' ').slice(1).join(' ') || '',
+      id: uid, date: prior.date || new Date().toISOString().slice(0,10),
+      score: finalScore, pass: pass?'Pass':'Fail', status:'finalized',
+      mcEarned: mcEarned, totalPossible: totalPossible, writtenPending: 0,
+      exam: testInfo.name, submittedAt: new Date().toISOString(),
+      gradeNotes: quizNotes, saScore: saTotal
+    });
+    form.appendChild(inp);
+    const ifr = document.createElement('iframe'); ifr.name='gradehf'; ifr.style.display='none';
+    document.body.appendChild(ifr); document.body.appendChild(form); form.submit();
+  } catch(e) {}
 
   closeGrading();
   renderAdmin();
   const status = document.getElementById('gs-pull-status');
-  status.style.color = 'var(--green)';
-  status.textContent = uid + ' — ' + testInfo.name + ' graded: ' + finalScore + '% (' + (pass?'Pass':'Fail') + ')';
-  setTimeout(() => { status.textContent = ''; }, 4000);
+  if (status) {
+    status.style.color = 'var(--green)';
+    status.textContent = uid + ' — ' + testInfo.name + ' finalized: ' + finalScore + '% (' + (pass?'Pass':'Fail') + ')';
+    setTimeout(() => { status.textContent = ''; }, 4000);
+  }
 }
 
 function closeGrading() {
