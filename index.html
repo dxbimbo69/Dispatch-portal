@@ -2461,8 +2461,20 @@ function openGrading(uid, quizId) {
   document.getElementById('grading-title').textContent = uid + ' — ' + testInfo.name;
 
   const savedNotes = (grades[quizId + '_notes'] || {});
-  const scTotalPossible = scores[quizId] ? (scores[quizId].totalPossible || 0) : 0;
-  const scMcEarned = scores[quizId] ? (scores[quizId].mcEarned || 0) : 0;
+  // Reconstruct MC earned + total possible from the sheet attempt / quiz definition,
+  // so the header is accurate even when the student tested on another device.
+  const _quiz = QUIZZES.find(q => q.id === quizId);
+  let _allPts = 0;
+  if (_quiz && _quiz.questions) _quiz.questions.forEach(qq => { _allPts += (Number(qq.pts)||0); });
+  let scMcEarned = scores[quizId] ? scores[quizId].mcEarned : null;
+  if (scMcEarned == null) {
+    scMcEarned = 0;
+    const _qL = {}; if (_quiz) (_quiz.questions||[]).forEach(qq => _qL[qq.n]=qq);
+    getMCAnswersForAttempt(uid, quizId).forEach(a => {
+      if (a.isCorrect === true || a.isCorrect === 'true') scMcEarned += (Number((_qL[a.q]||{}).pts)||0);
+    });
+  }
+  const scTotalPossible = (scores[quizId] && scores[quizId].totalPossible) ? scores[quizId].totalPossible : _allPts;
 
   let html = `<div style="background:var(--blue-lt);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--ink2);">
     <strong>Multiple-choice earned:</strong> ${scMcEarned} pts &nbsp;·&nbsp;
@@ -2540,13 +2552,41 @@ function saveGrades(uid, quizId) {
   grades[quizId + '_notes'] = quizNotes;
   saveSAGrades(uid, grades);
 
-  // Combine MC + written into one final score = total earned ÷ total possible
+  // Combine MC + written into one final score = total earned ÷ total possible.
+  // MC context may be missing locally (student tested on another device), so
+  // reconstruct it from the quiz definition + the student's sheet attempt.
   const existing = getScores(uid);
   const prior = existing[quizId] || {};
-  const mcEarned = prior.mcEarned != null ? prior.mcEarned : 0;
-  const totalPossible = prior.totalPossible != null && prior.totalPossible > 0
+  const quiz = QUIZZES.find(q => q.id === quizId);
+
+  // Total possible across ALL questions (MC + written) from the quiz definition.
+  let allPts = 0, mcPtsPossible = 0;
+  if (quiz && quiz.questions) {
+    quiz.questions.forEach(qq => {
+      const p = Number(qq.pts) || 0;
+      allPts += p;
+      if (!isWrittenQ(qq)) mcPtsPossible += p;
+    });
+  }
+
+  // MC points earned: prefer local, else compute from the sheet attempt's answers.
+  let mcEarned = prior.mcEarned;
+  if (mcEarned == null) {
+    mcEarned = 0;
+    const mcAns = getMCAnswersForAttempt(uid, quizId);
+    const qLookup = {};
+    if (quiz) (quiz.questions||[]).forEach(qq => qLookup[qq.n] = qq);
+    mcAns.forEach(a => {
+      if (a.isCorrect === true || a.isCorrect === 'true') {
+        mcEarned += (Number((qLookup[a.q]||{}).pts) || 0);
+      }
+    });
+  }
+
+  const writtenPtsPossible = testInfo.questions.reduce((a,q)=>a+(Number(q.pts)||0),0);
+  const totalPossible = (prior.totalPossible != null && prior.totalPossible > 0)
     ? prior.totalPossible
-    : (mcEarned + testInfo.questions.reduce((a,q)=>a+(Number(q.pts)||0),0));
+    : (allPts > 0 ? allPts : (mcPtsPossible + writtenPtsPossible));
   const finalScore = totalPossible > 0 ? Math.round((mcEarned + saTotal) / totalPossible * 100) : 0;
   const pass = finalScore >= PASS_THRESHOLD;
 
