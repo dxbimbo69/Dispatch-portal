@@ -2423,6 +2423,25 @@ function getMCAnswersForAttempt(uid, quizId) {
   });
 }
 
+// Get written answers {qn: text} from a student's sheet attempt (the row that has answers).
+function getWrittenAnswersFromSheet(uid, quizId) {
+  const quiz = QUIZZES.find(q => q.id === quizId);
+  const examName = quiz ? (quiz.mod + ' — ' + quiz.name) : '';
+  const U = String(uid).toUpperCase();
+  const mine = SHEET_RESULTS.filter(r =>
+    String(r.id||'').toUpperCase() === U && (r.exam === examName));
+  if (!mine.length) return {};
+  mine.sort((a,b)=> (b.submittedAt||'').localeCompare(a.submittedAt||''));
+  const attempt = mine.find(r => Array.isArray(r.answers) && r.answers.length) || mine[0];
+  const answers = Array.isArray(attempt.answers) ? attempt.answers : [];
+  const out = {};
+  answers.filter(a => a.written).forEach(a => {
+    const v = (a.selected != null) ? String(a.selected) : '';
+    if (v && v !== 'Not answered') out[a.q] = v;
+  });
+  return out;
+}
+
 function openGrading(uid, quizId) {
   const testInfo = getWrittenQuestions(quizId);
   if (!testInfo || !testInfo.questions || !testInfo.questions.length) {
@@ -2432,7 +2451,10 @@ function openGrading(uid, quizId) {
 
   const grades = getSAGrades(uid);
   const quizGrades = grades[quizId] || {};
-  const saAnswers = getSAAnswers(uid, quizId);
+  const saAnswersLocal = getSAAnswers(uid, quizId);
+  const saAnswersSheet = getWrittenAnswersFromSheet(uid, quizId);
+  // Prefer the sheet (cross-device); fall back to local for same-device attempts.
+  const saAnswers = Object.assign({}, saAnswersLocal, saAnswersSheet);
   const scores = getScores(uid);
   const mcScore = scores[quizId] ? (scores[quizId].score || 0) : 0;
 
