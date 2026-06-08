@@ -198,11 +198,6 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);min-heig
       <button class="sidebar-link active" onclick="showPanel('fp-steps')">Step-by-Step Guide</button>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-label">Study Decks</div>
-      <button class="sidebar-link" onclick="showPanel('section-flashcards')">&#9636; Section Flashcards</button>
-    </div>
-    <div class="sidebar-section">
-    <div class="sidebar-section">
       <div class="sidebar-label">Dispatch Release</div>
       <button class="sidebar-link" onclick="showPanel('release-guide')">Release Explanation Guide</button>
       <button class="sidebar-link" onclick="showPanel('release-review')">Thorough Release Review</button>
@@ -244,53 +239,6 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);min-heig
         </div>
       </div>
     </div>
-    <div class="panel" id="panel-section-flashcards">
-      <div class="guide-card">
-        <div class="guide-card-header">
-          <span class="guide-card-icon">&#9636;</span>
-          <span class="guide-card-title">Section Flashcards</span>
-        </div>
-        <div class="guide-card-body">
-          <div class="sf-crumbs" id="sf-crumbs"></div>
-
-          <div class="sf-view active" id="sf-view-sections">
-            <p style="font-size:13.5px;color:var(--ink2);line-height:1.6;margin-bottom:1.25rem;">Quick-recall flashcards organized by training section, then module, then topic. Click a tile to drill in.</p>
-            <div class="sf-tile-grid" id="sf-section-grid"></div>
-          </div>
-
-          <div class="sf-view" id="sf-view-modules">
-            <div class="sf-tile-grid" id="sf-module-grid"></div>
-          </div>
-
-          <div class="sf-view" id="sf-view-categories">
-            <div class="sf-tile-grid" id="sf-category-grid"></div>
-          </div>
-
-          <div class="sf-view" id="sf-view-deck">
-            <div class="sf-deck-header">
-              <button class="ap-btn" onclick="sfGoToCategories()">&larr; Categories</button>
-              <span class="sf-deck-title" id="sf-deck-title">Deck</span>
-              <span class="sf-progress" id="sf-progress">Card <strong>1</strong> of <strong>1</strong></span>
-            </div>
-            <div class="sf-card-stage" id="sf-card-stage">
-              <div class="sf-card" id="sf-card" onclick="sfFlip()">
-                <div class="sf-face sf-face-front"><span class="sf-face-label">Term</span><span class="sf-face-text" id="sf-front-text">&mdash;</span><span class="sf-tap-hint">Tap card to reveal</span></div>
-                <div class="sf-face sf-face-back"><span class="sf-face-label">Definition</span><span class="sf-face-text" id="sf-back-text">&mdash;</span><span class="sf-tap-hint">Tap to flip back</span></div>
-              </div>
-            </div>
-            <div class="sf-controls" id="sf-controls">
-              <button class="ap-btn sf-btn-dim" id="sf-prev-btn" onclick="sfPrev()">&larr; Previous</button>
-              <button class="ap-btn sf-known sf-btn-dim" id="sf-known-btn" onclick="sfMarkKnown()">&#10003; Got it</button>
-              <button class="ap-btn" onclick="sfShuffle()">&#8644; Shuffle</button>
-              <button class="ap-btn-primary sf-btn-dim" id="sf-next-btn" onclick="sfNext()">Next &rarr;</button>
-            </div>
-            <div class="sf-deck-footer"><button class="sf-reset-link" onclick="sfResetKnown()">Reset "Got it" cards in this deck</button></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
     <!-- ── FLIGHT PLANNING STEPS ── -->
     <div class="panel active" id="panel-fp-steps">
       <div class="guide-card">
@@ -1896,11 +1844,12 @@ function sfMarkKnown(){ const ci=sfState.order[sfState.position]; const kk=sfKno
 function sfResetKnown(){ if(!sfState.categoryKey) return; if(!confirm('Reset all "got it" cards in this deck?')) return; const kk=sfKnownKey(sfState.sectionKey,sfState.moduleKey,sfState.categoryKey); sfState.known[kk]=new Set(); sfSaveKnown(); sfRebuildOrder(); sfState.position=0; sfEnsureCardMarkup(); sfRenderCard(); }
 
 sfLoadKnown();
-sfBuildSectionGrid();
-sfUpdateCrumbs();
+// Section Flashcards removed — startup calls disabled.
+// sfBuildSectionGrid();
+// sfUpdateCrumbs();
 
 loadContentOverrides();
-loadFlashcardsFromSheet();
+// loadFlashcardsFromSheet();  // Section Flashcards removed
 loadCustomSections();
 
 function loadAirportsFromSheet() {
