@@ -110,6 +110,38 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .home-card-study{border-left:5px solid var(--cyan);}
 .home-card-practice{border-left:5px solid var(--accent);}
 
+/* ── Dashboard strip (sits above the home cards) ───────────────────────── */
+.dash{margin-bottom:1.6rem;}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.2rem;}
+.dash-stat{position:relative;background:#fff;border:1.5px solid var(--gray);border-radius:18px;padding:1.1rem 1.3rem;overflow:hidden;opacity:0;transform:translateY(16px);animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards;}
+.dash-stat:nth-child(1){animation-delay:.04s;}.dash-stat:nth-child(2){animation-delay:.10s;}.dash-stat:nth-child(3){animation-delay:.16s;}.dash-stat:nth-child(4){animation-delay:.22s;}
+.dash-stat-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);}
+.dash-stat-num{font-family:var(--display);font-weight:800;font-size:34px;line-height:1.05;letter-spacing:-.02em;margin-top:.35rem;color:var(--navy);}
+.dash-stat.is-score .dash-stat-num{color:var(--green);}
+.dash-stat.is-score .dash-stat-label{color:var(--green);}
+.dash-stat.is-pending .dash-stat-num{color:var(--accent);}
+.dash-stat.is-pending .dash-stat-label{color:var(--accent);}
+.dash-stat-sub{font-size:11.5px;color:var(--ink3);margin-top:.15rem;}
+
+/* Up-next + progress card */
+.dash-next{background:#fff;border:1.5px solid var(--gray);border-radius:18px;padding:1.25rem 1.4rem;opacity:0;transform:translateY(16px);animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:.28s;}
+.dash-next-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;}
+.dash-next-eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:.55rem;}
+.dash-next-row{display:flex;align-items:center;gap:.9rem;}
+.dash-next-icon{flex-shrink:0;width:42px;height:42px;border-radius:12px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.dash-next-mod{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);}
+.dash-next-name{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em;color:var(--navy);line-height:1.15;margin-top:1px;}
+.dash-next-btn{flex-shrink:0;border:none;border-radius:11px;padding:11px 20px;font-family:var(--font);font-weight:700;font-size:13px;cursor:pointer;background:var(--blue);color:#fff;transition:transform .15s,box-shadow .15s;}
+.dash-next-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(37,102,204,.25);}
+.dash-prog{margin-top:.25rem;}
+.dash-prog-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:.45rem;}
+.dash-prog-meta strong{color:var(--navy);font-weight:700;}
+.dash-prog-track{height:8px;background:var(--gray);border-radius:8px;overflow:hidden;}
+.dash-prog-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .6s cubic-bezier(.2,.8,.2,1);}
+.dash-alldone{display:flex;align-items:center;gap:.6rem;font-size:14px;font-weight:600;color:var(--green);}
+.dash-alldone-icon{width:32px;height:32px;border-radius:50%;background:var(--green-lt);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;}
+@media(max-width:560px){.dash-next-btn{width:100%;}.dash-next-top{flex-direction:column;align-items:stretch;}}
+
 .back-home-btn,.back-to-portal{background:#fff;border:1.5px solid var(--gray);color:var(--ink2);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;transition:all .15s;}
 .back-home-btn:hover,.back-to-portal:hover{border-color:var(--blue);color:var(--blue);}
 
@@ -230,6 +262,45 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .badge-pass{background:var(--green-lt);color:var(--green);}
 .badge-fail{background:var(--red-lt);color:var(--red);}
 .badge-pending{background:var(--skysoft);color:var(--blue);}
+
+/* ── Admin view toggle (Roster vs Analytics) ───────────────────────────── */
+.admin-viewtabs{display:inline-flex;gap:4px;background:var(--gray);border-radius:12px;padding:4px;margin-bottom:1.5rem;}
+.admin-viewtab{font-family:var(--font);font-weight:700;font-size:12px;letter-spacing:.03em;padding:9px 18px;border-radius:9px;border:none;background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.admin-viewtab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(4,28,52,.08);}
+#admin-roster,#admin-analytics{display:none;}
+#admin-roster.active,#admin-analytics.active{display:block;}
+
+/* Analytics — ranked lists */
+.an-card{background:#fff;border:1.5px solid var(--gray);border-radius:16px;padding:1.25rem 1.4rem;margin-bottom:1.5rem;}
+.an-empty{color:var(--ink3);font-size:13px;padding:1rem 0;text-align:center;}
+.an-row{display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center;padding:.85rem 0;border-bottom:1px solid var(--gray);}
+.an-row:last-child{border-bottom:none;}
+.an-row-main{min-width:0;}
+.an-row-title{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.35;}
+.an-row-sub{font-size:11.5px;color:var(--ink3);margin-top:2px;}
+.an-row-stat{text-align:right;white-space:nowrap;}
+.an-row-pct{font-family:var(--display);font-weight:800;font-size:18px;line-height:1;}
+.an-row-pct.hot{color:var(--red);}.an-row-pct.warm{color:var(--amber);}.an-row-pct.ok{color:var(--green);}
+.an-row-n{font-size:10.5px;color:var(--ink3);margin-top:2px;}
+.an-bar{grid-column:1/3;height:6px;background:var(--gray);border-radius:6px;overflow:hidden;margin-top:2px;}
+.an-bar-fill{height:100%;border-radius:6px;}
+.an-bar-fill.hot{background:var(--red);}.an-bar-fill.warm{background:var(--amber);}.an-bar-fill.ok{background:var(--green);}
+.an-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle;}
+.an-tag.written{background:var(--cyan-lt);color:var(--navy);}
+.an-tag.mc{background:var(--blue-lt);color:var(--blue);}
+
+/* At-risk student cards */
+.an-risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;}
+.an-risk{background:#fff;border:1.5px solid var(--gray);border-left:5px solid var(--red);border-radius:14px;padding:1rem 1.1rem;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.an-risk:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(4,28,52,.1);}
+.an-risk.warn{border-left-color:var(--amber);}
+.an-risk-name{font-family:var(--display);font-weight:800;font-size:16px;color:var(--navy);}
+.an-risk-id{font-size:11px;color:var(--ink3);font-family:var(--mono);}
+.an-risk-reasons{margin-top:.7rem;display:flex;flex-direction:column;gap:5px;}
+.an-risk-reason{font-size:12px;color:var(--ink2);display:flex;align-items:flex-start;gap:6px;line-height:1.4;}
+.an-risk-reason-icon{color:var(--red);flex-shrink:0;font-weight:700;}
+.an-risk.warn .an-risk-reason-icon{color:var(--amber);}
+.an-section-note{font-size:12px;color:var(--ink3);margin:-.5rem 0 1rem 2px;}
 
 /* trainee detail modal */
 #trainee-modal,#feedback-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-start;justify-content:center;}
@@ -385,6 +456,9 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
       <p>Choose a section below to get started.</p>
     </div>
 
+    <!-- Dashboard strip — stats + up-next + progress -->
+    <div id="portal-dashboard" class="dash"></div>
+
     <!-- Home screen — 3 cards -->
     <div id="portal-home" class="home-grid">
       <div class="home-card" onclick="showPortalSection('kc')">
@@ -469,6 +543,13 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
     </div>
   </header>
   <div class="admin-wrap">
+    <div class="admin-viewtabs">
+      <button class="admin-viewtab active" id="viewtab-roster" onclick="setAdminView('roster')">&#128203; Roster</button>
+      <button class="admin-viewtab" id="viewtab-analytics" onclick="setAdminView('analytics')">&#128200; Analytics</button>
+    </div>
+
+    <!-- ROSTER VIEW (existing) -->
+    <div id="admin-roster" class="active">
     <div class="admin-summary" id="admin-summary"></div>
     <div class="admin-section-title">Student completion</div>
     <div class="admin-filter-row">
@@ -497,6 +578,24 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
         <thead><tr><th>Quiz</th><th>Attempted</th><th>Passed</th><th>Failed</th><th>Pass rate</th><th>Avg score</th></tr></thead>
         <tbody id="admin-quiz-summary"></tbody>
       </table>
+    </div>
+    </div>
+
+    <!-- ANALYTICS VIEW (new) -->
+    <div id="admin-analytics">
+      <div class="admin-summary" id="an-summary"></div>
+
+      <div class="admin-section-title">Weakest subjects</div>
+      <div class="an-section-note">Sections ranked by how often their questions are missed across all attempts.</div>
+      <div class="an-card" id="an-subjects"></div>
+
+      <div class="admin-section-title">Most-missed questions</div>
+      <div class="an-section-note">Individual questions ranked by miss rate. Written questions count as missed when scored below full marks.</div>
+      <div class="an-card" id="an-questions"></div>
+
+      <div class="admin-section-title">Students who may need support</div>
+      <div class="an-section-note">Flagged for low average, a failed attempt, or stalled progress. Click a card to open the trainee.</div>
+      <div id="an-risk"></div>
     </div>
   </div>
 </div>
@@ -1208,7 +1307,7 @@ function enterAdmin() {
   const tbody = document.getElementById('admin-tbody');
   if (tbody) tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:2rem;color:var(--ink3);">Loading trainee results…</td></tr>`;
   try {
-    loadResults(function(){ try { renderAdmin(); } catch(e){ console.error('renderAdmin error:', e); if(tbody) tbody.innerHTML='<tr><td colspan=99 style="padding:2rem;text-align:center;color:var(--ink3);">Could not load results. Check the Apps Script deployment.</td></tr>'; } });
+    loadResults(function(){ try { renderAdmin(); if (window._adminView === 'analytics') renderAnalytics(); } catch(e){ console.error('renderAdmin error:', e); if(tbody) tbody.innerHTML='<tr><td colspan=99 style="padding:2rem;text-align:center;color:var(--ink3);">Could not load results. Check the Apps Script deployment.</td></tr>'; } });
   } catch(e) { console.error('loadResults error:', e); }
 }
 
@@ -1283,7 +1382,110 @@ function scoreBadge(sc) {
   return { cls: sc.pass ? 'pass' : 'fail', label: sc.score + '% — ' + (sc.pass ? 'Pass' : 'Fail') };
 }
 
+// ── Dashboard strip (stats + up-next + progress) ───────────────────────────────
+function renderDashboard() {
+  const el = document.getElementById('portal-dashboard');
+  if (!el) return;
+  const scores = getScores(currentUser);
+
+  // Trackable quizzes = everything except practice (matches the home tabs).
+  const tracked = QUIZZES.filter(q => q.type !== 'practice');
+  const total = tracked.length;
+
+  let completed = 0, pending = 0, passed = 0;
+  const finalizedPcts = [];
+  tracked.forEach(q => {
+    const sc = scores[q.id];
+    if (!sc) return;
+    if (sc.status === 'pending') { pending++; return; }
+    completed++;
+    if (sc.pass) passed++;
+    if (typeof sc.score === 'number') finalizedPcts.push(sc.score);
+  });
+
+  const avg = finalizedPcts.length
+    ? Math.round(finalizedPcts.reduce((a,b)=>a+b,0) / finalizedPcts.length)
+    : null;
+
+  // "Up next" = first tracked quiz with no record at all, in the portal's section order.
+  const sectionOrder = ['Basic Indoctrination','General Subjects','Group II Aircraft','All Sections'];
+  const ordered = tracked.slice().sort((a,b) => {
+    const ai = sectionOrder.indexOf(a.section), bi = sectionOrder.indexOf(b.section);
+    return (ai<0?99:ai) - (bi<0?99:bi);
+  });
+  const next = ordered.find(q => !scores[q.id]) || null;
+
+  // Progress = share of tracked quizzes with any record (completed or pending).
+  const touched = completed + pending;
+  const pct = total ? Math.round(touched / total * 100) : 0;
+
+  const avgDisplay = avg != null ? avg + '%' : '—';
+  const avgSub = avg != null
+    ? passed + ' of ' + completed + ' passed'
+    : 'No graded scores yet';
+
+  let nextBlock;
+  if (next) {
+    const tabFor = next.type === 'test' ? 'test' : 'kc';
+    nextBlock = `
+      <div class="dash-next-top">
+        <div class="dash-next-row">
+          <div class="dash-next-icon">${next.type === 'test' ? '&#9654;' : '&#9642;'}</div>
+          <div>
+            <div class="dash-next-mod">${next.mod || (next.type === 'test' ? 'Test' : 'Knowledge Check')}</div>
+            <div class="dash-next-name">${next.name || 'Continue your training'}</div>
+          </div>
+        </div>
+        <button class="dash-next-btn" onclick="showPortalSection('${tabFor}')">&#9654; Start now</button>
+      </div>`;
+  } else if (total) {
+    nextBlock = `
+      <div class="dash-next-top">
+        <div class="dash-alldone">
+          <span class="dash-alldone-icon">&#10003;</span>
+          You've started every section — nice work. Revisit any quiz below to keep sharp.
+        </div>
+      </div>`;
+  } else {
+    nextBlock = `
+      <div class="dash-next-top">
+        <div class="dash-next-row">
+          <div class="dash-next-icon">&#9642;</div>
+          <div><div class="dash-next-name">Your training will appear here</div></div>
+        </div>
+      </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="dash-stats">
+      <div class="dash-stat">
+        <div class="dash-stat-label">Completed</div>
+        <div class="dash-stat-num">${completed}<span style="font-size:18px;color:var(--ink3);font-weight:700;"> / ${total}</span></div>
+        <div class="dash-stat-sub">Knowledge checks &amp; tests</div>
+      </div>
+      <div class="dash-stat is-score">
+        <div class="dash-stat-label">Avg score</div>
+        <div class="dash-stat-num">${avgDisplay}</div>
+        <div class="dash-stat-sub">${avgSub}</div>
+      </div>
+      <div class="dash-stat is-pending">
+        <div class="dash-stat-label">Awaiting grade</div>
+        <div class="dash-stat-num">${pending}</div>
+        <div class="dash-stat-sub">${pending === 1 ? 'Written answer in review' : 'Written answers in review'}</div>
+      </div>
+    </div>
+    <div class="dash-next">
+      <div class="dash-next-eyebrow">Up next</div>
+      ${nextBlock}
+      <div class="dash-prog">
+        <div class="dash-prog-meta"><span><strong>${pct}%</strong> of your training started</span><span>${touched} / ${total}</span></div>
+        <div class="dash-prog-track"><div class="dash-prog-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+}
+
 function renderPortal() {
+  renderDashboard();
   const scores = getScores(currentUser);
 
   // Tab state
@@ -1379,6 +1581,7 @@ function renderPortal() {
 
 function showPortalSection(tab) {
   document.getElementById('portal-home').style.display = 'none';
+  var dash = document.getElementById('portal-dashboard'); if (dash) dash.style.display = 'none';
   document.getElementById('portal-study').style.display = 'none';
   document.getElementById('portal-content').style.display = 'none';
   document.getElementById('portal-practice').style.display = 'none';
@@ -1395,6 +1598,8 @@ function showPortalSection(tab) {
 }
 
 function showPortalHome() {
+  var dash = document.getElementById('portal-dashboard'); if (dash) dash.style.display = 'block';
+  renderDashboard();
   document.getElementById('portal-home').style.display = 'grid';
   document.getElementById('portal-content').style.display = 'none';
   document.getElementById('portal-study').style.display = 'none';
@@ -1997,6 +2202,205 @@ function renderAdmin() {
       <td>${avg !== null ? avg + '%' : '—'}</td>
     </tr>`;
   }).join('');
+}
+
+// ── Admin view toggle (Roster vs Analytics) ───────────────────────────────────
+function setAdminView(view) {
+  window._adminView = view;
+  document.getElementById('admin-roster').classList.toggle('active', view === 'roster');
+  document.getElementById('admin-analytics').classList.toggle('active', view === 'analytics');
+  document.getElementById('viewtab-roster').classList.toggle('active', view === 'roster');
+  document.getElementById('viewtab-analytics').classList.toggle('active', view === 'analytics');
+  if (view === 'analytics') renderAnalytics();
+}
+
+// Bucket a miss-rate into a severity class for color coding.
+function anSeverity(pct) { return pct >= 50 ? 'hot' : pct >= 30 ? 'warm' : 'ok'; }
+
+// ── Analytics engine ───────────────────────────────────────────────────────────
+// Walks every recorded attempt's per-question answers, maps each back to its quiz
+// definition, and tallies attempts vs. misses at the question and section level.
+function computeAnalytics() {
+  const allStudents = getAllStudentScores();          // {uid: {quizId: rec}}
+  // Index quizzes + their questions for fast lookup.
+  const quizById = {};
+  QUIZZES.forEach(q => { quizById[q.id] = q; });
+
+  const qStats = {};   // key `${quizId}#${n}` -> {quizId, n, text, section, written, attempts, misses}
+  const secStats = {}; // section -> {attempts, misses}
+
+  function bumpSection(section, missed) {
+    if (!secStats[section]) secStats[section] = { attempts: 0, misses: 0 };
+    secStats[section].attempts++;
+    if (missed) secStats[section].misses++;
+  }
+
+  Object.values(allStudents).forEach(byQuiz => {
+    Object.entries(byQuiz).forEach(([quizId, rec]) => {
+      const quiz = quizById[quizId];
+      if (!quiz || !Array.isArray(rec.answers)) return;
+      const section = quiz.section || 'Other';
+      // Map question number -> definition for this quiz.
+      const defByN = {};
+      (quiz.questions || []).forEach(qq => { defByN[qq.n] = qq; });
+
+      rec.answers.forEach(a => {
+        const def = defByN[a.q];
+        const isWritten = a.written === true || (def && def.written);
+
+        let missed = null;   // null = don't count (e.g. ungraded written)
+        if (isWritten) {
+          // Only count written once graded: look up awarded points vs. max.
+          const gp = rec.gradePoints || {};
+          const awarded = gp[a.q];
+          if (awarded === undefined || awarded === '' || awarded === null) return; // ungraded → skip
+          const max = def ? (Number(def.pts) || 0) : 0;
+          missed = max > 0 ? (Number(awarded) < max) : false;
+        } else {
+          // MC: isCorrect may be boolean or string.
+          const right = a.isCorrect === true || a.isCorrect === 'true';
+          // Skip carried-over "not answered" rows that have no real selection in retakes? Count them as attempts.
+          missed = !right;
+        }
+        if (missed === null) return;
+
+        const key = quizId + '#' + a.q;
+        if (!qStats[key]) {
+          qStats[key] = {
+            quizId, n: a.q,
+            text: (def && def.text) ? def.text : ('Question ' + a.q),
+            section, written: !!isWritten,
+            mod: quiz.mod, name: quiz.name,
+            attempts: 0, misses: 0
+          };
+        }
+        qStats[key].attempts++;
+        if (missed) qStats[key].misses++;
+        bumpSection(section, missed);
+      });
+    });
+  });
+
+  return { qStats, secStats, allStudents };
+}
+
+function renderAnalytics() {
+  const { qStats, secStats, allStudents } = computeAnalytics();
+
+  // ---- Summary metrics ----
+  const studentCount = Object.keys(allStudents).length;
+  const gradedQ = Object.values(qStats);
+  const totalAnswered = gradedQ.reduce((s,q) => s + q.attempts, 0);
+  const totalMissed   = gradedQ.reduce((s,q) => s + q.misses, 0);
+  const overallMiss   = totalAnswered ? Math.round(totalMissed / totalAnswered * 100) : 0;
+  const weakestSec    = Object.entries(secStats)
+    .map(([sec,v]) => ({ sec, pct: v.attempts ? Math.round(v.misses/v.attempts*100) : 0, n: v.attempts }))
+    .filter(s => s.n >= 1)
+    .sort((a,b) => b.pct - a.pct)[0];
+
+  const sm = document.getElementById('an-summary');
+  if (sm) sm.innerHTML = [
+    ['Students analyzed', studentCount, 'with recorded answers'],
+    ['Answers reviewed', totalAnswered, 'graded responses'],
+    ['Overall miss rate', overallMiss + '%', 'across all questions'],
+    ['Weakest subject', weakestSec ? weakestSec.pct + '%' : '—', weakestSec ? weakestSec.sec : 'No data yet'],
+  ].map(([lbl,val,sub]) => `<div class="admin-metric">
+    <div class="admin-metric-label">${lbl}</div>
+    <div class="admin-metric-val">${val}</div>
+    <div class="admin-metric-sub">${sub}</div>
+  </div>`).join('');
+
+  // ---- Weakest subjects ----
+  const secEl = document.getElementById('an-subjects');
+  const sections = Object.entries(secStats)
+    .map(([sec,v]) => ({ sec, attempts: v.attempts, misses: v.misses, pct: v.attempts ? Math.round(v.misses/v.attempts*100) : 0 }))
+    .filter(s => s.attempts >= 1)
+    .sort((a,b) => b.pct - a.pct);
+  if (!sections.length) {
+    secEl.innerHTML = `<div class="an-empty">No graded answers yet. Subject analysis appears once students complete quizzes with recorded per-question answers.</div>`;
+  } else {
+    secEl.innerHTML = sections.map(s => {
+      const sev = anSeverity(s.pct);
+      return `<div class="an-row">
+        <div class="an-row-main">
+          <div class="an-row-title">${s.sec}</div>
+          <div class="an-row-sub">${s.misses} missed of ${s.attempts} answers</div>
+        </div>
+        <div class="an-row-stat">
+          <div class="an-row-pct ${sev}">${s.pct}%</div>
+          <div class="an-row-n">miss rate</div>
+        </div>
+        <div class="an-bar"><div class="an-bar-fill ${sev}" style="width:${s.pct}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- Most-missed questions ----
+  const qEl = document.getElementById('an-questions');
+  const MIN_ATTEMPTS = 1; // show everything; tighten later if you want statistical significance
+  const questions = Object.values(qStats)
+    .filter(q => q.attempts >= MIN_ATTEMPTS && q.misses > 0)
+    .map(q => Object.assign(q, { pct: Math.round(q.misses / q.attempts * 100) }))
+    .sort((a,b) => b.pct - a.pct || b.misses - a.misses)
+    .slice(0, 15);
+  if (!questions.length) {
+    qEl.innerHTML = `<div class="an-empty">No missed questions recorded yet — or every answered question is being answered correctly.</div>`;
+  } else {
+    qEl.innerHTML = questions.map(q => {
+      const sev = anSeverity(q.pct);
+      const tag = q.written ? '<span class="an-tag written">Written</span>' : '<span class="an-tag mc">MC</span>';
+      const txt = String(q.text).replace(/<[^>]*>/g,'').slice(0,150);
+      return `<div class="an-row">
+        <div class="an-row-main">
+          <div class="an-row-title">${txt}${tag}</div>
+          <div class="an-row-sub">${q.mod} — ${q.name} · Q${q.n}</div>
+        </div>
+        <div class="an-row-stat">
+          <div class="an-row-pct ${sev}">${q.pct}%</div>
+          <div class="an-row-n">${q.misses}/${q.attempts} missed</div>
+        </div>
+        <div class="an-bar"><div class="an-bar-fill ${sev}" style="width:${q.pct}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- At-risk students ----
+  const riskEl = document.getElementById('an-risk');
+  const trackedCount = QUIZZES.filter(q => q.type !== 'practice').length;
+  const risks = [];
+  Object.entries(allStudents).forEach(([uid, byQuiz]) => {
+    const recs = Object.values(byQuiz);
+    if (!recs.length) return;
+    const finalized = recs.filter(r => r.status !== 'pending' && typeof r.score === 'number');
+    const scores = finalized.map(r => r.score);
+    const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    const failed = finalized.filter(r => r.pass === false).length;
+    const completed = recs.filter(r => r.status !== 'pending').length;
+
+    const reasons = [];
+    let severe = false;
+    if (avg !== null && avg < PASS_THRESHOLD) { reasons.push('Average score ' + avg + '% (below ' + PASS_THRESHOLD + '%)'); severe = true; }
+    if (failed > 0) { reasons.push(failed + ' failed attempt' + (failed>1?'s':'')); severe = true; }
+    // Stalled: started but well short of finishing the tracked set, and no recent pending work.
+    if (trackedCount > 0 && completed > 0 && completed < trackedCount && (completed / trackedCount) < 0.5 && failed === 0 && (avg === null || avg >= PASS_THRESHOLD)) {
+      reasons.push('Stalled — ' + completed + ' of ' + trackedCount + ' completed');
+    }
+    if (reasons.length) risks.push({ uid, name: getName(uid) || '(no name)', avg, reasons, severe });
+  });
+  risks.sort((a,b) => (a.avg ?? 999) - (b.avg ?? 999));
+
+  if (!risks.length) {
+    riskEl.innerHTML = `<div class="an-card"><div class="an-empty">No students currently flagged. Everyone with recorded results is at or above ${PASS_THRESHOLD}% with steady progress.</div></div>`;
+  } else {
+    riskEl.innerHTML = `<div class="an-risk-grid">` + risks.map(r => `
+      <div class="an-risk ${r.severe ? '' : 'warn'}" onclick="setAdminView('roster'); openTrainee('${r.uid}')">
+        <div class="an-risk-name">${r.name}</div>
+        <div class="an-risk-id">${r.uid}${r.avg !== null ? ' · avg ' + r.avg + '%' : ''}</div>
+        <div class="an-risk-reasons">
+          ${r.reasons.map(x => `<div class="an-risk-reason"><span class="an-risk-reason-icon">&#9656;</span>${x}</div>`).join('')}
+        </div>
+      </div>`).join('') + `</div>`;
+  }
 }
 
 // ── Per-trainee detail view (proficiency tracker) ──────────────────────────────
