@@ -463,6 +463,19 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .grade-mc-line{font-size:12.5px;color:var(--ink2);line-height:1.5;}
 .grade-mc-correct{font-size:12.5px;color:var(--green);margin-top:.15rem;}
 
+/* matching grading breakdown table */
+.match-grade-tbl{width:100%;border-collapse:collapse;margin-top:.35rem;font-size:12.5px;}
+.match-grade-tbl th{text-align:left;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);font-weight:700;padding:2px 6px;border-bottom:1px solid var(--gray);}
+.match-grade-tbl td{padding:4px 6px;vertical-align:top;line-height:1.35;}
+.match-grade-tbl tr.mp-ok .mp-icon{color:var(--green);font-weight:800;}
+.match-grade-tbl tr.mp-no .mp-icon{color:var(--red);font-weight:800;}
+.match-grade-tbl .mp-icon{width:16px;}
+.match-grade-tbl .mp-left{font-weight:700;color:var(--navy);}
+.match-grade-tbl .mp-arrow{color:var(--ink3);}
+.match-grade-tbl tr.mp-no .mp-chosen{color:var(--red);}
+.match-grade-tbl tr.mp-ok .mp-chosen{color:var(--ink2);}
+.match-grade-tbl .mp-correct{color:var(--green);font-weight:600;}
+
 /* generic buttons */
 .btn{border:none;border-radius:11px;padding:11px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);}
 .btn-primary{background:var(--blue);color:#fff;}
@@ -2565,8 +2578,17 @@ async function submitExam() {
           const t = qExamType(qu);
           if (t === 'matching') {
             const sc = scoreMatching(qu);
+            const ans = (window._examMatch && window._examMatch[qu.n]) || {};
+            const pairs = qu.pairs || [];
+            // Detailed breakdown: for each left item, what they matched vs. the correct match.
+            const detail = pairs.map((p, li) => {
+              const chosenRi = ans[li];
+              const chosen = (chosenRi != null && pairs[chosenRi]) ? pairs[chosenRi].right : 'Not matched';
+              return { left: p.left, chosen: chosen, correct: p.right, ok: Number(chosenRi) === li };
+            });
             rows.push({ q: qu.n, matching: true, selected: sc.right + '/' + sc.total + ' correct',
-                        correct: 'All matched correctly', isCorrect: sc.allCorrect, earned: sc.earned, possible: sc.possible });
+                        correct: 'See breakdown', isCorrect: sc.allCorrect, earned: sc.earned, possible: sc.possible,
+                        matchDetail: detail });
           } else if (t === 'scenario') {
             (qu.subs||[]).forEach((s, si) => {
               const subN = qu.n + '_' + si;
@@ -3305,6 +3327,22 @@ function openTrainee(uid) {
             </div>`;
           }
           const right = a.isCorrect === true || a.isCorrect === 'true';
+          if (a.matching && Array.isArray(a.matchDetail)) {
+            const rows = a.matchDetail.map(d => `<tr class="${d.ok?'mp-ok':'mp-no'}">
+                <td class="mp-icon">${d.ok?'✓':'✗'}</td>
+                <td class="mp-left">${String(d.left).replace(/</g,'&lt;')}</td>
+                <td class="mp-arrow">→</td>
+                <td class="mp-chosen">${String(d.chosen).replace(/</g,'&lt;')}</td>
+                <td class="mp-correct">${d.ok ? '' : '✓ ' + String(d.correct).replace(/</g,'&lt;')}</td>
+              </tr>`).join('');
+            return `<div class="tr-ans ${right?'tr-ans-right':'tr-ans-wrong'}">
+              <div class="tr-ans-q">${right?'✓':'✗'} Q${a.q}. ${qText}</div>
+              <table class="match-grade-tbl">
+                <thead><tr><th></th><th>Item</th><th></th><th>You matched</th><th>Correct</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>`;
+          }
           return `<div class="tr-ans ${right?'tr-ans-right':'tr-ans-wrong'}">
             <div class="tr-ans-q">${right?'✓':'✗'} Q${a.q}. ${qText}</div>
             <div class="tr-ans-line"><strong>Their answer:</strong> ${a.selected!=null?String(a.selected).replace(/</g,'&lt;'):'<em>Not answered</em>'}</div>
@@ -3691,7 +3729,8 @@ function getMCAnswersForAttempt(uid, quizId) {
   return answers.filter(a => !a.written).map(a => {
     const qq = qLookup[a.q] || {};
     return { q: a.q, text: qq.text || '', selected: a.selected, correct: a.correct, isCorrect: a.isCorrect,
-             matching: a.matching || false, earned: a.earned, possible: a.possible, scenario: a.scenario || false };
+             matching: a.matching || false, earned: a.earned, possible: a.possible, scenario: a.scenario || false,
+             matchDetail: a.matchDetail || null };
   });
 }
 
@@ -3781,11 +3820,29 @@ function openGrading(uid, quizId) {
       const kindLabel = a.matching ? ' <span class="an-tag mc">Matching</span>'
                       : a.scenario ? ' <span class="an-tag mc">Scenario</span>' : '';
       const ptsNote = a.matching && a.earned != null ? ` <span style="color:var(--ink3);font-size:11px;">(${a.earned}/${a.possible} pts)</span>` : '';
-      html += `<div class="grade-mc ${right?'mc-right':'mc-wrong'}">
-        <div class="grade-mc-q">${right?'✓':'✗'} Q${a.q}${kindLabel}${a.text ? '. ' + a.text : ''}${ptsNote}</div>
-        <div class="grade-mc-line"><strong>Their answer:</strong> ${a.selected!=null?String(a.selected).replace(/</g,'&lt;'):'<em>Not answered</em>'}</div>
-        ${!right ? `<div class="grade-mc-correct"><strong>Correct:</strong> ${a.correct!=null?String(a.correct).replace(/</g,'&lt;'):''}</div>` : ''}
-      </div>`;
+      if (a.matching && Array.isArray(a.matchDetail)) {
+        // Detailed per-pair breakdown so the grader sees exactly what was matched.
+        const rows = a.matchDetail.map(d => `<tr class="${d.ok?'mp-ok':'mp-no'}">
+            <td class="mp-icon">${d.ok?'✓':'✗'}</td>
+            <td class="mp-left">${String(d.left).replace(/</g,'&lt;')}</td>
+            <td class="mp-arrow">→</td>
+            <td class="mp-chosen">${String(d.chosen).replace(/</g,'&lt;')}</td>
+            <td class="mp-correct">${d.ok ? '' : '✓ ' + String(d.correct).replace(/</g,'&lt;')}</td>
+          </tr>`).join('');
+        html += `<div class="grade-mc ${right?'mc-right':'mc-wrong'}">
+          <div class="grade-mc-q">${right?'✓':'✗'} Q${a.q}${kindLabel}${a.text ? '. ' + a.text : ''}${ptsNote}</div>
+          <table class="match-grade-tbl">
+            <thead><tr><th></th><th>Item</th><th></th><th>They matched</th><th>Correct answer</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      } else {
+        html += `<div class="grade-mc ${right?'mc-right':'mc-wrong'}">
+          <div class="grade-mc-q">${right?'✓':'✗'} Q${a.q}${kindLabel}${a.text ? '. ' + a.text : ''}${ptsNote}</div>
+          <div class="grade-mc-line"><strong>Their answer:</strong> ${a.selected!=null?String(a.selected).replace(/</g,'&lt;'):'<em>Not answered</em>'}</div>
+          ${!right ? `<div class="grade-mc-correct"><strong>Correct:</strong> ${a.correct!=null?String(a.correct).replace(/</g,'&lt;'):''}</div>` : ''}
+        </div>`;
+      }
     });
     if (hasWritten) html += `<div class="grade-mc-title" style="margin-top:1.25rem;">Written answers — grade below</div>`;
   } else if (!hasWritten) {
