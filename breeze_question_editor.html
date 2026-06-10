@@ -164,6 +164,19 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);min-heig
 .scn-edit-letter{font-family:var(--display);font-weight:800;color:var(--blue);font-size:14px;}
 .scn-edit-pts{width:54px;padding:5px 7px;border:1.5px solid var(--gray);border-radius:7px;font-size:12px;font-family:var(--font);}
 
+/* image editor */
+.img-edit{margin-top:.2rem;}
+.img-edit-empty{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.img-upload-btn{background:var(--skysoft,#EAF1FB);border:1.5px solid var(--sky,#9CC0EE);color:var(--navy);font-weight:700;}
+.img-edit-hint{font-size:11.5px;color:var(--ink3);}
+.img-edit-preview{margin-bottom:.6rem;max-width:280px;border:1.5px solid var(--gray);border-radius:10px;overflow:hidden;background:#FAFBFD;}
+.img-edit-preview img{display:block;width:100%;height:auto;}
+.img-edit-err{padding:1rem;font-size:12px;color:var(--ink3);text-align:center;}
+.img-edit-ctrls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.img-ctrl{display:flex;flex-direction:column;gap:3px;}
+.img-ctrl span{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);font-weight:700;}
+.img-ctrl select{padding:6px 9px;border:1.5px solid var(--gray);border-radius:8px;font-size:12.5px;font-family:var(--font);background:#fff;}
+
 /* Bottom save bar */
 .bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);padding:.9rem 2rem;display:none;align-items:center;justify-content:space-between;gap:1rem;box-shadow:0 -4px 16px rgba(0,0,0,.15);z-index:50;}
 .bar.show{display:flex;}
@@ -477,6 +490,12 @@ function selectQuiz(id) {
     .sort((a,b)=>(Number(a.n)||0)-(Number(b.n)||0))
     .map(q => {
       const raw = (q.model != null ? String(q.model) : '');
+      // Image metadata appended to cite as: <cite>@@IMG@@<json>
+      const citeRaw = (q.cite != null ? String(q.cite) : '');
+      const imgSplit = citeRaw.split('@@IMG@@');
+      const citeText = imgSplit[0].trim();
+      let img = null;
+      if (imgSplit.length > 1) { try { img = JSON.parse(imgSplit[1]); } catch(e) { img = null; } }
       // Matching / scenario stored as @@Q@@<json> in the model column.
       if (raw.indexOf('@@Q@@') === 0) {
         let payload = {};
@@ -484,12 +503,12 @@ function selectQuiz(id) {
         if (payload.qtype === 'matching') {
           return { n:Number(q.n), pts:Number(q.pts), text:q.text||'', kind:'matching',
                    pairs: Array.isArray(payload.pairs)&&payload.pairs.length ? payload.pairs : [{left:'',right:''},{left:'',right:''}],
-                   options:['','','',''], correct:0, model:'', cite:q.cite||'' };
+                   options:['','','',''], correct:0, model:'', cite:citeText, img:img };
         }
         if (payload.qtype === 'scenario') {
           return { n:Number(q.n), pts:Number(q.pts), text:q.text||'', kind:'scenario',
                    subs: Array.isArray(payload.subs)&&payload.subs.length ? payload.subs : [{label:'',type:'mc',pts:5,options:['','','',''],correct:0,model:''}],
-                   options:['','','',''], correct:0, model:'', cite:q.cite||'' };
+                   options:['','','',''], correct:0, model:'', cite:citeText, img:img };
         }
       }
       const model = raw.trim();
@@ -500,7 +519,7 @@ function selectQuiz(id) {
         options:[q.optionA||'',q.optionB||'',q.optionC||'',q.optionD||''],
         correct: Math.max(0, LETTERS.indexOf(String(q.correct||'A').trim().toUpperCase())),
         model: model,
-        cite:q.cite||''
+        cite:citeText, img:img
       };
     });
   working = { quiz: Object.assign({}, meta), questions: qs };
@@ -635,12 +654,85 @@ function questionCard(q,i){
     + '<button class="btn btn-sm btn-danger" onclick="delQ('+i+')">Delete</button>'
     + '</div></div>'
     + '<div class="field full"><label>'+(kind==='scenario'?'Scenario / situation prompt':'Question text')+'</label><textarea oninput="setText('+i+',this.value)">'+esc(q.text)+'</textarea></div>'
+    + (kind==='matching' ? '' : imageEditor(q, i))
     + body
     + '<div class="row2">'
     + '<div class="field"><label>Points'+(kind==='scenario'?' (auto-summed from sub-questions)':'')+'</label><input type="number" value="'+q.pts+'" oninput="setPts('+i+',this.value)"'+(kind==='scenario'?' readonly':'')+'></div>'
     + '<div class="field"><label>Citation / reference</label><input type="text" value="'+esc(q.cite)+'" oninput="setCite('+i+',this.value)"></div>'
     + '</div>'
     + '</div>';
+}
+
+// Image editor block: upload button, preview, and size/fit/alignment controls.
+function imageEditor(q, i){
+  const img = q.img || null;
+  const sizes = ['small','medium','large','full'];
+  const fits = [['contain','Fit whole image'],['cover','Fill box (crop)']];
+  const aligns = ['left','center','right'];
+  let inner;
+  if (img && img.url) {
+    inner = '<div class="img-edit-preview">'
+      + '<img src="'+esc(img.url)+'" alt="preview" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'block\';">'
+      + '<div class="img-edit-err" style="display:none;">Preview unavailable (image may still work for students)</div>'
+      + '</div>'
+      + '<div class="img-edit-ctrls">'
+      +   '<div class="img-ctrl"><span>Size</span><select onchange="setImg('+i+',\'size\',this.value)">'
+      +     sizes.map(s=>'<option value="'+s+'"'+((img.size||'medium')===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>').join('')
+      +   '</select></div>'
+      +   '<div class="img-ctrl"><span>Fit</span><select onchange="setImg('+i+',\'fit\',this.value)">'
+      +     fits.map(f=>'<option value="'+f[0]+'"'+((img.fit||'contain')===f[0]?' selected':'')+'>'+f[1]+'</option>').join('')
+      +   '</select></div>'
+      +   '<div class="img-ctrl"><span>Align</span><select onchange="setImg('+i+',\'align\',this.value)">'
+      +     aligns.map(a=>'<option value="'+a+'"'+((img.align||'center')===a?' selected':'')+'>'+a.charAt(0).toUpperCase()+a.slice(1)+'</option>').join('')
+      +   '</select></div>'
+      +   '<button class="btn btn-sm btn-danger" onclick="removeImg('+i+')">Remove image</button>'
+      + '</div>';
+  } else {
+    inner = '<div class="img-edit-empty">'
+      + '<button class="btn btn-sm img-upload-btn" onclick="document.getElementById(\'imgfile-'+i+'\').click()">&#128247; Upload image</button>'
+      + '<input type="file" id="imgfile-'+i+'" accept="image/*" style="display:none;" onchange="uploadImg('+i+',this)">'
+      + '<span class="img-edit-hint">PNG, JPG, GIF. Stored in your Drive automatically.</span>'
+      + '</div>';
+  }
+  return '<div class="field full img-edit"><label>Image (optional)</label>'+inner+'</div>';
+}
+
+function setImg(i, key, val){ if(!working.questions[i].img) return; working.questions[i].img[key]=val; markDirty(); refreshCard(i); }
+function removeImg(i){ working.questions[i].img = null; markDirty(); refreshCard(i); }
+
+function uploadImg(i, input){
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('Image is larger than 5 MB — please use a smaller file','err'); return; }
+  const btn = input.previousElementSibling;
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
+  const reader = new FileReader();
+  reader.onload = function(){
+    const base64 = String(reader.result).split(',')[1];
+    // Use fetch with a text/plain body — a "simple" CORS request that avoids a
+    // preflight and lets us read the JSON response (the hidden-iframe postData can't).
+    fetch(QUESTIONS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'uploadImage', filename:file.name, mimeType:file.type, base64:base64 })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.status === 'ok' && res.url) {
+        working.questions[i].img = { url:res.url, size:'medium', fit:'contain', align:'center' };
+        markDirty(); refreshCard(i); toast('Image uploaded — remember to Save','ok');
+      } else {
+        toast('Upload failed: ' + ((res&&res.message)||'unknown error'),'err');
+        if (btn) { btn.disabled = false; btn.innerHTML = '\uD83D\uDCF7 Upload image'; }
+      }
+    })
+    .catch(function(err){
+      toast('Upload error: ' + err,'err');
+      if (btn) { btn.disabled = false; btn.innerHTML = '\uD83D\uDCF7 Upload image'; }
+    });
+  };
+  reader.onerror = function(){ toast('Could not read the file','err'); };
+  reader.readAsDataURL(file);
 }
 
 // Matching editor: list of left→right pairs. The left/right ORDER defines the correct match.
@@ -794,7 +886,14 @@ function saveCurrentQuiz(){
     action:'saveQuiz',
     quiz: working.quiz,
     questions: working.questions.map(q=>{
-      const base = { quizId: working.quiz.id, n:q.n, pts:q.pts, text:q.text, cite:q.cite,
+      // Append image metadata to cite as: <cite>@@IMG@@<json> (matching questions skip images).
+      let citeOut = q.cite || '';
+      if (q.kind !== 'matching' && q.img && q.img.url) {
+        citeOut = (q.cite || '') + '@@IMG@@' + JSON.stringify({
+          url: q.img.url, size: q.img.size || 'medium', fit: q.img.fit || 'contain', align: q.img.align || 'center'
+        });
+      }
+      const base = { quizId: working.quiz.id, n:q.n, pts:q.pts, text:q.text, cite:citeOut,
                      optionA:'', optionB:'', optionC:'', optionD:'', correct:'', model:'' };
       if (q.kind === 'matching') {
         const pairs = (q.pairs||[]).filter(p=>String(p.left||'').trim() && String(p.right||'').trim());

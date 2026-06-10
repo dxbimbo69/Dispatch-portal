@@ -225,6 +225,10 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .q-num{font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:700;}
 .q-pts{font-family:var(--mono);font-size:11px;color:var(--ink3);}
 .q-text{font-family:var(--display);font-weight:700;font-size:18px;margin:.4rem 0 1rem;line-height:1.25;}
+.q-image-wrap{display:flex;margin:0 0 1.1rem;}
+.q-image-box{border:1.5px solid var(--gray);border-radius:12px;overflow:hidden;background:#FAFBFD;}
+.q-image{display:block;width:100%;}
+.q-image-err{padding:1.5rem;text-align:center;color:var(--ink3);font-size:13px;}
 .q-cite{font-size:11px;color:var(--ink3);margin-top:.5rem;font-style:italic;}
 .options{display:flex;flex-direction:column;}
 .option{display:flex;align-items:center;gap:.8rem;border:1.5px solid var(--gray);border-radius:13px;padding:12px 14px;margin-bottom:.6rem;cursor:pointer;transition:all .15s;}
@@ -1207,6 +1211,12 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
     const quiz = byId[q.quizId];
     if (!quiz) return;
     const rawModel = (q.model != null ? String(q.model) : '');
+    const citeRaw = (q.cite != null ? String(q.cite) : '');
+    // Image metadata (if any) is appended to cite as: <cite text>@@IMG@@<json>
+    const imgSplit = citeRaw.split('@@IMG@@');
+    const citeText = imgSplit[0].trim();
+    let imgObj = null;
+    if (imgSplit.length > 1) { try { imgObj = JSON.parse(imgSplit[1]); } catch(e) { imgObj = null; } }
 
     // Matching / scenario questions are stored as a JSON payload in the model column,
     // prefixed with @@Q@@ so normal written/MC rows are unaffected.
@@ -1217,7 +1227,8 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
         n: Number(q.n) || (quiz.questions.length + 1),
         pts: Number(q.pts) || 10,
         text: q.text || '',
-        cite: q.cite || '',
+        cite: citeText,
+        img: imgObj,
         qtype: payload.qtype
       };
       if (payload.qtype === 'matching') {
@@ -1239,7 +1250,8 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
       correct: Math.max(0, LETTERS.indexOf(String(q.correct||'A').trim().toUpperCase())),
       model: model,
       written: written,
-      cite: q.cite || ''
+      cite: citeText,
+      img: imgObj
     });
   });
   // sort each quiz's questions by n, set totals, return as ordered array
@@ -2050,6 +2062,7 @@ function renderExam() {
       html += `<div class="q-card" id="qcard-${qu.n}">
         <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Written</span></div>
         <div class="q-text">${qu.text}</div>
+        ${renderQuestionImage(qu.img)}
         <textarea class="written-input" id="written-${qu.n}" placeholder="Type your answer…" oninput="setWritten(${qu.n}, this.value)">${prior}</textarea>
       </div>`;
     } else {
@@ -2057,6 +2070,7 @@ function renderExam() {
       html += `<div class="q-card" id="qcard-${qu.n}">
         <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts</span></div>
         <div class="q-text">${qu.text}</div>
+        ${renderQuestionImage(qu.img)}
         <div class="options">
           ${opts.map((o,oi) => `<label class="option" id="opt-${qu.n}-${oi}" onclick="selectOpt(${qu.n},${oi})">
             <span class="opt-letter">${'ABCD'[oi]}</span>
@@ -2297,7 +2311,28 @@ function renderScenarioQ(qu) {
   return `<div class="q-card scn-card" id="qcard-${qu.n}">
     <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Scenario</span></div>
     <div class="scn-prompt">${qu.text}</div>
+    ${renderQuestionImage(qu.img)}
     <div class="scn-subs">${subHtml}</div>
+  </div>`;
+}
+
+// Render a question image from its config {url, size, fit, align}. Returns '' if none.
+function renderQuestionImage(img) {
+  if (!img || !img.url) return '';
+  const sizes = { small:'220px', medium:'380px', large:'560px', full:'100%' };
+  const maxW = sizes[img.size] || sizes.medium;
+  const fit = img.fit === 'cover' ? 'cover' : 'contain';
+  const align = img.align === 'left' ? 'flex-start' : img.align === 'right' ? 'flex-end' : 'center';
+  const url = String(img.url).replace(/"/g, '&quot;');
+  // For 'cover' we constrain a height so the crop is visible; for 'contain' height is auto.
+  const imgStyle = fit === 'cover'
+    ? `width:100%;height:${img.size==='small'?'150px':img.size==='large'?'360px':'240px'};object-fit:cover;`
+    : `max-width:100%;height:auto;object-fit:contain;`;
+  return `<div class="q-image-wrap" style="justify-content:${align};">
+    <div class="q-image-box" style="max-width:${maxW};">
+      <img src="${url}" alt="Question image" class="q-image" style="${imgStyle}" loading="lazy"
+           onerror="this.parentNode.innerHTML='<div class=&quot;q-image-err&quot;>Image could not be loaded</div>';">
+    </div>
   </div>`;
 }
 
