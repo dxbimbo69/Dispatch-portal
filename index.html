@@ -109,6 +109,26 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .home-card:hover .home-card-arrow{transform:translateX(5px);}
 .home-card-study{border-left:5px solid var(--cyan);}
 .home-card-practice{border-left:5px solid var(--accent);}
+.home-card-ojt{border-left:5px solid var(--gold);background:linear-gradient(180deg,#FFFDF7,#fff);}
+.home-card-ojt .home-card-icon{color:var(--gold);}
+
+/* OJT comp-check section hero */
+.ojt-hero{max-width:680px;margin:0 auto;background:#fff;border:1.5px solid var(--gray);border-left:5px solid var(--gold);border-radius:20px;padding:2rem 2.25rem;}
+.ojt-hero-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a5a00;background:var(--gold-lt);padding:5px 12px;border-radius:20px;margin-bottom:1rem;}
+.ojt-hero-title{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em;color:var(--navy);margin-bottom:.5rem;}
+.ojt-hero-sub{font-size:14.5px;line-height:1.6;color:var(--ink2);margin-bottom:1.5rem;}
+.ojt-hero-meta{display:flex;gap:2.5rem;padding:1.1rem 0;border-top:1px solid var(--gray);border-bottom:1px solid var(--gray);margin-bottom:1.5rem;}
+.ojt-meta-item{display:flex;flex-direction:column;}
+.ojt-meta-val{font-family:var(--display);font-weight:800;font-size:26px;color:var(--navy);line-height:1;}
+.ojt-meta-val.pass{color:var(--green);}.ojt-meta-val.fail{color:var(--red);}
+.ojt-meta-lbl{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);margin-top:.35rem;}
+.ojt-instructions{margin:0 0 1.5rem;padding-left:1.1rem;display:flex;flex-direction:column;gap:.5rem;}
+.ojt-instructions li{font-size:13.5px;color:var(--ink2);line-height:1.5;}
+.ojt-status-chip{font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:20px;}
+.ojt-status-chip.pass{background:var(--green-lt);color:var(--green);}
+.ojt-status-chip.fail{background:var(--red-lt);color:var(--red);}
+.ojt-status-chip.await{background:var(--gold-lt);color:#8a5a00;}
+.ojt-status-chip.pending{background:var(--skysoft);color:var(--blue);}
 
 /* ── Dashboard strip (sits above the home cards) ───────────────────────── */
 .dash{margin-bottom:1.6rem;}
@@ -215,6 +235,36 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .opt-text{font-size:14px;}
 .written-input{width:100%;border:1.5px solid var(--gray);border-radius:12px;padding:12px 14px;font-size:14px;font-family:var(--font);min-height:100px;resize:vertical;}
 .written-input:focus{outline:none;border-color:var(--blue);}
+
+/* Matching questions — drag a left tile onto its right match */
+.mtch-hint{font-size:12px;color:var(--ink3);margin:.4rem 0 1rem;}
+.mtch-grid{display:grid;grid-template-columns:0.85fr 1.15fr;gap:1.5rem;align-items:start;}
+.mtch-bank{display:flex;flex-direction:column;gap:.7rem;min-height:60px;padding:.5rem;border:1.5px dashed var(--gray);border-radius:14px;background:#FAFBFD;}
+.mtch-targets{display:flex;flex-direction:column;gap:.7rem;}
+.mtch-tile{display:flex;align-items:center;gap:.55rem;background:#fff;border:1.5px solid var(--sky);border-radius:11px;padding:10px 12px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:grab;user-select:none;transition:border-color .15s,background .15s,box-shadow .15s;}
+.mtch-tile:active{cursor:grabbing;}
+.mtch-tile.dragging{opacity:.5;}
+.mtch-tile.picked{box-shadow:0 0 0 3px rgba(37,102,204,.22);border-color:var(--blue);}
+.mtch-tile.docked{margin:0;}
+.mtch-grip{color:var(--ink3);font-size:13px;flex-shrink:0;letter-spacing:-1px;}
+.mtch-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex-shrink:0;border-radius:6px;font-family:var(--display);font-weight:800;font-size:11px;background:transparent;color:transparent;}
+.mtch-tile.docked .mtch-badge{}
+.mtch-label{flex:1;}
+.mtch-target{display:flex;align-items:center;gap:.7rem;border:1.5px solid var(--gray);border-radius:12px;padding:.55rem .7rem;min-height:46px;transition:border-color .15s,background .15s;}
+.mtch-target.drop-hover{border-color:var(--blue);background:var(--skysoft);border-style:dashed;}
+.mtch-target.filled{background:#fff;}
+.mtch-dock{flex:0 0 auto;min-width:96px;display:flex;align-items:center;}
+.mtch-dock:empty{min-width:96px;height:34px;border:1.5px dashed var(--gray);border-radius:9px;background:#FAFBFD;}
+.mtch-target.drop-hover .mtch-dock:empty{border-color:var(--blue);}
+.mtch-right-label{flex:1;font-size:13.5px;font-weight:600;color:var(--navy);}
+@media(max-width:560px){.mtch-grid{grid-template-columns:1fr;gap:.9rem;}.mtch-dock{min-width:80px;}}
+
+/* Scenario questions */
+.scn-card{border-left:5px solid var(--accent);}
+.scn-prompt{background:var(--accent-lt);border-radius:12px;padding:1rem 1.2rem;font-size:14px;line-height:1.55;color:var(--ink);margin:.5rem 0 1.1rem;}
+.scn-subs{display:flex;flex-direction:column;gap:1.25rem;}
+.scn-sub-label{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:.6rem;}
+.scn-sub-pts{font-weight:600;color:var(--ink3);font-size:11.5px;margin-left:6px;}
 .submit-wrap{max-width:760px;margin:0 auto;padding:2rem;}
 .submit-btn{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--font);transition:all .2s;}
 .submit-btn:hover{background:var(--blue);}
@@ -518,6 +568,12 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
         <div class="home-card-sub">Reference guides, module notes, and training resources. Coming soon.</div>
         <div class="home-card-arrow">&#8594;</div>
       </div>
+      <div class="home-card home-card-ojt" id="home-card-ojt" style="display:none;" onclick="showPortalSection('ojt')">
+        <div class="home-card-icon">&#9992;</div>
+        <div class="home-card-title">OJT Mock Comp Check</div>
+        <div class="home-card-sub">Your OJT competency check. Scenario, matching, and written questions. <strong>90% required to pass.</strong></div>
+        <div class="home-card-arrow">&#8594;</div>
+      </div>
     </div>
 
     <!-- Quiz / test content (hidden until card clicked) -->
@@ -540,6 +596,12 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
     <div id="portal-practice" style="display:none;">
       <button class="back-home-btn" onclick="showPortalSection('kc')">&#8592; Back to Knowledge Checks</button>
       <div id="practice-section-container"></div>
+    </div>
+
+    <!-- OJT Mock Comp Check section (hidden until card clicked, gated to signed-off) -->
+    <div id="portal-ojt" style="display:none;">
+      <button class="back-home-btn" onclick="showPortalHome()">&#8592; Back to home</button>
+      <div id="ojt-section-container"></div>
     </div>
   </div>
 </div>
@@ -682,6 +744,12 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 <script>
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxO1FIbW4oaaHTfOEqbSN4eMDzRXuyxNz7bFLHYBmAkpBpifVkHeQRDQOlfFVXW5qF2/exec';
 const PASS_THRESHOLD = 80;
+
+// Per-quiz pass mark: use the quiz's own passMark if set, else the global default.
+function passMarkFor(quiz) {
+  if (quiz && quiz.passMark != null && Number(quiz.passMark) > 0) return Number(quiz.passMark);
+  return PASS_THRESHOLD;
+}
 
 // ── Quiz catalog ────────────────────────────────────────────────────────────
 const QUIZZES_FALLBACK = [
@@ -1058,6 +1126,38 @@ const QUIZZES_FALLBACK = [
   {id:'mod21kc',mod:'Module 21',name:'Emergency Procedures Knowledge Check',sub:'MEL · CDL · NEF · ACI · N-OC · Aerodata · SFP',section:'Group II Aircraft',type:'kc',totalQuestions:10,questions:[{n:1,pts:10,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the procedures and conditions listed in the MEL are followed.',options:['True','False'],correct:0,cite:'IOCM / Module 6 MEL/CDL Dispatch Procedures'},{n:2,pts:10,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it is essentially the same as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural external parts of the aircraft (e.g., fairings, '},{n:3,pts:10,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s immediate first step in Aerodata?',options:['Revise the dispatch release immediately','Block the FDP so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL implications','Notify crew scheduling of a potential delay'],correct:1,cite:'Module 6 slide 26 / IOCC-INFO-05'},{n:4,pts:10,text:'An MEL amendment is considered complete only when:',options:['The dispatcher sends it via ACARS','The PIC replies via ACARS acknowledging the amendment with time and initials','MOC confirms the MEL has been applied in the maintenance log','The supervisor approves the amendment in N-FP'],correct:1,cite:'Module 6 slide 34'},{n:5,pts:10,text:'What is a NEF (Non-Essential Furnishing)?',options:['A missing structural part that requires a CDL','An item that, if inoperative or missing, has no effect on safe aircraft operation; does not need to appear on the release but is tracked in the maintenance log','An FAA-required item that must be listed on every dispatch release','A type of MEL that requires dispatch concurrence before flight'],correct:1,cite:'Module 6 slide 22'},{n:6,pts:10,text:'What color designation in N-OC indicates an aircraft is Out of Service (OOS) and not airworthy?',options:['Purple','Yellow','Red','Orange'],correct:2,cite:'Module 6 slide 5'},{n:7,pts:10,text:'A Special Flight Permit (SFP) requires a signature. Per the updated IOCM procedure, who must sign the SFP?',options:['The Captain only','The Manager of Flight Dispatch, or their designee (typically the dispatcher)','The Director of Maintenance','Both the Captain and the Dispatcher'],correct:1,cite:'IOCM / Module 6 slide 38'},{n:8,pts:10,text:'MOC calls to inform you that an E190 has an MEL applied that restricts the flight to FL310 or below. The current release is planned at FL350. What must you do?',options:['Nothing — the crew will manage the altitude restriction on their own','Block the FDP, revise the release with the MEL applied and a cruise altitude at or below FL310, then unblock FDP once the crew acknowledges','Amend the release only — no FDP block needed for an altitude restriction','Cancel the flight until the MEL is resolved'],correct:1,cite:'IOCM / Module 6 MEL procedures'},{n:9,pts:10,text:'A crew sends an ACARS message mid-flight reporting an EICAS caution message. Who should the dispatcher coordinate with first, alongside communicating with the crew?',options:['Crew scheduling','The station manager at the destination','Maintenance Operations Control (MOC)','The FAA Flight Standards office'],correct:2,cite:'Module 6 slide 8'},{n:10,pts:10,text:'What is the key difference between an ACI (Administrative Control Item) and a standard MEL item?',options:['An ACI allows the aircraft to fly with reduced performance; an MEL does not','An ACI is listed for tracking and informational purposes only — no operational relief is granted. A MEL item grants specific operational relief.','An ACI applies only to cabin items; a MEL applies to flight-critical systems','They are functionally identical'],correct:1,cite:'Module 6 slide 20'}]},
   {id:'group2_final',externalUrl:'breeze_test_group2_final.html',mod:'Section Final',name:'Group II Aircraft Section Final',sub:'Modules 6, 16–21 · All Group II content',section:'Group II Aircraft',type:'test',totalQuestions:10,questions:[{n:1,pts:10,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:2,pts:10,text:'The fuselage is considered a critical surface and must always be deiced before flight in winter conditions.',options:['True','False'],correct:1,cite:'Module 17 slide 9'},{n:3,pts:10,text:'Which of the following are the critical surfaces that must be free of contamination before takeoff under the Clean Aircraft Concept?',options:['Fuselage, wings, and nose','Wings, horizontal stabilizers, vertical stabilizers, control surfaces, and engine inlets','Wings, cockpit windows, and landing gear','Wings, control surfaces, and antennas'],correct:1,cite:'Module 17 slide 8 / GDAP'},{n:4,pts:10,text:'What is the key difference between deicing and anti-icing fluids?',options:['Deicing prevents ice formation; anti-icing removes existing ice','Deicing removes existing frost, ice, or snow; anti-icing prevents formation or accumulation after application','They are the same fluid applied at different temperatures','Anti-icing is only used on critical surfaces; deicing is for the fuselage'],correct:1,cite:'Module 17 slide 12 / GDAP 4.1.3'},{n:5,pts:10,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from gate departure to takeoff; begins at pushback','The estimated time anti-icing fluid will prevent frost or ice formation; begins when the final application of fluid commences','The maximum time an aircraft can hold on the taxiway in winter conditions','The time limit for completing the deicing process before the fluid must be reapplied'],correct:1,cite:'Module 17 / GDAP'},{n:6,pts:10,text:'Per 14 CFR 121.629 (the Clean Aircraft Concept), when may a dispatcher release or an aircraft take off?',options:['Only when conditions are below 0°C and precipitation has stopped','Only when the approved deicing/anti-icing program is followed if frost, ice, or snow may reasonably be expected to adhere to critical surfaces','Whenever the crew performs a visual inspection and finds no contamination','At the captain\'s discretion during winter operations'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:7,pts:10,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement must dispatch verify and how?',options:['No additional requirement — standard landing field length applies','The effective runway length must be at least 115% of the required landing field length; verified using the RWA section in N-FP','The crew must conduct a visual inspection of the runway before landing','An alternate must be added regardless of existing alternate requirements'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17 slide 57'},{n:8,pts:10,text:'Your flight to BDL is departing in 90 minutes. OAT is -5°C and light snow is falling. The crew will be deiced with Type IV anti-icing fluid. What is the dispatcher\'s primary responsibility regarding holdover time?',options:['Nothing — holdover time is the crew\'s responsibility','Ensure the crew is aware of the HOT for the conditions and fluid type, and that they understand HOT begins at the final fluid application — not at takeoff','Ensure the aircraft is deiced no more than 10 minutes before pushback','Add 30 minutes of hold fuel for winter operations'],correct:1,cite:'Module 17 / GDAP'},{n:9,pts:10,text:'You are planning a flight to SBN in January. The destination TAF shows -8°C and moderate snow at ETA with reported braking action POOR. What must dispatch assess before releasing the flight?',options:['Only whether fuel minimums are met','Whether the destination runway meets landing performance requirements under contaminated runway conditions, including the 115% field length check if visibility is also below ¾ SM','Whether the crew has been trained for winter operations','Whether the station has a deice truck available'],correct:1,cite:'Module 17 / OpSpec C054 / § 121.195'},{n:10,pts:10,text:'The Air Florida Flight 90 case study in Module 17 is used to illustrate which core dispatch lesson?',options:['The importance of fuel planning in winter operations','The catastrophic consequences of failing to properly deice and the critical importance of the Clean Aircraft Concept','How dispatchers should calculate holdover times','The danger of tailwind operations in cold weather'],correct:1,cite:'Module 17 slide 11'}]},
   {id:'comp_final',externalUrl:'breeze_test_comprehensive_final.html',mod:'Comprehensive Final',name:'Comprehensive Final Exam',sub:'All sections · 80% to pass · Closed book',section:'All Sections',type:'test',totalQuestions:15,questions:[{n:1,pts:7,text:'A MEL (Minimum Equipment List) allows an aircraft with inoperative equipment to remain in service, provided the conditions and procedures in the MEL are followed.',options:['True','False'],correct:0,cite:'Module 6 / IOCM MEL/CDL procedures'},{n:2,pts:7,text:'A CDL (Configuration Deviation List) applies to inoperative avionics and flight systems — it functions the same way as a MEL.',options:['True','False'],correct:1,cite:'A CDL applies to missing or deviated non-structural EXTERNAL parts of the aircraft (e.g., fairings, '},{n:3,pts:7,text:'On both the A220 and E190, the maximum tailwind component for takeoff and landing is 10 knots.',options:['True','False'],correct:0,cite:'Both the A220 and E190 AFMs limit tailwind operations to 10 knots for takeoff and landing.'},{n:4,pts:7,text:'Ballast fuel on the E190/195 is considered usable fuel and does not need to be remarked on the dispatch release.',options:['True','False'],correct:1,cite:'Module 20 slide 5'},{n:5,pts:7,text:'The Breeze Cold Weather Operations period runs from October 15th through April 15th each year.',options:['True','False'],correct:0,cite:'Module 17 slide 3 / GDAP'},{n:6,pts:7,text:'Breeze plans for a minimum weight buffer between planned Takeoff Gross Weight (TOGW) and MTOW of:',options:['1,000 lbs','2,000 lbs','3,000 lbs','4,000 lbs'],correct:1,cite:'Module 16/18/19 W&B policy'},{n:7,pts:7,text:'When MOC notifies dispatch of an incoming MEL, what is the dispatcher\'s FIRST action in Aerodata?',options:['Revise the dispatch release with the MEL applied','Block the FDP immediately so the crew cannot run takeoff performance until the MEL is properly applied','Contact the captain to discuss the MEL','File a safety report in Ideagen'],correct:1,cite:'Module 6 / IOCC-INFO-05'},{n:8,pts:7,text:'When is ballast fuel required on the E190/195, and how much?',options:['Always required — 3,000 lbs minimum','When there are 15 or fewer passengers onboard — 5,000 lbs','When the aircraft is below MZFW — amount determined by W&B','Ballast fuel is not required on the E190'],correct:1,cite:'Module 20 slide 5'},{n:9,pts:7,text:'Which of the following correctly describes the Clean Aircraft Concept under 14 CFR 121.629?',options:['The dispatcher must confirm the aircraft has been washed before winter operations','Dispatch, release, or takeoff is prohibited when frost, ice, or snow may reasonably adhere to critical surfaces unless the approved deicing/anti-icing program is followed','The crew must perform a visual inspection of the aircraft before every winter departure','Anti-icing fluid must be applied at all temperatures below 10°C'],correct:1,cite:'14 CFR 121.629 / Module 17'},{n:10,pts:7,text:'What is \'BINGO\' fuel and how is it calculated?',options:['The minimum fuel for landing; equal to company landing fuel minimums','Minimum fuel at a given point: burn to destination + alternate fuel + 45-minute reserve','Emergency fuel — 30 minutes or less of fuel remaining','Total fuel planned for the flight including all reserves and contingency'],correct:1,cite:'Module 20 slide 17'},{n:11,pts:6,text:'When destination visibility is forecast below ¾ SM or RVR 4000, what additional landing performance requirement applies?',options:['No additional requirement — standard field length applies','The effective runway length must be at least 115% of the required landing field length, verified via N-FP\'s RWA section','The crew must conduct a runway inspection before landing','A destination alternate must always be added regardless of the 1-2-3 rule'],correct:1,cite:'OpSpec C054 / § 121.195 / Module 17'},{n:12,pts:6,text:'A MEL amendment is considered complete only when:',options:['The dispatcher sends the revised release via ACARS','MOC confirms the MEL has been entered in the maintenance log','The PIC replies via ACARS acknowledging the amendment with time and initials','The supervisor approves the amendment in N-FP'],correct:2,cite:'Module 6 slide 34'},{n:13,pts:6,text:'What is Holdover Time (HOT) and when does it begin?',options:['The time from deicing completion to takeoff; begins at wheels-up','The estimated time anti-icing fluid prevents contamination formation; begins when the FINAL application of fluid commences','The maximum allowed taxi time in winter conditions; begins at pushback','The time limit to complete the deicing process; begins when fluid is first applied'],correct:1,cite:'Module 17 / GDAP'},{n:16,pts:6,text:'Briefly describe what the GDAP (Ground Deice/Anti-Icing Program) contains and why it matters to dispatch. Cite the applicable regulation. Answer + Citation:',options:['Yes — drizzle and mist are not icing conditions','No — OAT is 09°C which is above freezing; icing is not a factor','No — temperature/dewpoint spread of 0°C with visible moisture (BR/mist) at 9°C meets the definition of icing conditions (≤10°C with visible moisture), and drizzle is a form of precipitation that can freeze on cold-soaked surfaces','Yes — the MEL only restricts known icing, and this METAR does not show ice pellets or freezing drizzle'],correct:2,cite:'OAT 9°C with visible moisture (mist/drizzle) meets Breeze icing conditions criteria (≤10°C with visi'},{n:22,pts:6,text:'You are dispatching an E190 with 13 passengers from BNA to PVD. What fuel planning action is required and what must appear on the release?',options:['No special action — normal fuel planning applies for any passenger count','Add 5,000 lbs of ballast fuel (considered unusable) and remark the release — required for 15 or fewer passengers on the E190/195','Reduce planned fuel by 5,000 lbs to compensate for the light load','Contact MOC to confirm weight and balance before releasing'],correct:1,cite:'Module 20 slide 5'}]},
+  {id:'ojt_comp_check',mod:'OJT',name:'Mock Comp Check',sub:'Check Dispatcher competency check · 90% to pass · Gated to OJT',section:'OJT',type:'test',passMark:90,ojtGated:true,totalQuestions:12,questions:[
+    {n:1,qtype:'mc',pts:8,text:'What is the dispatcher\'s very first step upon arriving at the desk?',options:['Begin reviewing releases for the next departure bank','Read & Sign bulletins, conduct an ops review, check email/Teams, then complete WX and ATC briefs','Call the off-going dispatcher for a verbal passdown','Run RWA on all desk aircraft'],correct:1,cite:'OJT Guide Part 3 / Beginning of Shift Brief'},
+    {n:2,qtype:'mc',pts:8,text:'What is the controlling element on a METAR for dispatch purposes?',options:['Ceiling','Visibility / RVR','Wind','Altimeter setting'],correct:1,cite:'OJT Guide Part 5 — IOCM 18.10.3.1'},
+    {n:3,qtype:'mc',pts:8,text:'What is the difference between a Ground Stop and a Ground Delay Program (GDP)?',options:['A GS assigns EDCT delay slots; a GDP stops all departures','A GS stops all departures to an airport; a GDP meters arrivals by assigning EDCT delay slots','They are two names for the same program','A GS is airport-based; a GDP is fix-based'],correct:1,cite:'OJT Guide Part 5 — ATC Knowledge'},
+    {n:4,qtype:'mc',pts:8,text:'If a flight diverts, does the diversion airport need to be above alternate minimums?',options:['Yes — it must meet alternate minimums until landing','No — the diversion airport becomes the destination airport, so it no longer needs to meet alternate minimums','Yes — unless the captain declares an emergency','Only if a second alternate was not originally filed'],correct:1,cite:'OJT Guide Part 5 / Scenarios — IOCM 14.8.2'},
+    {n:5,qtype:'mc',pts:8,text:'Per Breeze policy, what is the company minimum planned landing fuel?',options:['45 minutes (FAR minimum)','60 minutes','70 minutes','90 minutes'],correct:1,cite:'OJT Guide — IOCM 9.4'},
+    {n:6,qtype:'matching',pts:10,text:'Match each OpSpec to what it governs.',pairs:[
+      {left:'C52',right:'Approved approach procedures'},
+      {left:'C55',right:'Alternate minimums (1 Nav / 2 Nav)'},
+      {left:'C51',right:'RVR conversion chart'},
+      {left:'A13',right:'Offshore / eject-off-coast distance limit'},
+      {left:'B46',right:'RVSM airspace'}
+    ],cite:'OJT Guide Part 5 — Ops Specs'},
+    {n:7,qtype:'matching',pts:10,text:'Match each ATC / flow concept to its correct description.',pairs:[
+      {left:'Capping',right:'Blocking a flight at a lower altitude'},
+      {left:'Tunneling',right:'Routing a flight between traffic layers'},
+      {left:'AFP',right:'Area flow program (fix-based)'},
+      {left:'GDP',right:'Airport-based delay program with EDCTs'},
+      {left:'P-Time',right:'Proposed departure time in EDCT management'}
+    ],cite:'OJT Guide Part 5 — ATC Knowledge'},
+    {n:8,qtype:'written',pts:8,text:'Explain the difference between a Safety report and an ASAP report, including when each is used and what protections ASAP provides.',model:'A Safety report is internal company reporting under just culture; an ASAP (Aviation Safety Action Program) report is an FAA safety partnership that provides certain protections from enforcement when criteria are met. ASAP is rejected for intentional violations, criminal activity, substance abuse, falsification, or events already under FAA investigation.',cite:'OJT Guide Part 5 — General Knowledge / Module 15'},
+    {n:9,qtype:'written',pts:8,text:'Walk through a complete release review. What are you checking, and in what order? Be specific.',model:'Route (filed vs. planned, reroutes/CDRs), fuel (MINTO, contingency, 2,000 lb buffer, tanker/ballast as applicable), alternates (suitability, alt mins, NOTAMs), weather (controlling VIS/RVR, trends, 1-2-3 rule), NOTAMs including FDCs affecting approaches, landing minimums for all airports, restrictive MELs/CDLs and their performance impact, and RWA — rerun immediately before sending.',cite:'OJT Guide Part 5 — N-FP / Flight Planning'},
+    {n:10,qtype:'scenario',pts:12,text:'Your flight is holding over a fix on its planned route. The crew sends: "Holding, request bingo." Burn from the holding fix to destination is 800 lbs, alternate fuel is 1,800 lbs, and final reserve is 3,000 lbs.',subs:[
+      {label:'What is the BINGO fuel at this point?',type:'mc',pts:6,options:['4,800 lbs','5,600 lbs','3,000 lbs','6,600 lbs'],correct:1},
+      {label:'Briefly explain what BINGO fuel represents and what the crew must do when reaching it.',type:'written',pts:6,model:'BINGO is the minimum fuel for the given point: burn to destination + alternate fuel + 45-min reserve (here 800 + 1,800 + 3,000 = 5,600 lbs). On reaching BINGO the crew must depart holding and proceed, since continuing to hold would erode required destination/alternate/reserve fuel.'}
+    ],cite:'OJT Guide Part 5 — Scenarios / Module 20'},
+    {n:11,qtype:'scenario',pts:12,text:'Mid-flight, the crew reports a passenger medical emergency and is considering a diversion to an airport on your route.',subs:[
+      {label:'Does the diversion airport need to meet alternate minimums?',type:'mc',pts:6,options:['Yes — until the wheels are down','No — it becomes the destination, so alternate minimums do not apply','Only if no alternate was filed','Yes — medical diversions still require alternate mins'],correct:1},
+      {label:'Describe your role and notification chain in a medical diversion. Who decides to divert, and who do you coordinate with?',type:'written',pts:6,model:'The PIC has final authority to divert; the dispatcher supports by identifying the nearest suitable airport, running the fuel check, coordinating MedLink as needed (SATCOM/phone conference), notifying MOC and the Duty Manager, and amending the release. Coordinate per IOCM Chapter 14 emergency procedures.'}
+    ],cite:'OJT Guide Part 5 / Scenarios — IOCM Chapter 14'},
+    {n:12,qtype:'mc',pts:8,text:'When can you amend a release versus when must you issue a new release (revision)?',options:['Amend for any change; a new release is never required once filed','Amend per IOCM 5.2 for minor changes within defined limits; issue a new release (revise) per IOCM 5.3.1 when changes exceed those limits','A new release is required for every change','Only supervisors may amend or revise a release'],correct:1,cite:'OJT Guide Part 5 — IOCM 5.2 / 5.3.1'}
+  ]},
   {id:'practice_sheet1',mod:'Sheet 1',name:'Practice Knowledge Check — Sheet 1',sub:'Practice scenarios · Placeholder content',section:'Practice',type:'practice',totalQuestions:2,questions:[
   {n:1,pts:50,text:'Placeholder question — replace this in the Question Editor. The dispatcher and pilot in command share joint responsibility for preflight planning, delay, and the dispatch release of each flight.',options:['True','False'],correct:0,cite:'Placeholder — § 121.533(b)'},
   {n:2,pts:50,text:'Placeholder question — replace this in the Question Editor. Which is the dispatcher\'s sole responsibility under § 121.533(c)?',options:['Sign the release','Monitor the progress of each flight','Fuel the aircraft','File the flight plan'],correct:1,cite:'Placeholder — § 121.533(c)'}]},
@@ -1097,7 +1197,30 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
   questionRows.forEach(function(q){
     const quiz = byId[q.quizId];
     if (!quiz) return;
-    const model = (q.model != null ? String(q.model) : '').trim();
+    const rawModel = (q.model != null ? String(q.model) : '');
+
+    // Matching / scenario questions are stored as a JSON payload in the model column,
+    // prefixed with @@Q@@ so normal written/MC rows are unaffected.
+    if (rawModel.indexOf('@@Q@@') === 0) {
+      let payload = {};
+      try { payload = JSON.parse(rawModel.slice(5)); } catch(e) { payload = {}; }
+      const base = {
+        n: Number(q.n) || (quiz.questions.length + 1),
+        pts: Number(q.pts) || 10,
+        text: q.text || '',
+        cite: q.cite || '',
+        qtype: payload.qtype
+      };
+      if (payload.qtype === 'matching') {
+        base.pairs = Array.isArray(payload.pairs) ? payload.pairs : [];
+      } else if (payload.qtype === 'scenario') {
+        base.subs = Array.isArray(payload.subs) ? payload.subs : [];
+      }
+      quiz.questions.push(base);
+      return;
+    }
+
+    const model = rawModel.trim();
     const written = model.length > 0;
     quiz.questions.push({
       n: Number(q.n) || (quiz.questions.length + 1),
@@ -1497,8 +1620,12 @@ function renderDashboard() {
   if (!el) return;
   const scores = getScores(currentUser);
 
-  // Trackable quizzes = everything except practice (matches the home tabs).
-  const tracked = QUIZZES.filter(q => q.type !== 'practice');
+  // Reveal the OJT comp-check card only for signed-off (OJT-phase) students.
+  const ojtCard = document.getElementById('home-card-ojt');
+  if (ojtCard) ojtCard.style.display = isSignedOff(currentUser) ? '' : 'none';
+
+  // Trackable quizzes = everything except practice and the gated OJT check.
+  const tracked = QUIZZES.filter(q => q.type !== 'practice' && !q.ojtGated);
   const total = tracked.length;
 
   let completed = 0, pending = 0, passed = 0;
@@ -1607,6 +1734,7 @@ function renderPortal() {
   sectionOrder.forEach(s => { quizzesBySection[s] = {kc:[], test:[]}; });
   QUIZZES.forEach(q => {
     if (q.type === 'practice') return;  // practice quizzes have their own launcher
+    if (q.ojtGated) return;             // OJT comp check has its own gated card
     if (!quizzesBySection[q.section]) quizzesBySection[q.section] = {kc:[],test:[]};
     quizzesBySection[q.section][q.type === 'test' ? 'test' : 'kc'].push(q);
   });
@@ -1615,6 +1743,7 @@ function renderPortal() {
   let totalKC = 0, totalTests = 0;
   QUIZZES.forEach(q => {
     if (q.type === 'practice') return;
+    if (q.ojtGated) return;
     if(q.type==='test') totalTests++; else totalKC++;
   });
 
@@ -1694,11 +1823,15 @@ function showPortalSection(tab) {
   document.getElementById('portal-study').style.display = 'none';
   document.getElementById('portal-content').style.display = 'none';
   document.getElementById('portal-practice').style.display = 'none';
+  var ojt = document.getElementById('portal-ojt'); if (ojt) ojt.style.display = 'none';
   if (tab === 'study') {
     document.getElementById('portal-study').style.display = 'block';
   } else if (tab === 'practice') {
     renderPractice();
     document.getElementById('portal-practice').style.display = 'block';
+  } else if (tab === 'ojt') {
+    renderOJTSection();
+    document.getElementById('portal-ojt').style.display = 'block';
   } else {
     window._portalTab = tab;
     renderPortal();
@@ -1713,6 +1846,51 @@ function showPortalHome() {
   document.getElementById('portal-content').style.display = 'none';
   document.getElementById('portal-study').style.display = 'none';
   document.getElementById('portal-practice').style.display = 'none';
+  var ojt = document.getElementById('portal-ojt'); if (ojt) ojt.style.display = 'none';
+}
+
+// ── Render the OJT comp-check section (gated start + instructions + result) ─────
+function renderOJTSection() {
+  const container = document.getElementById('ojt-section-container');
+  if (!container) return;
+  if (!isSignedOff(currentUser)) {
+    container.innerHTML = `<div class="study-coming-soon">
+      <div style="font-size:48px;margin-bottom:1rem;">&#128274;</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--navy);margin-bottom:.5rem;">Not yet unlocked</div>
+      <div style="font-size:14px;color:var(--ink3);max-width:420px;margin:0 auto;">The OJT Mock Comp Check unlocks once you have been signed off from classroom training and moved to OJT.</div>
+    </div>`;
+    return;
+  }
+  const quiz = QUIZZES.find(q => q.id === 'ojt_comp_check');
+  const sc = getScores(currentUser)['ojt_comp_check'];
+  const sb = scoreBadge(sc);
+  const done = !!sc;
+  const notes = getSAGrades(currentUser)['ojt_comp_check_notes'];
+  const hasNotes = notes && Object.keys(notes).length;
+  const qCount = quiz ? quiz.totalQuestions : 12;
+
+  container.innerHTML = `
+    <div class="ojt-hero">
+      <div class="ojt-hero-badge">&#9992; OJT Phase</div>
+      <div class="ojt-hero-title">Mock Comp Check</div>
+      <div class="ojt-hero-sub">This competency check mirrors the questions your Check Dispatcher will probe during OJT. It mixes multiple choice, matching, scenario, and written questions.</div>
+      <div class="ojt-hero-meta">
+        <div class="ojt-meta-item"><span class="ojt-meta-val">${qCount}</span><span class="ojt-meta-lbl">questions</span></div>
+        <div class="ojt-meta-item"><span class="ojt-meta-val">90%</span><span class="ojt-meta-lbl">to pass</span></div>
+        <div class="ojt-meta-item"><span class="ojt-meta-val ${sb.cls === 'pass' ? 'pass' : sb.cls === 'fail' ? 'fail' : ''}">${done ? (sc.status === 'pending' ? '⏳' : sc.score + '%') : '—'}</span><span class="ojt-meta-lbl">${done ? (sc.status === 'pending' ? 'in review' : (sc.pass ? 'passed' : 'not yet')) : 'not attempted'}</span></div>
+      </div>
+      <ul class="ojt-instructions">
+        <li>Written and scenario answers are reviewed by an instructor before your score is finalized.</li>
+        <li>For matching questions, connect each item on the left to its match on the right.</li>
+        <li>You can retake missed questions after your written answers are graded.</li>
+      </ul>
+      ${hasNotes ? `<button class="qc-feedback-btn" onclick="viewFeedback('ojt_comp_check')" style="margin-bottom:1rem;">&#128172; View instructor feedback</button>` : ''}
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="start-btn" onclick="startQuiz('ojt_comp_check', false)">${done ? '&#8635; Retake' : '&#9654; Start comp check'}</button>
+        ${done && sc.status !== 'pending' ? `<button class="start-btn retake" onclick="startQuiz('ojt_comp_check', true)">&#8635; Retake missed only</button>` : ''}
+        <span class="ojt-status-chip ${sb.cls}">${sb.label}</span>
+      </div>
+    </div>`;
 }
 
 // ── Render Practice Knowledge Checks (real, graded quizzes; single list) ───────
@@ -1764,6 +1942,14 @@ function setPortalTab(tab) {
 }
 
 // ── Start quiz ────────────────────────────────────────────────────────────────
+function startOJTCheck() {
+  if (!isSignedOff(currentUser)) {
+    alert('The OJT Mock Comp Check unlocks once you have been signed off from classroom training and moved to OJT.');
+    return;
+  }
+  startQuiz('ojt_comp_check', false);
+}
+
 function startQuiz(qid, missedOnly) {
   const quiz = QUIZZES.find(q => q.id === qid);
   if (!quiz) return;
@@ -1796,6 +1982,7 @@ function startQuiz(qid, missedOnly) {
 
   examSelected = {};
   window._examWritten = {};
+  window._examMatch = {};
   examResults  = null;
   const titlePrefix = missedOnly ? 'Retake — ' : '';
   document.getElementById('exam-topbar-title').textContent = titlePrefix + currentQuiz.mod + ' — ' + currentQuiz.name;
@@ -1844,7 +2031,11 @@ function renderExam() {
       <div id="exam-questions">`;
 
   q.questions.forEach((qu, i) => {
-    if (isWrittenQ(qu)) {
+    if (qExamType(qu) === 'matching') {
+      html += renderMatchingQ(qu);
+    } else if (qExamType(qu) === 'scenario') {
+      html += renderScenarioQ(qu);
+    } else if (isWrittenQ(qu)) {
       const prior = (window._examWritten && window._examWritten[qu.n]) || '';
       html += `<div class="q-card" id="qcard-${qu.n}">
         <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Written</span></div>
@@ -1877,6 +2068,227 @@ function renderExam() {
     </div>`;
 
   content.innerHTML = html;
+  // Wire up drag-to-connect matching questions now that the DOM exists.
+  setTimeout(initMatchingQuestions, 0);
+}
+
+// Determine a question's exam type. Explicit qtype wins; otherwise fall back to
+// the legacy written/MC detection so existing quizzes keep working unchanged.
+function qExamType(qu) {
+  if (qu && qu.qtype) {
+    const t = String(qu.qtype).toLowerCase();
+    if (t === 'matching' && Array.isArray(qu.pairs) && qu.pairs.length) return 'matching';
+    if (t === 'scenario' && Array.isArray(qu.subs) && qu.subs.length) return 'scenario';
+    if (t === 'written') return 'written';
+    if (t === 'mc') return 'mc';
+  }
+  return isWrittenQ(qu) ? 'written' : 'mc';
+}
+
+// Stable shuffle helper (seeded by question number so the right-column order is
+// consistent within a single render but still mixed up).
+function shuffledIndices(n, seed) {
+  const arr = Array.from({length:n}, (_,i)=>i);
+  let s = seed || 1;
+  for (let i = n - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ── Matching question — drag a left box onto a right box to dock it ─────────────
+// qu.pairs = [{left, right}, ...]. Student drags a left box onto a right box; on drop
+// the left box docks next to its match and they share a color/number. Drag a docked
+// box back out (or onto another right) to move it. Data: _examMatch[n] = {leftIdx: rightIdx}.
+function renderMatchingQ(qu) {
+  const pairs = qu.pairs || [];
+  const order = shuffledIndices(pairs.length, qu.n * 7 + 3);  // shuffled right column
+  if (!window._examMatch) window._examMatch = {};
+
+  const leftBank = pairs.map((p, li) =>
+    `<div class="mtch-tile" id="mtch-${qu.n}-L${li}" draggable="true" data-q="${qu.n}" data-idx="${li}">
+       <span class="mtch-badge"></span><span class="mtch-grip">⠿</span><span class="mtch-label">${p.left}</span>
+     </div>`).join('');
+
+  const rightRows = order.map(ri =>
+    `<div class="mtch-target" id="mtch-${qu.n}-R${ri}" data-q="${qu.n}" data-idx="${ri}">
+       <div class="mtch-dock" id="mtch-${qu.n}-dock${ri}"></div>
+       <div class="mtch-right-label">${pairs[ri].right}</div>
+     </div>`).join('');
+
+  return `<div class="q-card" id="qcard-${qu.n}">
+    <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Matching</span></div>
+    <div class="q-text">${qu.text || 'Drag each item on the left onto its match on the right.'}</div>
+    <div class="mtch-hint">Drag a box from the left onto its match on the right. Drag a docked box back to the bank to undo.</div>
+    <div class="mtch-grid" id="mtch-grid-${qu.n}">
+      <div class="mtch-bank" id="mtch-bank-${qu.n}" data-q="${qu.n}">${leftBank}</div>
+      <div class="mtch-targets">${rightRows}</div>
+    </div>
+  </div>`;
+}
+
+// 8 distinct pair colors (cycled if more pairs). [border/badge, soft fill]
+var MTCH_COLORS = [
+  ['#2566CC','#E3ECFB'], ['#1A9E8F','#DDF3F0'], ['#C8284F','#FBE3EA'], ['#B5821A','#FBF0D8'],
+  ['#7A4FC0','#EEE6FA'], ['#1A7A3C','#E1F2E7'], ['#D2602A','#FBEADF'], ['#3F7CB8','#E5EFF8']
+];
+
+// Wire up drag/drop for every matching question after the exam DOM exists.
+function initMatchingQuestions() {
+  if (!currentQuiz) return;
+  currentQuiz.questions.forEach(qu => {
+    if (qExamType(qu) === 'matching') initOneMatching(qu.n);
+  });
+}
+
+function initOneMatching(qn) {
+  if (!window._examMatch) window._examMatch = {};
+  if (!window._examMatch[qn]) window._examMatch[qn] = {};
+  let dragLeft = null;  // left idx being dragged
+
+  function tiles(){ return document.querySelectorAll('#mtch-grid-'+qn+' .mtch-tile'); }
+
+  function attachTileDrag(tile){
+    tile.addEventListener('dragstart', function(ev){
+      dragLeft = Number(tile.dataset.idx);
+      ev.dataTransfer.effectAllowed = 'move';
+      try { ev.dataTransfer.setData('text/plain', String(dragLeft)); } catch(e){}
+      setTimeout(()=>tile.classList.add('dragging'), 0);
+    });
+    tile.addEventListener('dragend', function(){ tile.classList.remove('dragging'); dragLeft = null; clearDropHints(); });
+    // Pointer fallback for touch (basic): tap a tile to "pick up", tap a target to drop.
+    tile.addEventListener('click', function(){
+      if (window._mtchPick && window._mtchPick.qn === qn && window._mtchPick.li === Number(tile.dataset.idx)) { window._mtchPick = null; tile.classList.remove('picked'); return; }
+      document.querySelectorAll('#mtch-grid-'+qn+' .mtch-tile').forEach(t=>t.classList.remove('picked'));
+      window._mtchPick = { qn: qn, li: Number(tile.dataset.idx) };
+      tile.classList.add('picked');
+    });
+  }
+
+  function clearDropHints(){ document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(t=>t.classList.remove('drop-hover')); }
+
+  function bindTarget(target){
+    const ri = Number(target.dataset.idx);
+    target.addEventListener('dragover', function(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; target.classList.add('drop-hover'); });
+    target.addEventListener('dragleave', function(){ target.classList.remove('drop-hover'); });
+    target.addEventListener('drop', function(ev){ ev.preventDefault(); target.classList.remove('drop-hover'); if (dragLeft != null) link(dragLeft, ri); });
+    target.addEventListener('click', function(){
+      if (window._mtchPick && window._mtchPick.qn === qn) { link(window._mtchPick.li, ri); window._mtchPick = null; }
+    });
+  }
+
+  // Bank accepts a docked tile dragged back out (unlink).
+  const bank = document.getElementById('mtch-bank-'+qn);
+  if (bank) {
+    bank.addEventListener('dragover', function(ev){ ev.preventDefault(); });
+    bank.addEventListener('drop', function(ev){ ev.preventDefault(); if (dragLeft != null) unlink(dragLeft); });
+    bank.addEventListener('click', function(){
+      // tapping empty bank area drops a picked tile back (no-op if already in bank)
+      if (window._mtchPick && window._mtchPick.qn === qn) { unlink(window._mtchPick.li); window._mtchPick = null; }
+    });
+  }
+
+  function link(li, ri){
+    const map = window._examMatch[qn];
+    // a right target holds at most one left
+    Object.keys(map).forEach(k => { if (Number(map[k]) === ri) delete map[k]; });
+    map[li] = ri;
+    redraw();
+  }
+  function unlink(li){ delete window._examMatch[qn][li]; redraw(); }
+
+  function redraw(){
+    const map = window._examMatch[qn] || {};
+    const leftKeys = Object.keys(map).map(Number).sort((a,b)=>a-b);
+    const slotOf = {}; leftKeys.forEach((li,slot)=>slotOf[li]=slot);
+
+    // Move tiles into docks or back to the bank, set colors/badges.
+    currentQuizMatchPairs(qn).forEach((p, li) => {
+      const tile = document.getElementById('mtch-'+qn+'-L'+li);
+      if (!tile) return;
+      const badge = tile.querySelector('.mtch-badge');
+      tile.classList.remove('picked');
+      if (map[li] != null) {
+        const slot = slotOf[li]; const c = MTCH_COLORS[slot % MTCH_COLORS.length];
+        const dock = document.getElementById('mtch-'+qn+'-dock'+map[li]);
+        if (dock && tile.parentNode !== dock) dock.appendChild(tile);
+        tile.classList.add('docked');
+        tile.style.borderColor = c[0]; tile.style.background = c[1];
+        badge.textContent = (slot+1); badge.style.background = c[0]; badge.style.color = '#fff';
+      } else {
+        if (tile.parentNode !== bank && bank) bank.appendChild(tile);
+        tile.classList.remove('docked');
+        tile.style.borderColor = ''; tile.style.background = '';
+        badge.textContent = ''; badge.style.background = ''; badge.style.color = '';
+      }
+    });
+    // Color the right targets that are filled.
+    document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(t => {
+      const ri = Number(t.dataset.idx);
+      const li = leftKeys.find(k => map[k] === ri);
+      t.classList.toggle('filled', li != null);
+      if (li != null) { const c = MTCH_COLORS[slotOf[li] % MTCH_COLORS.length]; t.style.borderColor = c[0]; }
+      else t.style.borderColor = '';
+    });
+
+    const total = currentQuizMatchPairs(qn).length;
+    const done = Object.keys(map).length;
+    const card = document.getElementById('qcard-'+qn);
+    if (card) { if (done >= total && total>0) card.classList.add('answered'); else card.classList.remove('answered'); }
+    updateExamProgress();
+  }
+
+  tiles().forEach(attachTileDrag);
+  document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(bindTarget);
+  redraw();
+}
+
+function currentQuizMatchPairs(qn){
+  const q = currentQuiz.questions.find(x=>String(x.n)===String(qn));
+  return (q && q.pairs) ? q.pairs : [];
+}
+
+// Score a matching question: fraction of correctly matched pairs × points.
+function scoreMatching(qu) {
+  const pairs = qu.pairs || [];
+  const ans = (window._examMatch && window._examMatch[qu.n]) || {};
+  let right = 0;
+  pairs.forEach((p, li) => { if (Number(ans[li]) === li) right++; }); // correct match = same index
+  const possible = Number(qu.pts) || 0;
+  const frac = pairs.length ? right / pairs.length : 0;
+  return { earned: Math.round(frac * possible), possible, right, total: pairs.length, allCorrect: right === pairs.length };
+}
+
+// ── Scenario question ────────────────────────────────────────────────────────
+// qu.text = the situation; qu.subs = [{label, type:'mc'|'written', options?, correct?, model?, pts}]
+function renderScenarioQ(qu) {
+  const subs = qu.subs || [];
+  let subHtml = subs.map((s, si) => {
+    const subN = qu.n + '_' + si;
+    if (s.type === 'written') {
+      const prior = (window._examWritten && window._examWritten[subN]) || '';
+      return `<div class="scn-sub">
+        <div class="scn-sub-label">${String.fromCharCode(97+si)}) ${s.label} <span class="scn-sub-pts">${s.pts} pts · Written</span></div>
+        <textarea class="written-input" id="written-${subN}" placeholder="Type your answer…" oninput="setWritten('${subN}', this.value)">${prior}</textarea>
+      </div>`;
+    }
+    const opts = Array.isArray(s.options) ? s.options : [];
+    return `<div class="scn-sub">
+      <div class="scn-sub-label">${String.fromCharCode(97+si)}) ${s.label} <span class="scn-sub-pts">${s.pts} pts</span></div>
+      <div class="options">
+        ${opts.map((o,oi)=>`<label class="option" id="opt-${subN}-${oi}" onclick="selectOpt('${subN}',${oi})">
+          <span class="opt-letter">${'ABCD'[oi]}</span><span class="opt-text">${o}</span>
+        </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="q-card scn-card" id="qcard-${qu.n}">
+    <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Scenario</span></div>
+    <div class="scn-prompt">${qu.text}</div>
+    <div class="scn-subs">${subHtml}</div>
+  </div>`;
 }
 
 // A question is "written" if it has a model answer and no real multiple-choice options.
@@ -1899,45 +2311,107 @@ function selectOpt(qn, oi) {
   examSelected[qn] = oi;
   document.querySelectorAll(`[id^="opt-${qn}-"]`).forEach(e => e.classList.remove('selected'));
   document.getElementById(`opt-${qn}-${oi}`).classList.add('selected');
-  document.getElementById('qcard-' + qn).classList.add('answered');
+  // For scenario sub-questions (qn like "5_0"), mark the parent card.
+  const parentN = String(qn).indexOf('_') > -1 ? String(qn).split('_')[0] : qn;
+  const card = document.getElementById('qcard-' + parentN);
+  if (card) card.classList.add('answered');
   updateExamProgress();
 }
 
 function updateExamProgress() {
   if (!currentQuiz) return;
-  const total = currentQuiz.totalQuestions;
   const w = window._examWritten || {};
-  let writtenDone = 0;
-  currentQuiz.questions.forEach(qu => { if (isWrittenQ(qu) && (w[qu.n]||'').trim()) writtenDone++; });
-  const done  = Object.keys(examSelected).length + writtenDone;
-  const pct   = total > 0 ? Math.round(done/total*100) : 0;
-  document.getElementById('exam-prog-fill').style.width = pct + '%';
-  document.getElementById('exam-prog-count').textContent = done + ' / ' + total;
+  const m = window._examMatch || {};
+  let total = 0, done = 0;
+  currentQuiz.questions.forEach(qu => {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      total++;
+      const need = (qu.pairs||[]).length;
+      if (need > 0 && Object.keys(m[qu.n]||{}).length >= need) done++;
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s, si) => {
+        total++;
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') { if ((w[subN]||'').trim()) done++; }
+        else if (examSelected[subN] !== undefined) done++;
+      });
+    } else if (t === 'written') {
+      total++;
+      if ((w[qu.n]||'').trim()) done++;
+    } else {
+      total++;
+      if (examSelected[qu.n] !== undefined) done++;
+    }
+  });
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  const fill = document.getElementById('exam-prog-fill'); if (fill) fill.style.width = pct + '%';
+  const cnt = document.getElementById('exam-prog-count'); if (cnt) cnt.textContent = done + ' / ' + total;
 }
 
 async function submitExam() {
   const q = currentQuiz;
   const written = window._examWritten || {};
-  // Count unanswered across both MC and written
-  let answeredCount = 0;
+  const match = window._examMatch || {};
+  // Count unanswered across MC, written, matching, and scenario sub-questions.
+  let answeredCount = 0, totalItems = 0;
   q.questions.forEach(qu => {
-    if (isWrittenQ(qu)) { if ((written[qu.n]||'').trim()) answeredCount++; }
-    else if (examSelected[qu.n] !== undefined) answeredCount++;
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      totalItems++;
+      const done = Object.keys(match[qu.n] || {}).length;
+      if (done >= (qu.pairs||[]).length && (qu.pairs||[]).length>0) answeredCount++;
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s,si) => {
+        totalItems++;
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') { if ((written[subN]||'').trim()) answeredCount++; }
+        else if (examSelected[subN] !== undefined) answeredCount++;
+      });
+    } else if (t === 'written') {
+      totalItems++;
+      if ((written[qu.n]||'').trim()) answeredCount++;
+    } else {
+      totalItems++;
+      if (examSelected[qu.n] !== undefined) answeredCount++;
+    }
   });
-  const ua = q.questions.length - answeredCount;
+  const ua = totalItems - answeredCount;
   if (ua > 0 && !confirm(ua + ' question' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
 
   let mcEarned = 0;
-  let mcPts = 0;             // total MC points possible
+  let mcPts = 0;             // total auto-scored points possible (MC + matching + scenario MC subs)
   let writtenPts = 0;        // total written points possible
   let writtenCount = 0;
   const results = {};
   const writtenAnswers = {};
   q.questions.forEach(qu => {
-    if (isWrittenQ(qu)) {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      const sc = scoreMatching(qu);
+      mcPts += sc.possible;
+      mcEarned += sc.earned;
+      results[qu.n] = { matching: true, earned: sc.earned, possible: sc.possible, right: sc.right, total: sc.total };
+    } else if (t === 'scenario') {
+      (qu.subs || []).forEach((s, si) => {
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') {
+          writtenCount++;
+          writtenPts += (Number(s.pts) || 0);
+          writtenAnswers[subN] = ((window._examWritten||{})[subN] || '');
+          results[subN] = { written: true, answer: writtenAnswers[subN], model: s.model || '' };
+        } else {
+          mcPts += (Number(s.pts) || 0);
+          const a = examSelected[subN];
+          const correct = a !== undefined && a === s.correct;
+          if (correct) mcEarned += (Number(s.pts) || 0);
+          results[subN] = { selected: a, correct };
+        }
+      });
+    } else if (t === 'written') {
       writtenCount++;
       writtenPts += (Number(qu.pts) || 0);
-      writtenAnswers[qu.n] = (written[qu.n] || '');
+      writtenAnswers[qu.n] = ((window._examWritten||{})[qu.n] || '');
       results[qu.n] = { written: true, answer: writtenAnswers[qu.n], model: qu.model || '' };
     } else {
       mcPts += (Number(qu.pts) || 0);
@@ -2011,6 +2485,7 @@ async function submitExam() {
   document.getElementById('submit-btn').disabled = true;
 
   let pct, pass, status;
+  const passMark = passMarkFor(fullQuiz);
   if (hasWritten) {
     // Not finalized — awaits instructor evaluation. Store the pieces needed to finalize later.
     pct = mcPct;            // provisional MC score for reference
@@ -2021,11 +2496,11 @@ async function submitExam() {
     // over the full quiz's total possible points.
     const combinedEarned = mcEarned + (RETAKE.priorWrittenEarned || 0);
     pct = totalPossible > 0 ? Math.round(combinedEarned / totalPossible * 100) : 0;
-    pass = pct >= PASS_THRESHOLD;
+    pass = pct >= passMark;
     status = 'finalized';
   } else {
     pct = mcPct;
-    pass = pct >= PASS_THRESHOLD;
+    pass = pct >= passMark;
     status = 'finalized';
   }
 
@@ -2039,18 +2514,36 @@ async function submitExam() {
 
   // Send to Google Sheets
   try {
-    const answersOut = RETAKE ? combinedAnswers : q.questions.map(qu => {
-        if (isWrittenQ(qu)) {
-          return { q: qu.n, written: true, selected: writtenAnswers[qu.n] || 'Not answered', correct: '(written — pending grading)', isCorrect: '' };
-        }
-        const opts = Array.isArray(qu.options) ? qu.options : [];
-        return {
-          q: qu.n,
-          selected: examSelected[qu.n] !== undefined ? opts[examSelected[qu.n]] : 'Not answered',
-          correct: opts[qu.correct],
-          isCorrect: results[qu.n].correct
-        };
-      });
+    const answersOut = RETAKE ? combinedAnswers : (() => {
+        const rows = [];
+        q.questions.forEach(qu => {
+          const t = qExamType(qu);
+          if (t === 'matching') {
+            const sc = scoreMatching(qu);
+            rows.push({ q: qu.n, matching: true, selected: sc.right + '/' + sc.total + ' correct',
+                        correct: 'All matched correctly', isCorrect: sc.allCorrect, earned: sc.earned, possible: sc.possible });
+          } else if (t === 'scenario') {
+            (qu.subs||[]).forEach((s, si) => {
+              const subN = qu.n + '_' + si;
+              if (s.type === 'written') {
+                rows.push({ q: subN, scenario: true, written: true, selected: writtenAnswers[subN] || 'Not answered', correct: '(written — pending grading)', isCorrect: '' });
+              } else {
+                const opts = Array.isArray(s.options) ? s.options : [];
+                rows.push({ q: subN, scenario: true,
+                            selected: examSelected[subN] !== undefined ? opts[examSelected[subN]] : 'Not answered',
+                            correct: opts[s.correct], isCorrect: results[subN] ? results[subN].correct : false });
+              }
+            });
+          } else if (t === 'written') {
+            rows.push({ q: qu.n, written: true, selected: writtenAnswers[qu.n] || 'Not answered', correct: '(written — pending grading)', isCorrect: '' });
+          } else {
+            const opts = Array.isArray(qu.options) ? qu.options : [];
+            rows.push({ q: qu.n, selected: examSelected[qu.n] !== undefined ? opts[examSelected[qu.n]] : 'Not answered',
+                        correct: opts[qu.correct], isCorrect: results[qu.n].correct });
+          }
+        });
+        return rows;
+      })();
     const correctCount = answersOut.filter(a => !a.written && (a.isCorrect === true)).length;
     const mcTotalCount = answersOut.filter(a => !a.written).length;
     const payload = {
@@ -2217,15 +2710,23 @@ function renderAdmin() {
     });
   }
 
-  // Summary metrics
-  const totalStudents = Object.keys(allStudents).length;
-  const allAttempts   = Object.values(allStudents).flatMap(s => Object.values(s));
+  // Summary metrics — scoped to the current Active/Signed-off tab.
+  const scope = window._rosterScope || 'active';
+  const scopedEntries = Object.entries(allStudents).filter(([uid]) =>
+    scope === 'signed' ? isSignedOff(uid) : !isSignedOff(uid));
+  const scopedStudents = scopedEntries.map(([, s]) => s);
+
+  const totalStudents = scopedStudents.length;
+  const allAttempts   = scopedStudents.flatMap(s => Object.values(s));
   const totalPassed   = allAttempts.filter(a => a.pass).length;
   const avgScore      = allAttempts.length ? Math.round(allAttempts.reduce((a,b) => a + (b.score||0), 0) / allAttempts.length) : 0;
-  const fullyComplete = Object.values(allStudents).filter(s => QUIZZES.every(q => s[q.id])).length;
+  const fullyComplete = scopedStudents.filter(s => QUIZZES.every(q => s[q.id])).length;
+
+  const studentsLabel = scope === 'signed' ? 'Signed off' : 'Active students';
+  const studentsSub   = scope === 'signed' ? 'no longer active' : 'currently active';
 
   document.getElementById('admin-summary').innerHTML = [
-    ['Students', totalStudents, 'have logged in'],
+    [studentsLabel, totalStudents, studentsSub],
     ['Attempts', allAttempts.length, 'total submissions'],
     ['Passed', totalPassed, 'of ' + allAttempts.length + ' attempts'],
     ['Avg score', avgScore + '%', 'across all quizzes'],
@@ -2248,13 +2749,12 @@ function renderAdmin() {
   // Filter and build rows
   let rows = Object.entries(allStudents);
 
-  // Sign-off scope: split active vs signed-off, update the toggle counts.
-  const scope = window._rosterScope || 'active';
+  // Update the toggle counts (computed from the full set).
   const signedCount = rows.filter(([uid]) => isSignedOff(uid)).length;
   const activeCount = rows.length - signedCount;
   const an = document.getElementById('scope-active-n'); if (an) an.textContent = activeCount;
   const sn = document.getElementById('scope-signed-n'); if (sn) sn.textContent = signedCount;
-  rows = rows.filter(([uid]) => scope === 'signed' ? isSignedOff(uid) : !isSignedOff(uid));
+  rows = scopedEntries.slice();  // already filtered to the current tab above
 
   if (search) rows = rows.filter(([uid]) => uid.toLowerCase().includes(search) || (getName(uid)||'').toLowerCase().includes(search));
   if (filterQ !== 'all') {
@@ -2406,8 +2906,20 @@ function computeAnalytics() {
       if (!quiz || !Array.isArray(rec.answers)) return;
       const section = quiz.section || 'Other';
       // Map question number -> definition for this quiz.
+      // Scenario sub-questions are also mapped under their composite key (e.g. "10_1").
       const defByN = {};
-      (quiz.questions || []).forEach(qq => { defByN[qq.n] = qq; });
+      (quiz.questions || []).forEach(qq => {
+        defByN[qq.n] = qq;
+        if (qq.qtype === 'scenario' && Array.isArray(qq.subs)) {
+          qq.subs.forEach((s, si) => {
+            defByN[qq.n + '_' + si] = {
+              text: '(Scenario Q' + qq.n + ') ' + s.label,
+              options: Array.isArray(s.options) ? s.options : [],
+              correct: s.correct, pts: s.pts, written: s.type === 'written'
+            };
+          });
+        }
+      });
 
       rec.answers.forEach(a => {
         const def = defByN[a.q];
@@ -3035,10 +3547,24 @@ const SA_TESTS = {
 };
 
 // Return the list of written questions for a quiz, from live QUIZZES or legacy SA_TESTS.
+// Scenario questions are flattened: each written sub-question becomes a gradeable item
+// with a composite number like "10_1" and its label as the text.
 function getWrittenQuestions(quizId) {
   const quiz = QUIZZES.find(q => q.id === quizId);
   if (quiz && quiz.questions) {
-    const w = quiz.questions.filter(qu => isWrittenQ(qu));
+    const w = [];
+    quiz.questions.forEach(qu => {
+      if (qExamType(qu) === 'scenario') {
+        (qu.subs || []).forEach((s, si) => {
+          if (s.type === 'written') {
+            w.push({ n: qu.n + '_' + si, pts: s.pts, text: '(Scenario Q' + qu.n + ') ' + s.label,
+                     model: s.model || '', cite: qu.cite || '' });
+          }
+        });
+      } else if (isWrittenQ(qu)) {
+        w.push(qu);
+      }
+    });
     if (w.length) return { name: quiz.mod + ' — ' + quiz.name, questions: w };
   }
   if (SA_TESTS[quizId] && SA_TESTS[quizId].questions && SA_TESTS[quizId].questions.length) {
@@ -3119,7 +3645,8 @@ function getMCAnswersForAttempt(uid, quizId) {
   if (quiz) (quiz.questions||[]).forEach(qq => qLookup[qq.n] = qq);
   return answers.filter(a => !a.written).map(a => {
     const qq = qLookup[a.q] || {};
-    return { q: a.q, text: qq.text || '', selected: a.selected, correct: a.correct, isCorrect: a.isCorrect };
+    return { q: a.q, text: qq.text || '', selected: a.selected, correct: a.correct, isCorrect: a.isCorrect,
+             matching: a.matching || false, earned: a.earned, possible: a.possible, scenario: a.scenario || false };
   });
 }
 
@@ -3167,14 +3694,26 @@ function openGrading(uid, quizId) {
   // Reconstruct MC earned + total possible from the sheet attempt / quiz definition,
   // so the header is accurate even when the student tested on another device.
   const _quiz = QUIZZES.find(q => q.id === quizId);
+  // Points lookup that understands matching, scenario subs, MC, and written.
+  function _ptsForKey(quiz, key) {
+    if (!quiz) return 0;
+    const k = String(key);
+    if (k.indexOf('_') > -1) {           // scenario sub: "10_1"
+      const [pn, si] = k.split('_');
+      const parent = quiz.questions.find(q => String(q.n) === pn);
+      if (parent && Array.isArray(parent.subs) && parent.subs[Number(si)]) return Number(parent.subs[Number(si)].pts) || 0;
+      return 0;
+    }
+    const q = quiz.questions.find(q => String(q.n) === k);
+    return q ? (Number(q.pts) || 0) : 0;
+  }
   let _allPts = 0;
   if (_quiz && _quiz.questions) _quiz.questions.forEach(qq => { _allPts += (Number(qq.pts)||0); });
   let scMcEarned = scores[quizId] ? scores[quizId].mcEarned : null;
   if (scMcEarned == null) {
     scMcEarned = 0;
-    const _qL = {}; if (_quiz) (_quiz.questions||[]).forEach(qq => _qL[qq.n]=qq);
     getMCAnswersForAttempt(uid, quizId).forEach(a => {
-      if (a.isCorrect === true || a.isCorrect === 'true') scMcEarned += (Number((_qL[a.q]||{}).pts)||0);
+      if (a.isCorrect === true || a.isCorrect === 'true') scMcEarned += _ptsForKey(_quiz, a.q);
     });
   }
   const scTotalPossible = (scores[quizId] && scores[quizId].totalPossible) ? scores[quizId].totalPossible : _allPts;
@@ -3194,8 +3733,11 @@ function openGrading(uid, quizId) {
     html += `<div class="grade-mc-title">Multiple-choice answers</div>`;
     mcAnswers.forEach(a => {
       const right = a.isCorrect === true || a.isCorrect === 'true';
+      const kindLabel = a.matching ? ' <span class="an-tag mc">Matching</span>'
+                      : a.scenario ? ' <span class="an-tag mc">Scenario</span>' : '';
+      const ptsNote = a.matching && a.earned != null ? ` <span style="color:var(--ink3);font-size:11px;">(${a.earned}/${a.possible} pts)</span>` : '';
       html += `<div class="grade-mc ${right?'mc-right':'mc-wrong'}">
-        <div class="grade-mc-q">${right?'✓':'✗'} Q${a.q}${a.text ? '. ' + a.text : ''}</div>
+        <div class="grade-mc-q">${right?'✓':'✗'} Q${a.q}${kindLabel}${a.text ? '. ' + a.text : ''}${ptsNote}</div>
         <div class="grade-mc-line"><strong>Their answer:</strong> ${a.selected!=null?String(a.selected).replace(/</g,'&lt;'):'<em>Not answered</em>'}</div>
         ${!right ? `<div class="grade-mc-correct"><strong>Correct:</strong> ${a.correct!=null?String(a.correct).replace(/</g,'&lt;'):''}</div>` : ''}
       </div>`;
@@ -3267,13 +3809,38 @@ function saveGrades(uid, quizId) {
   const quiz = QUIZZES.find(q => q.id === quizId);
 
   // Total possible across ALL questions (MC + written) from the quiz definition.
+  // Points possible: auto-scored (MC + matching + scenario MC subs) vs. written.
+  // Scenario parent pts are split across subs, so walk subs individually.
   let allPts = 0, mcPtsPossible = 0;
   if (quiz && quiz.questions) {
     quiz.questions.forEach(qq => {
-      const p = Number(qq.pts) || 0;
-      allPts += p;
-      if (!isWrittenQ(qq)) mcPtsPossible += p;
+      const t = qExamType(qq);
+      if (t === 'scenario') {
+        (qq.subs || []).forEach(s => {
+          const sp = Number(s.pts) || 0;
+          allPts += sp;
+          if (s.type !== 'written') mcPtsPossible += sp;
+        });
+      } else {
+        const p = Number(qq.pts) || 0;
+        allPts += p;
+        if (t !== 'written') mcPtsPossible += p;   // MC + matching count as auto-scored
+      }
     });
+  }
+
+  // Points lookup that understands matching, scenario subs, MC, and written.
+  function _ptsForKey2(qz, key) {
+    if (!qz) return 0;
+    const k = String(key);
+    if (k.indexOf('_') > -1) {
+      const parts = k.split('_'); const pn = parts[0]; const si = Number(parts[1]);
+      const parent = qz.questions.find(q => String(q.n) === pn);
+      if (parent && Array.isArray(parent.subs) && parent.subs[si]) return Number(parent.subs[si].pts) || 0;
+      return 0;
+    }
+    const q = qz.questions.find(q => String(q.n) === k);
+    return q ? (Number(q.pts) || 0) : 0;
   }
 
   // MC points earned: prefer local, else compute from the sheet attempt's answers.
@@ -3281,11 +3848,11 @@ function saveGrades(uid, quizId) {
   if (mcEarned == null) {
     mcEarned = 0;
     const mcAns = getMCAnswersForAttempt(uid, quizId);
-    const qLookup = {};
-    if (quiz) (quiz.questions||[]).forEach(qq => qLookup[qq.n] = qq);
     mcAns.forEach(a => {
       if (a.isCorrect === true || a.isCorrect === 'true') {
-        mcEarned += (Number((qLookup[a.q]||{}).pts) || 0);
+        mcEarned += _ptsForKey2(quiz, a.q);
+      } else if (a.matching && a.earned != null) {
+        mcEarned += Number(a.earned) || 0;   // matching partial credit
       }
     });
   }
@@ -3295,7 +3862,8 @@ function saveGrades(uid, quizId) {
     ? prior.totalPossible
     : (allPts > 0 ? allPts : (mcPtsPossible + writtenPtsPossible));
   const finalScore = totalPossible > 0 ? Math.round((mcEarned + saTotal) / totalPossible * 100) : 0;
-  const pass = finalScore >= PASS_THRESHOLD;
+  const _gradeQuiz = QUIZZES.find(x => x.id === quizId);
+  const pass = finalScore >= passMarkFor(_gradeQuiz);
 
   existing[quizId] = Object.assign({}, prior, {
     score: finalScore,
