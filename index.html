@@ -1897,6 +1897,7 @@ function renderOJTSection() {
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="start-btn" onclick="startQuiz('ojt_comp_check', false)">${done ? '&#8635; Retake' : '&#9654; Start comp check'}</button>
         ${done && sc.status !== 'pending' ? `<button class="start-btn retake" onclick="startQuiz('ojt_comp_check', true)">&#8635; Retake missed only</button>` : ''}
+        <button class="back-home-btn" style="margin-bottom:0;" onclick="showPortalHome()">&#8592; Back to home</button>
         <span class="ojt-status-chip ${sb.cls}">${sb.label}</span>
       </div>
     </div>`;
