@@ -434,6 +434,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .res-rank{font-size:16px;width:40px;text-align:center;}
 .res-name{font-weight:700;color:var(--navy);}
 .res-votes{color:var(--ink2);font-size:12px;}
+.res-count{color:var(--ink3);font-size:12px;white-space:nowrap;}
 .res-test{color:var(--ink2);}
 .res-score{font-family:var(--display);font-weight:800;color:var(--blue);font-size:15px;text-align:right;}
 .res-note{font-size:11.5px;color:var(--ink3);margin-top:.7rem;line-height:1.5;}
@@ -3857,7 +3858,9 @@ function openApplicant(uid, quizId) {
 }
 
 // ── Compiled results (per-trainer sections + consensus table) ───────────────────
-const TIER_BASE = { top:3, consider:2, no:1 };
+// Scoring: each trainer's vote = base(tier) + small position bonus (tiebreaker within tier).
+// Final score = AVERAGE across trainers who voted (so consensus quality, not vote count).
+const TIER_BASE = { top:2, consider:1, no:-1 };
 function tierLabel(key){ const t = RANK_TIERS.find(x=>x.key===key); return t?t.label:key; }
 
 function openResults(){
@@ -3900,16 +3903,15 @@ function renderResultsBody(){
     });
   }
 
-  // Consensus scoring: for each applicant, sum each trainer's (tier base + position bonus).
-  // Seed from the RANKINGS themselves (not just test-submitters) so everyone ranked shows up.
-  const scores = {};   // canonicalUid -> { uid, total, votes:{top,consider,no}, count }
+  // Consensus scoring: each trainer's vote = base(tier) + small position bonus (max ~0.4,
+  // tiebreaker within a tier). Final score = AVERAGE across trainers who voted.
+  const scores = {};   // canonicalUid -> { uid, sum, votes:{top,consider,no}, count }
   function canon(id){ return String(id).toUpperCase(); }
-  // Map canonical id -> a display uid (prefer the applicants-list key for correct name lookup).
   const uidByCanon = {};
   Object.keys(applicants).forEach(u => { uidByCanon[canon(u)] = u; });
   SHEET_RANKINGS.forEach(r => { const c = canon(r.applicantId); if (!uidByCanon[c]) uidByCanon[c] = r.applicantId; });
 
-  function ensure(c){ if(!scores[c]) scores[c] = { uid: uidByCanon[c] || c, total:0, votes:{top:0,consider:0,no:0}, count:0 }; return scores[c]; }
+  function ensure(c){ if(!scores[c]) scores[c] = { uid: uidByCanon[c] || c, sum:0, votes:{top:0,consider:0,no:0}, count:0 }; return scores[c]; }
 
   trainers.forEach(tr => {
     RANK_TIERS.forEach(tier => {
@@ -3919,16 +3921,19 @@ function renderResultsBody(){
       inTier.forEach((r, idx) => {
         const s = ensure(canon(r.applicantId));
         const base = TIER_BASE[tier.key] || 0;
-        const posBonus = n > 1 ? (0.9 * (n - 1 - idx) / (n - 1)) : 0.45; // top of tier gets the most
-        s.total += base + posBonus;
+        const posBonus = n > 1 ? (0.4 * (n - 1 - idx) / (n - 1)) : 0.2; // small in-tier tiebreaker
+        s.sum += base + posBonus;
         s.votes[tier.key] = (s.votes[tier.key]||0) + 1;
         s.count += 1;
       });
     });
   });
+  Object.keys(scores).forEach(c => { const s = scores[c]; s.avg = s.count ? s.sum / s.count : 0; });
 
+  const totalTrainers = trainers.length;
   const ranked = Object.keys(scores).filter(c => scores[c].count > 0)
-    .sort((a,b) => scores[b].total - scores[a].total || (getName(scores[a].uid)||scores[a].uid).localeCompare(getName(scores[b].uid)||scores[b].uid));
+    .sort((a,b) => scores[b].avg - scores[a].avg || scores[b].count - scores[a].count
+      || (getName(scores[a].uid)||scores[a].uid).localeCompare(getName(scores[b].uid)||scores[b].uid));
 
   let consensusHtml;
   if (!ranked.length) {
@@ -3949,15 +3954,16 @@ function renderResultsBody(){
         <td class="res-rank">${medal}</td>
         <td class="res-name">${esc2(getName(uid)||uid.replace(/^APP-/,''))}</td>
         <td class="res-votes">${voteSummary||'—'}</td>
+        <td class="res-count">${s.count}${totalTrainers?(' of '+totalTrainers):''}</td>
         <td class="res-test">${testScore}</td>
-        <td class="res-score">${s.total.toFixed(1)}</td>
+        <td class="res-score">${s.avg.toFixed(2)}</td>
       </tr>`;
     }).join('');
     consensusHtml = `<table class="res-table">
-      <thead><tr><th></th><th>Applicant</th><th>Votes</th><th>Test</th><th>Score</th></tr></thead>
+      <thead><tr><th></th><th>Applicant</th><th>Votes</th><th>Voted</th><th>Test</th><th>Score</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="res-note">Composite score = each trainer's tier vote (Top 3 · Consider 2 · No 1) plus a bonus for higher placement within their tier. Higher is stronger consensus.</div>`;
+    <div class="res-note">Average of each trainer's vote (Top +2 · Consider +1 · No −1) plus a small bonus for higher placement within their tier. Averaged across only the trainers who voted — so a "No" pulls the score down, and the "Voted" column shows how many weighed in.</div>`;
   }
 
   body.innerHTML = `
