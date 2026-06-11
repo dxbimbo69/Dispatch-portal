@@ -3664,32 +3664,39 @@ function cardDrop(ev, tier){
 }
 
 // Place uid into a tier at a position (before beforeUid, or end if null), then persist
-// THIS TRAINER'S order only — so trainers don't overwrite each other's vertical ranking.
+// THIS TRAINER'S placements only. Reads only my own rows so other trainers' rankings
+// never leak into what gets written.
 function placeInTier(uid, tier, beforeUid){
   const me = currentTrainerName();
-  const applicants = getAllStudentScores('applicants');
-  // current ordered list (by MY order) of uids in this tier, excluding the dragged one
-  const byTier = Object.keys(applicants).filter(u => {
-    if (String(u).toUpperCase() === String(uid).toUpperCase()) return false;
-    return SHEET_RANKINGS.some(r => String(r.applicantId).toUpperCase()===String(u).toUpperCase() && r.tier===tier);
-  }).sort((a,b)=>{ const oa=myOrder(a,tier), ob=myOrder(b,tier); return oa!==ob?oa-ob:(getName(a)||a).localeCompare(getName(b)||b); });
+  const uidU = String(uid).toUpperCase();
 
-  let insertAt = byTier.length; // default end
-  if (beforeUid){ const i = byTier.findIndex(u => String(u).toUpperCase()===String(beforeUid).toUpperCase()); if (i>-1) insertAt = i; }
-  byTier.splice(insertAt, 0, uid);
+  // My current placements in THIS tier (excluding the dragged applicant), in my order.
+  const myInTier = SHEET_RANKINGS
+    .filter(r => r.trainer === me && r.tier === tier && String(r.applicantId).toUpperCase() !== uidU)
+    .sort((a,b) => (Number(a.order)||9999) - (Number(b.order)||9999))
+    .map(r => r.applicantId);
 
-  // Ensure the dragged applicant has MY ranking row in this tier.
-  rankApplicantSilent(uid, tier);
+  // Figure out insert position.
+  let insertAt = myInTier.length;
+  if (beforeUid){
+    const i = myInTier.findIndex(u => String(u).toUpperCase() === String(beforeUid).toUpperCase());
+    if (i > -1) insertAt = i;
+  }
+  myInTier.splice(insertAt, 0, uid);
 
-  // Assign sequential order, writing ONLY to my rows. Persist just my rows.
+  // Update MY local rows: remove any existing row of mine for this applicant (any tier),
+  // then set this applicant into the chosen tier. Leave OTHER trainers' rows untouched.
+  SHEET_RANKINGS = SHEET_RANKINGS.filter(r => !(r.trainer === me && String(r.applicantId).toUpperCase() === uidU));
+  SHEET_RANKINGS.push({ applicantId: uid, trainer: me, tier: tier, date: new Date().toLocaleDateString(), order: insertAt + 1 });
+
+  // Reassign sequential order to my rows in this tier, and build the save payload.
   const items = [];
-  byTier.forEach((u, idx) => {
-    const pos = idx + 1;
-    const u2 = String(u).toUpperCase();
+  myInTier.forEach((u, idx) => {
+    const uU = String(u).toUpperCase();
     SHEET_RANKINGS.forEach(r => {
-      if (String(r.applicantId).toUpperCase()===u2 && r.tier===tier && r.trainer===me) r.order = pos;
+      if (r.trainer === me && r.tier === tier && String(r.applicantId).toUpperCase() === uU) r.order = idx + 1;
     });
-    items.push({ applicantId: u, trainer: me, tier: tier, order: pos });
+    items.push({ applicantId: u, trainer: me, tier: tier, order: idx + 1 });
   });
   postBoardAction({ action:'setRankOrder', items: items });
   renderApplicants();
