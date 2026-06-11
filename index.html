@@ -1557,7 +1557,19 @@ function notesFor(uid){
   return SHEET_NOTES.filter(n => String(n.applicantId).toUpperCase() === u);
 }
 // Shared hidden-iframe POST for board actions (rankings + notes).
+// Board writes go through a small queue so rapid saves don't cancel each other
+// (a shared hidden iframe can only carry one submit at a time).
+var _boardQueue = [];
+var _boardSending = false;
 function postBoardAction(payload) {
+  _boardQueue.push(payload);
+  drainBoardQueue();
+}
+function drainBoardQueue() {
+  if (_boardSending) return;
+  const payload = _boardQueue.shift();
+  if (!payload) return;
+  _boardSending = true;
   try {
     const form = document.createElement('form');
     form.method='POST'; form.action=SHEET_URL; form.target='rkhf'; form.style.display='none';
@@ -1565,9 +1577,18 @@ function postBoardAction(payload) {
     form.appendChild(inp);
     let ifr = document.getElementById('rkhf-frame');
     if (!ifr) { ifr = document.createElement('iframe'); ifr.name='rkhf'; ifr.id='rkhf-frame'; ifr.style.display='none'; document.body.appendChild(ifr); }
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      if (form.parentNode) form.parentNode.removeChild(form);
+      _boardSending = false;
+      // small gap before the next one so the iframe is free
+      setTimeout(drainBoardQueue, 250);
+    };
+    ifr.onload = finish;
+    setTimeout(finish, 2500);   // fallback if onload doesn't fire (cross-origin)
     document.body.appendChild(form); form.submit();
-    setTimeout(()=>{ if(form.parentNode) form.parentNode.removeChild(form); }, 5000);
-  } catch(e){}
+  } catch(e){ _boardSending = false; setTimeout(drainBoardQueue, 250); }
 }
 
 function loadSignoffs(done) {
@@ -3330,7 +3351,16 @@ function setAdminView(view) {
   var appTab = document.getElementById('viewtab-applicants');
   if (appTab) appTab.classList.toggle('active', view === 'applicants');
   if (view === 'analytics') renderAnalytics();
-  if (view === 'applicants') { renderApplicants(); loadRankings(function(){ renderApplicants(); }); loadNotes(function(){ renderApplicants(); }); }
+  if (view === 'applicants') {
+    renderApplicants();
+    // Always pull the latest from the sheet on entry so a trainer sees everyone's
+    // current rankings/notes (not just whatever was in memory from a prior view).
+    loadResults(function(){
+      loadRankings(function(){
+        loadNotes(function(){ renderApplicants(); });
+      });
+    });
+  }
 }
 
 // Bucket a miss-rate into a severity class for color coding.
@@ -3664,14 +3694,12 @@ function placeInTier(uid, tier, beforeUid){
   renderApplicants();
 }
 
-// Add the current trainer's ranking for an applicant without re-rendering (used by placeInTier).
+// Add the current trainer's ranking for an applicant in local state only.
+// Persistence happens via the single setRankOrder upsert in placeInTier (no double-post).
 function rankApplicantSilent(uid, tier){
   const trainer = currentTrainerName();
-  const exists = SHEET_RANKINGS.some(r => String(r.applicantId).toUpperCase()===String(uid).toUpperCase() && r.trainer===trainer && r.tier===tier);
-  // If this trainer had this applicant in a different tier, move it; otherwise add.
   SHEET_RANKINGS = SHEET_RANKINGS.filter(r => !(String(r.applicantId).toUpperCase()===String(uid).toUpperCase() && r.trainer===trainer));
   SHEET_RANKINGS.push({ applicantId: uid, trainer, tier, date: new Date().toLocaleDateString(), order: 9999 });
-  if (!exists) postBoardAction({ action:'setRanking', applicantId: uid, trainer, tier, date: new Date().toLocaleDateString(), order: 9999 });
 }
 function rankApplicant(uid, tier){
   setRankingRemote(uid, tier);            // persist (and optimistic local update)
