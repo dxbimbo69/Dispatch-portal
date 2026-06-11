@@ -3921,7 +3921,13 @@ function renderResultsBody(){
       inTier.forEach((r, idx) => {
         const s = ensure(canon(r.applicantId));
         const base = TIER_BASE[tier.key] || 0;
-        const posBonus = n > 1 ? (0.4 * (n - 1 - idx) / (n - 1)) : 0.2; // small in-tier tiebreaker
+        // Position bonus is a tiebreaker ONLY within the positive tiers (Top/Consider),
+        // so a higher pick edges out a lower one. "No" is always a clean −1 (no bonus),
+        // so a No is a No regardless of where it sits in that pile.
+        let posBonus = 0;
+        if (tier.key === 'top' || tier.key === 'consider') {
+          posBonus = n > 1 ? (0.4 * (n - 1 - idx) / (n - 1)) : 0.2;
+        }
         s.sum += base + posBonus;
         s.votes[tier.key] = (s.votes[tier.key]||0) + 1;
         s.count += 1;
