@@ -598,7 +598,7 @@ function renderEditor() {
     + field('Module label','mod',m.mod)
     + selectField('Type','type',m.type,[['kc','Knowledge Check'],['test','Test / Final'],['practice','Practice']])
     + field('Subtitle','sub',m.sub,'full')
-    + field('Section','section',m.section)
+    + sectionField('Section','section',m.section)
     + field('Pass mark (%)','passMark',m.passMark,'','number')
     + '</div></div>';
 
@@ -617,6 +617,15 @@ function field(label,key,val,extra,type){ extra=extra||''; type=type||'text';
 function selectField(label,key,val,opts){
   return '<div class="field"><label>'+label+'</label><select onchange="setMeta(\''+key+'\',this.value)">'
     + opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+o[1]+'</option>').join('')
+    + '</select></div>'; }
+// Section dropdown: known training sections + OJT + Applicant. Preserves any existing
+// custom value so older quizzes keep their section.
+function sectionField(label,key,val){
+  const known = ['Basic Indoctrination','General Subjects','Group II Aircraft','All Sections','OJT','Applicant'];
+  const list = known.slice();
+  if (val && list.indexOf(val) === -1) list.unshift(val);
+  return '<div class="field"><label>'+label+'</label><select onchange="setMeta(\''+key+'\',this.value)">'
+    + list.map(s=>'<option value="'+esc(s)+'"'+(s===val?' selected':'')+'>'+esc(s)+(s==='Applicant'?' (job applicants)':'')+'</option>').join('')
     + '</select></div>'; }
 
 function questionCard(q,i){

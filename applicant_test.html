@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breeze Airways — Dispatch Applicant Assessment</title>
+<style>
+:root{
+  --navy:#041C34; --blue:#2566CC; --cyan:#27C3F3; --sky:#9CC0EE; --skysoft:#EAF1FB;
+  --ink:#152433; --ink2:#3C4A5C; --ink3:#5C6B7E; --gray:#E2E9F3; --surface:#F7FAFD;
+  --green:#1A9E3C; --green-lt:#E1F2E7; --red:#C8284F; --red-lt:#FBE3EA;
+  --gold:#FFC24D; --gold-lt:#FFF3D6;
+  --font:'DM Sans',system-ui,-apple-system,sans-serif;
+  --display:'Bricolage Grotesque','Syne',var(--font);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);color:var(--ink);background:var(--surface);line-height:1.5;}
+.wrap{max-width:820px;margin:0 auto;padding:1.5rem;}
+
+/* Header */
+.app-header{background:linear-gradient(120deg,#041C34,#0B2F5E 60%,#1E5BB0);color:#fff;padding:1.5rem 0;}
+.app-header-inner{max-width:820px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:.6rem;}
+.app-logo{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em;}
+.app-logo span{color:var(--cyan);}
+.app-tag{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9CC0EE;font-weight:700;}
+
+/* Entry card */
+.entry{max-width:540px;margin:3rem auto;background:#fff;border:1.5px solid var(--gray);border-radius:20px;padding:2.5rem;box-shadow:0 8px 30px rgba(4,28,52,.06);}
+.entry h1{font-family:var(--display);font-weight:800;font-size:26px;color:var(--navy);margin-bottom:.5rem;letter-spacing:-.02em;}
+.entry-sub{font-size:14.5px;color:var(--ink2);line-height:1.6;margin-bottom:1.75rem;}
+.fld{margin-bottom:1.1rem;}
+.fld label{display:block;font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);margin-bottom:.4rem;}
+.fld input{width:100%;border:1.5px solid var(--gray);border-radius:11px;padding:12px 14px;font-size:15px;font-family:var(--font);}
+.fld input:focus{outline:none;border-color:var(--blue);}
+.entry-err{background:var(--red-lt);color:var(--red);font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;margin-bottom:1rem;display:none;}
+.entry-note{font-size:12px;color:var(--ink3);margin-top:1rem;line-height:1.5;}
+.btn-go{width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;font-family:var(--display);font-weight:800;font-size:15px;cursor:pointer;transition:background .15s;}
+.btn-go:hover{background:#0B2F5E;}
+.btn-go:disabled{opacity:.6;cursor:default;}
+
+/* Exam */
+#exam-area{display:none;}
+.exam-head{position:sticky;top:0;background:rgba(247,250,253,.95);backdrop-filter:blur(8px);padding:1rem 0 .8rem;z-index:5;border-bottom:1px solid var(--gray);margin-bottom:1.5rem;}
+.exam-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+.exam-title{font-family:var(--display);font-weight:800;font-size:18px;color:var(--navy);}
+.exam-prog-count{font-size:13px;color:var(--ink3);font-weight:600;}
+.exam-prog{height:7px;background:var(--gray);border-radius:99px;overflow:hidden;}
+.exam-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0;transition:width .3s;}
+
+.q-card{background:#fff;border:1.5px solid var(--gray);border-radius:18px;padding:1.5rem;margin-bottom:1.25rem;transition:border-color .15s;}
+.q-card.answered{border-color:var(--sky);}
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;}
+.q-num{font-family:var(--display);font-weight:800;color:var(--navy);font-size:15px;}
+.q-pts{font-size:11.5px;font-weight:700;color:var(--ink3);letter-spacing:.02em;}
+.q-text{font-family:var(--display);font-weight:700;font-size:18px;margin:.4rem 0 1rem;line-height:1.25;}
+.q-image-wrap{display:flex;margin:0 0 1.1rem;}
+.q-image-box{border:1.5px solid var(--gray);border-radius:12px;overflow:hidden;background:#FAFBFD;}
+.q-image{display:block;width:100%;}
+.q-image-err{padding:1.5rem;text-align:center;color:var(--ink3);font-size:13px;}
+.options{display:flex;flex-direction:column;gap:.6rem;}
+.option{display:flex;align-items:center;gap:.8rem;border:1.5px solid var(--gray);border-radius:13px;padding:12px 14px;cursor:pointer;transition:all .15s;}
+.option:hover{border-color:var(--sky);}
+.option.selected{border-color:var(--blue);background:var(--skysoft);}
+.opt-letter{width:26px;height:26px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--ink3);flex-shrink:0;}
+.option.selected .opt-letter{background:var(--blue);color:#fff;}
+.opt-text{font-size:14.5px;}
+.written-input{width:100%;border:1.5px solid var(--gray);border-radius:12px;padding:12px 14px;font-size:14px;font-family:var(--font);min-height:100px;resize:vertical;}
+.written-input:focus{outline:none;border-color:var(--blue);}
+
+/* Matching (drag-and-dock) */
+.mtch-hint{font-size:12px;color:var(--ink3);margin:.4rem 0 1rem;}
+.mtch-grid{display:grid;grid-template-columns:0.85fr 1.15fr;gap:1.5rem;align-items:start;}
+.mtch-bank{display:flex;flex-direction:column;gap:.7rem;min-height:60px;padding:.5rem;border:1.5px dashed var(--gray);border-radius:14px;background:#FAFBFD;}
+.mtch-targets{display:flex;flex-direction:column;gap:.7rem;}
+.mtch-tile{display:flex;align-items:center;gap:.55rem;background:#fff;border:1.5px solid var(--sky);border-radius:11px;padding:10px 12px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:grab;user-select:none;transition:border-color .15s,background .15s,box-shadow .15s;}
+.mtch-tile:active{cursor:grabbing;}
+.mtch-tile.dragging{opacity:.5;}
+.mtch-tile.picked{box-shadow:0 0 0 3px rgba(37,102,204,.22);border-color:var(--blue);}
+.mtch-grip{color:var(--ink3);font-size:13px;flex-shrink:0;letter-spacing:-1px;}
+.mtch-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex-shrink:0;border-radius:6px;font-family:var(--display);font-weight:800;font-size:11px;background:transparent;color:transparent;}
+.mtch-label{flex:1;}
+.mtch-target{display:flex;align-items:center;gap:.7rem;border:1.5px solid var(--gray);border-radius:12px;padding:.55rem .7rem;min-height:46px;transition:border-color .15s,background .15s;}
+.mtch-target.drop-hover{border-color:var(--blue);background:var(--skysoft);border-style:dashed;}
+.mtch-target.filled{background:#fff;}
+.mtch-dock{flex:0 0 auto;min-width:96px;display:flex;align-items:center;}
+.mtch-dock:empty{min-width:96px;height:34px;border:1.5px dashed var(--gray);border-radius:9px;background:#FAFBFD;}
+.mtch-target.drop-hover .mtch-dock:empty{border-color:var(--blue);}
+.mtch-right-label{flex:1;font-size:13.5px;font-weight:600;color:var(--navy);}
+@media(max-width:560px){.mtch-grid{grid-template-columns:1fr;gap:.9rem;}.mtch-dock{min-width:80px;}}
+
+/* Scenario */
+.scn-card{border-left:5px solid var(--blue);}
+.scn-prompt{background:var(--skysoft);border-radius:12px;padding:1rem 1.2rem;font-size:14px;line-height:1.55;color:var(--ink);margin:.5rem 0 1.1rem;}
+.scn-subs{display:flex;flex-direction:column;gap:1.25rem;}
+.scn-sub-label{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:.6rem;}
+.scn-sub-pts{font-weight:600;color:var(--ink3);font-size:11.5px;margin-left:6px;}
+
+.submit-wrap{padding:1rem 0 3rem;text-align:center;}
+.btn-submit{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:15px 40px;font-family:var(--display);font-weight:800;font-size:16px;cursor:pointer;}
+.btn-submit:hover{background:#0B2F5E;}
+
+/* Thank you */
+#thanks{display:none;max-width:540px;margin:4rem auto;text-align:center;background:#fff;border:1.5px solid var(--gray);border-radius:20px;padding:3rem 2.5rem;box-shadow:0 8px 30px rgba(4,28,52,.06);}
+.thanks-check{width:64px;height:64px;border-radius:50%;background:var(--green-lt);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 1.25rem;}
+#thanks h2{font-family:var(--display);font-weight:800;font-size:24px;color:var(--navy);margin-bottom:.6rem;}
+#thanks p{font-size:14.5px;color:var(--ink2);line-height:1.6;}
+
+.loading{text-align:center;padding:4rem 1rem;color:var(--ink3);font-size:14px;}
+.spinner{width:32px;height:32px;border:3px solid var(--gray);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-header-inner">
+    <div class="app-logo">Breeze<span>✓</span></div>
+    <div class="app-tag">Dispatch Applicant Assessment</div>
+  </div>
+</div>
+
+<!-- ENTRY SCREEN -->
+<div id="entry-screen" class="wrap">
+  <div class="entry">
+    <h1>Welcome</h1>
+    <div class="entry-sub">Thank you for your interest in a dispatch position at Breeze Airways. This assessment is part of our interview process. Please enter your details and the access code provided to you, then complete the assessment in one sitting.</div>
+    <div class="entry-err" id="entry-err"></div>
+    <div class="fld"><label>Full name</label><input type="text" id="ent-name" placeholder="First and last name" autocomplete="name"></div>
+    <div class="fld"><label>Email address</label><input type="email" id="ent-email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="fld"><label>Access code</label><input type="text" id="ent-code" placeholder="Provided by your recruiter" autocomplete="off"></div>
+    <button class="btn-go" id="ent-go" onclick="beginApplicant()">Begin assessment</button>
+    <div class="entry-note">Your responses are submitted to the Breeze hiring team for review. You will not receive a score on screen.</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen" class="wrap" style="display:none;">
+  <div class="loading"><div class="spinner"></div>Loading your assessment…</div>
+</div>
+
+<!-- EXAM -->
+<div id="exam-area" class="wrap">
+  <div class="exam-head">
+    <div class="exam-head-row">
+      <div class="exam-title" id="exam-title">Assessment</div>
+      <div class="exam-prog-count" id="exam-prog-count">0 / 0</div>
+    </div>
+    <div class="exam-prog"><div class="exam-prog-fill" id="exam-prog-fill"></div></div>
+  </div>
+  <div id="exam-content"></div>
+  <div class="submit-wrap">
+    <button class="btn-submit" id="btn-submit" onclick="submitApplicant()">Submit assessment</button>
+  </div>
+</div>
+
+<!-- THANK YOU -->
+<div id="thanks">
+  <div class="thanks-check">&#10003;</div>
+  <h2>Thank you — your responses have been submitted</h2>
+  <p>The Breeze hiring team has received your assessment and will be in touch regarding next steps. You may now close this window.</p>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════════════════════════
+const SHEET_URL     = 'https://script.google.com/macros/s/AKfycbxO1FIbW4oaaHTfOEqbSN4eMDzRXuyxNz7bFLHYBmAkpBpifVkHeQRDQOlfFVXW5qF2/exec';
+const QUESTIONS_URL = SHEET_URL;
+const LETTERS = ['A','B','C','D'];
+
+// ▼▼▼ CHANGE THIS to rotate the applicant access code each hiring round ▼▼▼
+const ACCESS_CODE = 'BREEZE2026';
+// ▲▲▲
+
+// ════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════════════════
+let QUIZZES = [];
+let currentQuiz = null;
+let examSelected = {};
+let applicant = { name:'', email:'', first:'', last:'' };
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ENTRY
+// ════════════════════════════════════════════════════════════════════════════
+function beginApplicant() {
+  const name = document.getElementById('ent-name').value.trim();
+  const email = document.getElementById('ent-email').value.trim();
+  const code = document.getElementById('ent-code').value.trim();
+  const err = document.getElementById('entry-err');
+  function fail(msg){ err.textContent = msg; err.style.display='block'; }
+
+  if (!name) return fail('Please enter your full name.');
+  if (!email || email.indexOf('@') < 1) return fail('Please enter a valid email address.');
+  if (!code) return fail('Please enter the access code provided to you.');
+  if (code.toUpperCase() !== ACCESS_CODE.toUpperCase()) return fail('That access code is not correct. Please check with your recruiter.');
+
+  err.style.display = 'none';
+  const parts = name.split(/\s+/);
+  applicant = { name:name, email:email, first:parts[0]||name, last:parts.slice(1).join(' ')||'' };
+
+  document.getElementById('entry-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'block';
+
+  loadQuestions(function(ok){
+    document.getElementById('loading-screen').style.display = 'none';
+    const quiz = QUIZZES.find(q => q.section === 'Applicant');
+    if (!quiz || !quiz.questions || !quiz.questions.length) {
+      document.getElementById('entry-screen').style.display = 'block';
+      fail('The assessment is not available right now. Please contact your recruiter.');
+      return;
+    }
+    currentQuiz = quiz;
+    renderExam();
+    document.getElementById('exam-area').style.display = 'block';
+    window.scrollTo(0,0);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  LOADERS  (same JSONP pattern as the training portal)
+// ════════════════════════════════════════════════════════════════════════════
+function buildQuizzesFromSheet(quizRows, questionRows) {
+  const byId = {};
+  const list = [];
+  (quizRows||[]).forEach(function(qz){
+    const quiz = {
+      id: qz.id, mod: qz.mod||'', name: qz.name||'', sub: qz.sub||'',
+      section: qz.section||'', type: qz.type||'kc',
+      passMark: Number(qz.passMark)||80, order: Number(qz.order)||999,
+      questions: []
+    };
+    byId[qz.id] = quiz; list.push(quiz);
+  });
+  (questionRows||[]).forEach(function(q){
+    const quiz = byId[q.quizId];
+    if (!quiz) return;
+    const rawModel = (q.model != null ? String(q.model) : '');
+    const citeRaw = (q.cite != null ? String(q.cite) : '');
+    const imgSplit = citeRaw.split('@@IMG@@');
+    const citeText = imgSplit[0].trim();
+    let imgObj = null;
+    if (imgSplit.length > 1) { try { imgObj = JSON.parse(imgSplit[1]); } catch(e) { imgObj = null; } }
+
+    if (rawModel.indexOf('@@Q@@') === 0) {
+      let payload = {};
+      try { payload = JSON.parse(rawModel.slice(5)); } catch(e) { payload = {}; }
+      const base = { n:Number(q.n)||(quiz.questions.length+1), pts:Number(q.pts)||10, text:q.text||'', cite:citeText, img:imgObj, qtype:payload.qtype };
+      if (payload.qtype === 'matching') base.pairs = Array.isArray(payload.pairs) ? payload.pairs : [];
+      else if (payload.qtype === 'scenario') base.subs = Array.isArray(payload.subs) ? payload.subs : [];
+      quiz.questions.push(base);
+      return;
+    }
+    const model = rawModel.trim();
+    quiz.questions.push({
+      n:Number(q.n)||(quiz.questions.length+1), pts:Number(q.pts)||10, text:q.text||'',
+      options:[q.optionA||'',q.optionB||'',q.optionC||'',q.optionD||''],
+      correct: Math.max(0, LETTERS.indexOf(String(q.correct||'A').trim().toUpperCase())),
+      model: model, written: model.length>0, cite:citeText, img:imgObj
+    });
+  });
+  list.forEach(function(q){ q.totalQuestions = q.questions.length; });
+  return list;
+}
+
+function loadQuestions(done) {
+  const cb = 'appq_' + Date.now();
+  const s = document.createElement('script');
+  let finished = false;
+  function finish(ok){ if(finished) return; finished = true; delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s); done && done(ok); }
+  window[cb] = function(res){
+    try {
+      if (res && res.status === 'ok' && res.quizzes && res.quizzes.length) {
+        const built = buildQuizzesFromSheet(res.quizzes, res.questions || []);
+        if (built.length) QUIZZES = built;
+        finish(true);
+      } else { finish(false); }
+    } catch(e) { finish(false); }
+  };
+  s.onerror = function(){ finish(false); };
+  s.src = QUESTIONS_URL + (QUESTIONS_URL.indexOf('?')>-1?'&':'?') + 'callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ finish(false); }, 12000);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  EXAM ENGINE  (mirrors the training portal exactly)
+// ════════════════════════════════════════════════════════════════════════════
+function qExamType(qu) {
+  if (qu && qu.qtype) {
+    const t = String(qu.qtype).toLowerCase();
+    if (t === 'matching' && Array.isArray(qu.pairs) && qu.pairs.length) return 'matching';
+    if (t === 'scenario' && Array.isArray(qu.subs) && qu.subs.length) return 'scenario';
+    if (t === 'written') return 'written';
+    if (t === 'mc') return 'mc';
+  }
+  return isWrittenQ(qu) ? 'written' : 'mc';
+}
+
+function shuffledIndices(n, seed) {
+  const arr = Array.from({length:n}, (_,i)=>i);
+  let s = seed || 1;
+  for (let i = n - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderExam() {
+  const q = currentQuiz;
+  document.getElementById('exam-title').textContent = q.name || 'Assessment';
+  let html = '';
+  q.questions.forEach((qu) => {
+    const t = qExamType(qu);
+    if (t === 'matching') { html += renderMatchingQ(qu); return; }
+    if (t === 'scenario') { html += renderScenarioQ(qu); return; }
+    if (t === 'written') {
+      const prior = (window._examWritten && window._examWritten[qu.n]) || '';
+      html += `<div class="q-card" id="qcard-${qu.n}">
+        <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Written</span></div>
+        <div class="q-text">${qu.text}</div>
+        ${renderQuestionImage(qu.img)}
+        <textarea class="written-input" id="written-${qu.n}" placeholder="Type your answer…" oninput="setWritten(${qu.n}, this.value)">${prior}</textarea>
+      </div>`;
+    } else {
+      const opts = Array.isArray(qu.options) ? qu.options : [];
+      html += `<div class="q-card" id="qcard-${qu.n}">
+        <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts</span></div>
+        <div class="q-text">${qu.text}</div>
+        ${renderQuestionImage(qu.img)}
+        <div class="options">
+          ${opts.map((o,oi) => `<label class="option" id="opt-${qu.n}-${oi}" onclick="selectOpt(${qu.n},${oi})">
+            <span class="opt-letter">${'ABCD'[oi]}</span><span class="opt-text">${o}</span>
+          </label>`).join('')}
+        </div>
+      </div>`;
+    }
+  });
+  document.getElementById('exam-content').innerHTML = html;
+  setTimeout(initMatchingQuestions, 0);
+  updateExamProgress();
+}
+
+function renderMatchingQ(qu) {
+  const pairs = qu.pairs || [];
+  const order = shuffledIndices(pairs.length, qu.n * 7 + 3);
+  if (!window._examMatch) window._examMatch = {};
+  const leftBank = pairs.map((p, li) =>
+    `<div class="mtch-tile" id="mtch-${qu.n}-L${li}" draggable="true" data-q="${qu.n}" data-idx="${li}">
+       <span class="mtch-badge"></span><span class="mtch-grip">⠿</span><span class="mtch-label">${p.left}</span>
+     </div>`).join('');
+  const rightRows = order.map(ri =>
+    `<div class="mtch-target" id="mtch-${qu.n}-R${ri}" data-q="${qu.n}" data-idx="${ri}">
+       <div class="mtch-dock" id="mtch-${qu.n}-dock${ri}"></div>
+       <div class="mtch-right-label">${pairs[ri].right}</div>
+     </div>`).join('');
+  return `<div class="q-card" id="qcard-${qu.n}">
+    <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Matching</span></div>
+    <div class="q-text">${qu.text || 'Drag each item on the left onto its match on the right.'}</div>
+    ${renderQuestionImage(qu.img)}
+    <div class="mtch-hint">Drag a box from the left onto its match on the right. Drag a docked box back to the bank to undo.</div>
+    <div class="mtch-grid" id="mtch-grid-${qu.n}">
+      <div class="mtch-bank" id="mtch-bank-${qu.n}" data-q="${qu.n}">${leftBank}</div>
+      <div class="mtch-targets">${rightRows}</div>
+    </div>
+  </div>`;
+}
+
+var MTCH_COLORS = [
+  ['#2566CC','#E3ECFB'], ['#1A9E8F','#DDF3F0'], ['#C8284F','#FBE3EA'], ['#B5821A','#FBF0D8'],
+  ['#7A4FC0','#EEE6FA'], ['#1A7A3C','#E1F2E7'], ['#D2602A','#FBEADF'], ['#3F7CB8','#E5EFF8']
+];
+
+function initMatchingQuestions() {
+  if (!currentQuiz) return;
+  currentQuiz.questions.forEach(qu => { if (qExamType(qu) === 'matching') initOneMatching(qu.n); });
+}
+
+function initOneMatching(qn) {
+  if (!window._examMatch) window._examMatch = {};
+  if (!window._examMatch[qn]) window._examMatch[qn] = {};
+  let dragLeft = null;
+  function tiles(){ return document.querySelectorAll('#mtch-grid-'+qn+' .mtch-tile'); }
+  function attachTileDrag(tile){
+    tile.addEventListener('dragstart', function(ev){
+      dragLeft = Number(tile.dataset.idx);
+      ev.dataTransfer.effectAllowed = 'move';
+      try { ev.dataTransfer.setData('text/plain', String(dragLeft)); } catch(e){}
+      setTimeout(()=>tile.classList.add('dragging'), 0);
+    });
+    tile.addEventListener('dragend', function(){ tile.classList.remove('dragging'); dragLeft = null; clearDropHints(); });
+    tile.addEventListener('click', function(){
+      if (window._mtchPick && window._mtchPick.qn === qn && window._mtchPick.li === Number(tile.dataset.idx)) { window._mtchPick = null; tile.classList.remove('picked'); return; }
+      document.querySelectorAll('#mtch-grid-'+qn+' .mtch-tile').forEach(t=>t.classList.remove('picked'));
+      window._mtchPick = { qn: qn, li: Number(tile.dataset.idx) };
+      tile.classList.add('picked');
+    });
+  }
+  function clearDropHints(){ document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(t=>t.classList.remove('drop-hover')); }
+  function bindTarget(target){
+    const ri = Number(target.dataset.idx);
+    target.addEventListener('dragover', function(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; target.classList.add('drop-hover'); });
+    target.addEventListener('dragleave', function(){ target.classList.remove('drop-hover'); });
+    target.addEventListener('drop', function(ev){ ev.preventDefault(); target.classList.remove('drop-hover'); if (dragLeft != null) link(dragLeft, ri); });
+    target.addEventListener('click', function(){ if (window._mtchPick && window._mtchPick.qn === qn) { link(window._mtchPick.li, ri); window._mtchPick = null; } });
+  }
+  const bank = document.getElementById('mtch-bank-'+qn);
+  if (bank) {
+    bank.addEventListener('dragover', function(ev){ ev.preventDefault(); });
+    bank.addEventListener('drop', function(ev){ ev.preventDefault(); if (dragLeft != null) unlink(dragLeft); });
+    bank.addEventListener('click', function(){ if (window._mtchPick && window._mtchPick.qn === qn) { unlink(window._mtchPick.li); window._mtchPick = null; } });
+  }
+  function link(li, ri){ const map = window._examMatch[qn]; Object.keys(map).forEach(k => { if (Number(map[k]) === ri) delete map[k]; }); map[li] = ri; redraw(); }
+  function unlink(li){ delete window._examMatch[qn][li]; redraw(); }
+  function redraw(){
+    const map = window._examMatch[qn] || {};
+    const leftKeys = Object.keys(map).map(Number).sort((a,b)=>a-b);
+    const slotOf = {}; leftKeys.forEach((li,slot)=>slotOf[li]=slot);
+    currentQuizMatchPairs(qn).forEach((p, li) => {
+      const tile = document.getElementById('mtch-'+qn+'-L'+li);
+      if (!tile) return;
+      const badge = tile.querySelector('.mtch-badge');
+      tile.classList.remove('picked');
+      if (map[li] != null) {
+        const slot = slotOf[li]; const c = MTCH_COLORS[slot % MTCH_COLORS.length];
+        const dock = document.getElementById('mtch-'+qn+'-dock'+map[li]);
+        if (dock && tile.parentNode !== dock) dock.appendChild(tile);
+        tile.classList.add('docked');
+        tile.style.borderColor = c[0]; tile.style.background = c[1];
+        badge.textContent = (slot+1); badge.style.background = c[0]; badge.style.color = '#fff';
+      } else {
+        if (tile.parentNode !== bank && bank) bank.appendChild(tile);
+        tile.classList.remove('docked');
+        tile.style.borderColor = ''; tile.style.background = '';
+        badge.textContent = ''; badge.style.background = ''; badge.style.color = '';
+      }
+    });
+    document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(t => {
+      const ri = Number(t.dataset.idx);
+      const li = leftKeys.find(k => map[k] === ri);
+      t.classList.toggle('filled', li != null);
+      if (li != null) { const c = MTCH_COLORS[slotOf[li] % MTCH_COLORS.length]; t.style.borderColor = c[0]; }
+      else t.style.borderColor = '';
+    });
+    const total = currentQuizMatchPairs(qn).length;
+    const done = Object.keys(map).length;
+    const card = document.getElementById('qcard-'+qn);
+    if (card) { if (done >= total && total>0) card.classList.add('answered'); else card.classList.remove('answered'); }
+    updateExamProgress();
+  }
+  tiles().forEach(attachTileDrag);
+  document.querySelectorAll('#mtch-grid-'+qn+' .mtch-target').forEach(bindTarget);
+  redraw();
+}
+
+function currentQuizMatchPairs(qn){
+  const q = currentQuiz.questions.find(x=>String(x.n)===String(qn));
+  return (q && q.pairs) ? q.pairs : [];
+}
+
+function scoreMatching(qu) {
+  const pairs = qu.pairs || [];
+  const ans = (window._examMatch && window._examMatch[qu.n]) || {};
+  let right = 0;
+  pairs.forEach((p, li) => { if (Number(ans[li]) === li) right++; });
+  const possible = Number(qu.pts) || 0;
+  const frac = pairs.length ? right / pairs.length : 0;
+  return { earned: Math.round(frac * possible), possible, right, total: pairs.length, allCorrect: right === pairs.length };
+}
+
+function renderScenarioQ(qu) {
+  const subs = qu.subs || [];
+  let subHtml = subs.map((s, si) => {
+    const subN = qu.n + '_' + si;
+    if (s.type === 'written') {
+      const prior = (window._examWritten && window._examWritten[subN]) || '';
+      return `<div class="scn-sub">
+        <div class="scn-sub-label">${String.fromCharCode(97+si)}) ${s.label} <span class="scn-sub-pts">${s.pts} pts · Written</span></div>
+        <textarea class="written-input" id="written-${subN}" placeholder="Type your answer…" oninput="setWritten('${subN}', this.value)">${prior}</textarea>
+      </div>`;
+    }
+    const opts = Array.isArray(s.options) ? s.options : [];
+    return `<div class="scn-sub">
+      <div class="scn-sub-label">${String.fromCharCode(97+si)}) ${s.label} <span class="scn-sub-pts">${s.pts} pts</span></div>
+      <div class="options">
+        ${opts.map((o,oi)=>`<label class="option" id="opt-${subN}-${oi}" onclick="selectOpt('${subN}',${oi})">
+          <span class="opt-letter">${'ABCD'[oi]}</span><span class="opt-text">${o}</span>
+        </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="q-card scn-card" id="qcard-${qu.n}">
+    <div class="q-top"><span class="q-num">Q${qu.n}</span><span class="q-pts">${qu.pts} pts · Scenario</span></div>
+    <div class="scn-prompt">${qu.text}</div>
+    ${renderQuestionImage(qu.img)}
+    <div class="scn-subs">${subHtml}</div>
+  </div>`;
+}
+
+function renderQuestionImage(img) {
+  if (!img || !img.url) return '';
+  const sizes = { small:'220px', medium:'380px', large:'560px', full:'100%' };
+  const maxW = sizes[img.size] || sizes.medium;
+  const fit = img.fit === 'cover' ? 'cover' : 'contain';
+  const align = img.align === 'left' ? 'flex-start' : img.align === 'right' ? 'flex-end' : 'center';
+  const url = String(img.url).replace(/"/g, '&quot;');
+  const imgStyle = fit === 'cover'
+    ? `width:100%;height:${img.size==='small'?'150px':img.size==='large'?'360px':'240px'};object-fit:cover;`
+    : `max-width:100%;height:auto;object-fit:contain;`;
+  return `<div class="q-image-wrap" style="justify-content:${align};">
+    <div class="q-image-box" style="max-width:${maxW};">
+      <img src="${url}" alt="Question image" class="q-image" style="${imgStyle}" loading="lazy"
+           onerror="this.parentNode.innerHTML='<div class=&quot;q-image-err&quot;>Image could not be loaded</div>';">
+    </div>
+  </div>`;
+}
+
+function isWrittenQ(qu) {
+  if (qu.written === true) return true;
+  const hasModel = qu.model && String(qu.model).trim().length > 0;
+  const realOpts = Array.isArray(qu.options) && qu.options.filter(o => String(o == null ? '' : o).trim()).length >= 2;
+  return !!hasModel && !realOpts;
+}
+
+function setWritten(qn, val) {
+  if (!window._examWritten) window._examWritten = {};
+  window._examWritten[qn] = val;
+  const parentN = String(qn).indexOf('_') > -1 ? String(qn).split('_')[0] : qn;
+  const card = document.getElementById('qcard-' + parentN);
+  if (card) { if (val.trim()) card.classList.add('answered'); else card.classList.remove('answered'); }
+  updateExamProgress();
+}
+
+function selectOpt(qn, oi) {
+  examSelected[qn] = oi;
+  document.querySelectorAll(`[id^="opt-${qn}-"]`).forEach(e => e.classList.remove('selected'));
+  document.getElementById(`opt-${qn}-${oi}`).classList.add('selected');
+  const parentN = String(qn).indexOf('_') > -1 ? String(qn).split('_')[0] : qn;
+  const card = document.getElementById('qcard-' + parentN);
+  if (card) card.classList.add('answered');
+  updateExamProgress();
+}
+
+function updateExamProgress() {
+  if (!currentQuiz) return;
+  const w = window._examWritten || {};
+  const m = window._examMatch || {};
+  let total = 0, done = 0;
+  currentQuiz.questions.forEach(qu => {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      total++;
+      const need = (qu.pairs||[]).length;
+      if (need > 0 && Object.keys(m[qu.n]||{}).length >= need) done++;
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s, si) => {
+        total++;
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') { if ((w[subN]||'').trim()) done++; }
+        else if (examSelected[subN] !== undefined) done++;
+      });
+    } else if (t === 'written') {
+      total++;
+      if ((w[qu.n]||'').trim()) done++;
+    } else {
+      total++;
+      if (examSelected[qu.n] !== undefined) done++;
+    }
+  });
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  const fill = document.getElementById('exam-prog-fill'); if (fill) fill.style.width = pct + '%';
+  const cnt = document.getElementById('exam-prog-count'); if (cnt) cnt.textContent = done + ' / ' + total;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SUBMIT  (same payload as the portal, but id = APP-<email>, no score shown)
+// ════════════════════════════════════════════════════════════════════════════
+async function submitApplicant() {
+  const q = currentQuiz;
+  const written = window._examWritten || {};
+  const match = window._examMatch || {};
+
+  // unanswered count
+  let answeredCount = 0, totalItems = 0;
+  q.questions.forEach(qu => {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      totalItems++;
+      const done = Object.keys(match[qu.n] || {}).length;
+      if (done >= (qu.pairs||[]).length && (qu.pairs||[]).length>0) answeredCount++;
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s,si) => {
+        totalItems++;
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') { if ((written[subN]||'').trim()) answeredCount++; }
+        else if (examSelected[subN] !== undefined) answeredCount++;
+      });
+    } else if (t === 'written') {
+      totalItems++; if ((written[qu.n]||'').trim()) answeredCount++;
+    } else {
+      totalItems++; if (examSelected[qu.n] !== undefined) answeredCount++;
+    }
+  });
+  const ua = totalItems - answeredCount;
+  if (ua > 0 && !confirm(ua + ' item' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('btn-submit').textContent = 'Submitting…';
+
+  // score
+  let mcEarned = 0, mcPts = 0, writtenPts = 0, writtenCount = 0;
+  const results = {};
+  q.questions.forEach(qu => {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      const sc = scoreMatching(qu); mcPts += sc.possible; mcEarned += sc.earned;
+      results[qu.n] = { matching:true, earned:sc.earned, possible:sc.possible };
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s, si) => {
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') { writtenCount++; writtenPts += (Number(s.pts)||0); results[subN] = { written:true }; }
+        else { mcPts += (Number(s.pts)||0); const a = examSelected[subN]; const correct = a !== undefined && a === s.correct; if (correct) mcEarned += (Number(s.pts)||0); results[subN] = { selected:a, correct }; }
+      });
+    } else if (t === 'written') {
+      writtenCount++; writtenPts += (Number(qu.pts)||0); results[qu.n] = { written:true };
+    } else {
+      mcPts += (Number(qu.pts)||0); const a = examSelected[qu.n]; const correct = a !== undefined && a === qu.correct;
+      if (correct) mcEarned += (Number(qu.pts)||0); results[qu.n] = { selected:a, correct };
+    }
+  });
+  const totalPossible = mcPts + writtenPts;
+  const hasWritten = writtenCount > 0;
+  const mcPct = mcPts > 0 ? Math.round(mcEarned / mcPts * 100) : 0;
+  const passMark = Number(q.passMark) || 70;
+  const pct = mcPct;
+  const pass = !hasWritten && pct >= passMark;
+  const status = hasWritten ? 'pending' : 'finalized';
+
+  // answers payload (mirrors portal, incl. matching detail)
+  const answersOut = [];
+  q.questions.forEach(qu => {
+    const t = qExamType(qu);
+    if (t === 'matching') {
+      const sc = scoreMatching(qu);
+      const ans = (window._examMatch && window._examMatch[qu.n]) || {};
+      const pairs = qu.pairs || [];
+      const detail = pairs.map((p, li) => {
+        const chosenRi = ans[li];
+        const chosen = (chosenRi != null && pairs[chosenRi]) ? pairs[chosenRi].right : 'Not matched';
+        return { left:p.left, chosen:chosen, correct:p.right, ok:Number(chosenRi)===li };
+      });
+      answersOut.push({ q:qu.n, matching:true, selected:sc.right+'/'+sc.total+' correct', correct:'See breakdown', isCorrect:sc.allCorrect, earned:sc.earned, possible:sc.possible, matchDetail:detail });
+    } else if (t === 'scenario') {
+      (qu.subs||[]).forEach((s, si) => {
+        const subN = qu.n + '_' + si;
+        if (s.type === 'written') {
+          answersOut.push({ q:subN, scenario:true, written:true, selected:(written[subN]||'Not answered'), correct:'(written — pending grading)', isCorrect:'' });
+        } else {
+          const opts = Array.isArray(s.options) ? s.options : [];
+          answersOut.push({ q:subN, scenario:true, selected: examSelected[subN] !== undefined ? opts[examSelected[subN]] : 'Not answered', correct: opts[s.correct], isCorrect: results[subN] ? results[subN].correct : false });
+        }
+      });
+    } else if (t === 'written') {
+      answersOut.push({ q:qu.n, written:true, selected:(written[qu.n]||'Not answered'), correct:'(written — pending grading)', isCorrect:'' });
+    } else {
+      const opts = Array.isArray(qu.options) ? qu.options : [];
+      answersOut.push({ q:qu.n, selected: examSelected[qu.n] !== undefined ? opts[examSelected[qu.n]] : 'Not answered', correct: opts[qu.correct], isCorrect: results[qu.n].correct });
+    }
+  });
+  const correctCount = answersOut.filter(a => !a.written && (a.isCorrect === true)).length;
+  const mcTotalCount = answersOut.filter(a => !a.written).length;
+
+  const payload = {
+    action: 'submitResult',
+    first: applicant.first, last: applicant.last, id: 'APP-' + applicant.email.toLowerCase(),
+    date: new Date().toISOString().slice(0,10),
+    score: pct, pass: hasWritten ? 'Pending' : (pass ? 'Pass' : 'Fail'),
+    status: status,
+    mcEarned: mcEarned, mcPts: mcPts, writtenPts: writtenPts, totalPossible: totalPossible,
+    correct: correctCount, total: mcTotalCount, writtenPending: writtenCount,
+    exam: q.mod + ' — ' + q.name,
+    submittedAt: new Date().toISOString(),
+    retake: false,
+    answers: answersOut
+  };
+
+  await new Promise(resolve => {
+    const form = document.createElement('form');
+    form.method='POST'; form.action=SHEET_URL; form.target='hf'; form.style.display='none';
+    const inp = document.createElement('input');
+    inp.type='hidden'; inp.name='data'; inp.value=JSON.stringify(payload);
+    form.appendChild(inp);
+    const ifr = document.createElement('iframe');
+    ifr.name='hf'; ifr.style.display='none';
+    ifr.onload = resolve; setTimeout(resolve, 8000);
+    document.body.appendChild(ifr); document.body.appendChild(form); form.submit();
+  });
+
+  document.getElementById('exam-area').style.display = 'none';
+  document.getElementById('thanks').style.display = 'block';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

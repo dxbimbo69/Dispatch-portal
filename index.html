@@ -321,8 +321,20 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .admin-viewtabs{display:inline-flex;gap:4px;background:var(--gray);border-radius:12px;padding:4px;margin-bottom:1.5rem;}
 .admin-viewtab{font-family:var(--font);font-weight:700;font-size:12px;letter-spacing:.03em;padding:9px 18px;border-radius:9px;border:none;background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
 .admin-viewtab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(4,28,52,.08);}
-#admin-roster,#admin-analytics{display:none;}
-#admin-roster.active,#admin-analytics.active{display:block;}
+#admin-roster,#admin-analytics,#admin-applicants{display:none;}
+#admin-roster.active,#admin-analytics.active,#admin-applicants.active{display:block;}
+.app-rows{display:flex;flex-direction:column;gap:.5rem;}
+.app-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;background:var(--surface);border:1.5px solid var(--gray);border-radius:12px;padding:.85rem 1.1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.app-row:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(11,31,58,.06);}
+.app-row-name{font-weight:700;color:var(--navy);font-size:14px;}
+.app-row-email{font-size:12px;color:var(--ink3);margin-top:1px;}
+.app-row-meta{display:flex;align-items:center;gap:1rem;flex-shrink:0;}
+.app-row-date{font-size:12px;color:var(--ink3);}
+.app-row-score{font-family:var(--display);font-weight:800;font-size:16px;color:var(--navy);}
+.app-chip{font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap;}
+.app-chip.pending{background:var(--skysoft);color:var(--blue);}
+.app-chip.pass{background:var(--green-lt);color:var(--green);}
+.app-chip.fail{background:var(--gold-lt);color:#8a5a00;}
 
 /* Roster scope toggle (Active / Signed off) + analytics scope */
 .roster-scope{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
@@ -664,6 +676,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
     <div class="admin-viewtabs">
       <button class="admin-viewtab active" id="viewtab-roster" onclick="setAdminView('roster')">&#128203; Roster</button>
       <button class="admin-viewtab" id="viewtab-analytics" onclick="setAdminView('analytics')">&#128200; Analytics</button>
+      <button class="admin-viewtab" id="viewtab-applicants" onclick="setAdminView('applicants')">&#128188; Applicants</button>
     </div>
 
     <!-- ROSTER VIEW (existing) -->
@@ -723,6 +736,13 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
       <div class="admin-section-title">Students who may need support</div>
       <div class="an-section-note">Flagged for low average, a failed attempt, or stalled progress. Click a card to open the trainee.</div>
       <div id="an-risk"></div>
+    </div>
+
+    <div id="admin-applicants">
+      <div class="admin-summary" id="app-summary"></div>
+      <div class="admin-section-title">Applicant submissions</div>
+      <div class="an-section-note">Candidates who completed the applicant assessment. Click a row to review answers and grade written/scenario responses.</div>
+      <div id="app-list"></div>
     </div>
   </div>
 </div>
@@ -2734,7 +2754,12 @@ function showResults(score, pass, results) {
 // Sheet-derived names, populated by buildStudentsFromSheet during renderAdmin
 let SHEET_NAMES = {};
 
-function getAllStudentScores() {
+// Applicant submissions use IDs prefixed APP- so they never mix with trainee records.
+function isApplicantId(uid) { return String(uid).indexOf('APP-') === 0; }
+
+function getAllStudentScores(which) {
+  // which: 'trainees' (default) excludes applicants; 'applicants' includes only them.
+  const want = which || 'trainees';
   const students = {};
   // 1) Sheet results first (cross-device, authoritative)
   try {
@@ -2758,6 +2783,11 @@ function getAllStudentScores() {
       } catch(e) {}
     }
   }
+  // Split applicants from trainees.
+  Object.keys(students).forEach(uid => {
+    const applicant = isApplicantId(uid);
+    if (want === 'applicants' ? !applicant : applicant) delete students[uid];
+  });
   return students;
 }
 
@@ -2934,9 +2964,14 @@ function setAdminView(view) {
   window._adminView = view;
   document.getElementById('admin-roster').classList.toggle('active', view === 'roster');
   document.getElementById('admin-analytics').classList.toggle('active', view === 'analytics');
+  var appEl = document.getElementById('admin-applicants');
+  if (appEl) appEl.classList.toggle('active', view === 'applicants');
   document.getElementById('viewtab-roster').classList.toggle('active', view === 'roster');
   document.getElementById('viewtab-analytics').classList.toggle('active', view === 'analytics');
+  var appTab = document.getElementById('viewtab-applicants');
+  if (appTab) appTab.classList.toggle('active', view === 'applicants');
   if (view === 'analytics') renderAnalytics();
+  if (view === 'applicants') renderApplicants();
 }
 
 // Bucket a miss-rate into a severity class for color coding.
@@ -3037,6 +3072,57 @@ function computeAnalytics() {
   });
 
   return { qStats, secStats, allStudents };
+}
+
+// ── Applicants view ───────────────────────────────────────────────────────────
+function esc2(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function emailFromId(uid){ const m = String(uid).match(/^APP-(.+)$/); return m ? m[1] : ''; }
+
+function renderApplicants() {
+  const applicants = getAllStudentScores('applicants');
+  const listEl = document.getElementById('app-list');
+  const sumEl = document.getElementById('app-summary');
+  const entries = Object.entries(applicants);
+
+  const total = entries.length;
+  let pendingCount = 0, gradedCount = 0;
+  entries.forEach(([, scoresObj]) => {
+    Object.values(scoresObj).forEach(a => { if (a.status === 'pending') pendingCount++; else gradedCount++; });
+  });
+  if (sumEl) sumEl.innerHTML = [
+    ['Applicants', total, 'submitted the test'],
+    ['Awaiting grade', pendingCount, 'need review'],
+    ['Graded', gradedCount, 'finalized']
+  ].map(c => `<div class="sum-card"><div class="sum-val">${c[1]}</div><div class="sum-lbl">${c[0]}</div><div class="sum-sub">${c[2]}</div></div>`).join('');
+
+  if (!total) {
+    listEl.innerHTML = `<div class="an-card"><div class="an-empty">No applicant submissions yet. Share the applicant test link and access code with candidates; their results will appear here.</div></div>`;
+    return;
+  }
+
+  const rows = entries.map(([uid, scoresObj]) => {
+    const name = getName(uid) || uid.replace(/^APP-/, '');
+    const email = emailFromId(uid);
+    const attempts = Object.values(scoresObj);
+    const a = attempts[0] || {};
+    const statusChip = a.status === 'pending'
+      ? '<span class="app-chip pending">Awaiting grade</span>'
+      : (a.pass ? '<span class="app-chip pass">Pass</span>' : '<span class="app-chip fail">Review</span>');
+    const scoreTxt = a.status === 'pending' ? '—' : (a.score != null ? a.score + '%' : '—');
+    const when = a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : (a.date || '');
+    return `<div class="app-row" onclick="openTrainee('${String(uid).replace(/'/g,"\\'")}')">
+      <div class="app-row-main">
+        <div class="app-row-name">${esc2(name)}</div>
+        <div class="app-row-email">${esc2(email)}</div>
+      </div>
+      <div class="app-row-meta">
+        <span class="app-row-date">${when}</span>
+        <span class="app-row-score">${scoreTxt}</span>
+        ${statusChip}
+      </div>
+    </div>`;
+  }).join('');
+  listEl.innerHTML = `<div class="app-rows">${rows}</div>`;
 }
 
 function renderAnalytics() {
