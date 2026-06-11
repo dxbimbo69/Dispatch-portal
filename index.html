@@ -3505,12 +3505,16 @@ function renderApplicants() {
   renderRankBoard(applicants);
 }
 
-// Shared order for an applicant within a tier = min order across trainer rows (0 = unset).
-function sharedOrder(uid, tierKey) {
+// This trainer's order for an applicant within a tier (0/unset → large, so they sort last).
+function myOrder(uid, tierKey) {
   const u = String(uid).toUpperCase();
-  const vals = SHEET_RANKINGS.filter(r => String(r.applicantId).toUpperCase() === u && r.tier === tierKey)
+  const me = currentTrainerName();
+  const mine = SHEET_RANKINGS.find(r => String(r.applicantId).toUpperCase() === u && r.tier === tierKey && r.trainer === me);
+  if (mine && Number(mine.order) > 0) return Number(mine.order);
+  // Not ordered by me: fall back to any order so the card still has a stable spot, but after mine.
+  const any = SHEET_RANKINGS.filter(r => String(r.applicantId).toUpperCase() === u && r.tier === tierKey)
     .map(r => Number(r.order) || 0).filter(v => v > 0);
-  return vals.length ? Math.min.apply(null, vals) : 9999;
+  return any.length ? 1000 + Math.min.apply(null, any) : 9999;
 }
 
 // Build the three-tier ranking board from SHEET_RANKINGS, ordered within each tier.
@@ -3531,7 +3535,7 @@ function renderRankBoard(applicants) {
       const rks = byApplicant[String(uid).toUpperCase()] || [];
       return rks.some(r => r.tier === tier.key);
     }).sort((a,b) => {
-      const oa = sharedOrder(a, tier.key), ob = sharedOrder(b, tier.key);
+      const oa = myOrder(a, tier.key), ob = myOrder(b, tier.key);
       if (oa !== ob) return oa - ob;
       return (getName(a)||a).localeCompare(getName(b)||b);
     });
@@ -3586,34 +3590,33 @@ function cardDrop(ev, tier){
   placeInTier(uid, tier, targetUid);
 }
 
-// Place uid into a tier at a position (before beforeUid, or end if null), then persist order.
+// Place uid into a tier at a position (before beforeUid, or end if null), then persist
+// THIS TRAINER'S order only — so trainers don't overwrite each other's vertical ranking.
 function placeInTier(uid, tier, beforeUid){
-  // current ordered list of uids in this tier (excluding the dragged one)
+  const me = currentTrainerName();
   const applicants = getAllStudentScores('applicants');
+  // current ordered list (by MY order) of uids in this tier, excluding the dragged one
   const byTier = Object.keys(applicants).filter(u => {
     if (String(u).toUpperCase() === String(uid).toUpperCase()) return false;
     return SHEET_RANKINGS.some(r => String(r.applicantId).toUpperCase()===String(u).toUpperCase() && r.tier===tier);
-  }).sort((a,b)=>{ const oa=sharedOrder(a,tier), ob=sharedOrder(b,tier); return oa!==ob?oa-ob:(getName(a)||a).localeCompare(getName(b)||b); });
+  }).sort((a,b)=>{ const oa=myOrder(a,tier), ob=myOrder(b,tier); return oa!==ob?oa-ob:(getName(a)||a).localeCompare(getName(b)||b); });
 
   let insertAt = byTier.length; // default end
   if (beforeUid){ const i = byTier.findIndex(u => String(u).toUpperCase()===String(beforeUid).toUpperCase()); if (i>-1) insertAt = i; }
   byTier.splice(insertAt, 0, uid);
 
-  // Ensure the dragged applicant has a ranking row (by current trainer) in this tier.
+  // Ensure the dragged applicant has MY ranking row in this tier.
   rankApplicantSilent(uid, tier);
 
-  // Assign sequential order to every applicant in this tier, writing to ALL their rows.
+  // Assign sequential order, writing ONLY to my rows. Persist just my rows.
+  const items = [];
   byTier.forEach((u, idx) => {
     const pos = idx + 1;
     const u2 = String(u).toUpperCase();
-    SHEET_RANKINGS.forEach(r => { if (String(r.applicantId).toUpperCase()===u2 && r.tier===tier) r.order = pos; });
-  });
-  // Persist the order in bulk.
-  const items = [];
-  byTier.forEach((u, idx) => {
-    const u2 = String(u).toUpperCase();
-    SHEET_RANKINGS.filter(r => String(r.applicantId).toUpperCase()===u2 && r.tier===tier)
-      .forEach(r => items.push({ applicantId: r.applicantId, trainer: r.trainer, tier: tier, order: idx+1 }));
+    SHEET_RANKINGS.forEach(r => {
+      if (String(r.applicantId).toUpperCase()===u2 && r.tier===tier && r.trainer===me) r.order = pos;
+    });
+    items.push({ applicantId: u, trainer: me, tier: tier, order: pos });
   });
   postBoardAction({ action:'setRankOrder', items: items });
   renderApplicants();
@@ -3789,11 +3792,12 @@ function tierLabel(key){ const t = RANK_TIERS.find(x=>x.key===key); return t?t.l
 
 function openResults(){
   document.getElementById('modal-results').style.display = 'flex';
-  renderResultsBody();
-  // refresh data, then re-render
+  document.getElementById('results-body').innerHTML = '<div class="notes-empty">Compiling everyone\u2019s votes…</div>';
+  // Always pull the latest rankings + results FIRST, then render once.
   let pending = 2;
   function step(){ if(--pending<=0) renderResultsBody(); }
-  loadRankings(step); loadResults(step);
+  loadRankings(step);
+  loadResults(step);
 }
 function closeResults(){ document.getElementById('modal-results').style.display = 'none'; }
 
@@ -3827,36 +3831,42 @@ function renderResultsBody(){
   }
 
   // Consensus scoring: for each applicant, sum each trainer's (tier base + position bonus).
-  // Position bonus: being #1 in a tier adds up to +0.9, decreasing with position.
-  const scores = {};   // uid -> { total, votes:{top,consider,no}, count }
-  Object.keys(applicants).forEach(uid => { scores[uid] = { total:0, votes:{top:0,consider:0,no:0}, count:0 }; });
-  // Determine tier sizes per trainer for position bonus scaling.
+  // Seed from the RANKINGS themselves (not just test-submitters) so everyone ranked shows up.
+  const scores = {};   // canonicalUid -> { uid, total, votes:{top,consider,no}, count }
+  function canon(id){ return String(id).toUpperCase(); }
+  // Map canonical id -> a display uid (prefer the applicants-list key for correct name lookup).
+  const uidByCanon = {};
+  Object.keys(applicants).forEach(u => { uidByCanon[canon(u)] = u; });
+  SHEET_RANKINGS.forEach(r => { const c = canon(r.applicantId); if (!uidByCanon[c]) uidByCanon[c] = r.applicantId; });
+
+  function ensure(c){ if(!scores[c]) scores[c] = { uid: uidByCanon[c] || c, total:0, votes:{top:0,consider:0,no:0}, count:0 }; return scores[c]; }
+
   trainers.forEach(tr => {
     RANK_TIERS.forEach(tier => {
       const inTier = byTrainer[tr].filter(r => r.tier === tier.key)
         .sort((a,b)=> (Number(a.order)||9999) - (Number(b.order)||9999));
       const n = inTier.length;
       inTier.forEach((r, idx) => {
-        const uid = Object.keys(scores).find(u => String(u).toUpperCase() === String(r.applicantId).toUpperCase());
-        if (!uid) return;
+        const s = ensure(canon(r.applicantId));
         const base = TIER_BASE[tier.key] || 0;
         const posBonus = n > 1 ? (0.9 * (n - 1 - idx) / (n - 1)) : 0.45; // top of tier gets the most
-        scores[uid].total += base + posBonus;
-        scores[uid].votes[tier.key] = (scores[uid].votes[tier.key]||0) + 1;
-        scores[uid].count += 1;
+        s.total += base + posBonus;
+        s.votes[tier.key] = (s.votes[tier.key]||0) + 1;
+        s.count += 1;
       });
     });
   });
 
-  const ranked = Object.keys(scores).filter(uid => scores[uid].count > 0)
-    .sort((a,b) => scores[b].total - scores[a].total || (getName(a)||a).localeCompare(getName(b)||b));
+  const ranked = Object.keys(scores).filter(c => scores[c].count > 0)
+    .sort((a,b) => scores[b].total - scores[a].total || (getName(scores[a].uid)||scores[a].uid).localeCompare(getName(scores[b].uid)||scores[b].uid));
 
   let consensusHtml;
   if (!ranked.length) {
     consensusHtml = '<div class="notes-empty">No votes to compile yet.</div>';
   } else {
-    const rows = ranked.map((uid, i) => {
-      const s = scores[uid];
+    const rows = ranked.map((c, i) => {
+      const s = scores[c];
+      const uid = s.uid;
       const sc = applicants[uid] ? Object.values(applicants[uid])[0] : null;
       const testScore = sc && sc.status !== 'pending' && sc.score != null ? sc.score + '%' : '—';
       const voteSummary = [
