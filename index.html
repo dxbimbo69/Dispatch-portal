@@ -392,6 +392,37 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .rank-by{font-size:10.5px;font-weight:700;background:var(--skysoft);color:var(--blue);border-radius:20px;padding:2px 8px;}
 .rank-by.muted{background:transparent;color:var(--ink3);font-weight:600;font-style:italic;}
 @media(max-width:680px){.rank-board{grid-template-columns:1fr;}}
+.rank-notes-btn{margin-top:7px;width:100%;background:var(--surface);border:1.5px solid var(--gray);border-radius:8px;padding:5px;font-size:11.5px;font-weight:700;color:var(--ink2);cursor:pointer;font-family:var(--font);transition:all .15s;}
+.rank-notes-btn:hover{border-color:var(--blue);color:var(--blue);}
+.rank-notes-btn.has{background:var(--skysoft);border-color:var(--sky);color:var(--blue);}
+.notes-list{display:flex;flex-direction:column;gap:.7rem;max-height:50vh;overflow-y:auto;margin-bottom:1.25rem;}
+.notes-empty{color:var(--ink3);font-size:13px;text-align:center;padding:1.5rem;}
+.note-item{background:var(--surface);border:1.5px solid var(--gray);border-radius:12px;padding:.7rem .9rem;position:relative;}
+.note-item.mine{background:var(--skysoft);border-color:var(--sky);}
+.note-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;gap:10px;}
+.note-author{font-weight:800;font-size:12.5px;color:var(--navy);font-family:var(--display);}
+.note-date{font-size:11px;color:var(--ink3);}
+.note-text{font-size:13.5px;color:var(--ink);line-height:1.5;white-space:pre-wrap;}
+.note-del{margin-top:6px;background:transparent;border:none;color:var(--red);font-size:11.5px;font-weight:700;cursor:pointer;padding:0;}
+.note-del:hover{text-decoration:underline;}
+.note-add{border-top:1.5px solid var(--gray);padding-top:1rem;}
+.note-add-lbl{display:block;font-size:12px;color:var(--ink3);margin-bottom:.5rem;}
+.note-input{width:100%;border:1.5px solid var(--gray);border-radius:11px;padding:11px 13px;font-size:14px;font-family:var(--font);min-height:80px;resize:vertical;}
+.note-input:focus{outline:none;border-color:var(--blue);}
+.note-add-btn{margin-top:.7rem;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);}
+.note-add-btn:hover{background:#0B2F5E;}
+.note-actions{display:flex;gap:14px;margin-top:6px;align-items:center;}
+.note-reply-link{background:transparent;border:none;color:var(--blue);font-size:11.5px;font-weight:700;cursor:pointer;padding:0;}
+.note-reply-link:hover{text-decoration:underline;}
+.note-toggle{background:transparent;border:none;color:var(--ink2);font-size:12px;font-weight:700;cursor:pointer;padding:4px 0;margin-top:4px;}
+.note-toggle:hover{color:var(--blue);}
+.note-children{margin-top:.5rem;display:flex;flex-direction:column;gap:.5rem;border-left:2px solid var(--gray);padding-left:.5rem;}
+.note-reply-box{margin-top:.6rem;}
+.note-input.sm{min-height:54px;font-size:13px;}
+.note-reply-actions{display:flex;gap:8px;align-items:center;margin-top:.4rem;}
+.note-add-btn.sm{padding:7px 16px;font-size:12px;}
+.note-cancel{background:transparent;border:none;color:var(--ink3);font-size:12px;font-weight:700;cursor:pointer;}
+.note-cancel:hover{color:var(--ink);}
 
 /* Roster scope toggle (Active / Signed off) + analytics scope */
 .roster-scope{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
@@ -1464,6 +1495,34 @@ function setRankingRemote(applicantId, tier) {
   SHEET_RANKINGS = SHEET_RANKINGS.filter(r => !(r.applicantId === applicantId && r.trainer === trainer));
   if (tier) SHEET_RANKINGS.push({ applicantId, trainer, tier, date: new Date().toLocaleDateString() });
   const payload = { action:'setRanking', applicantId, trainer, tier: tier || '', date: new Date().toLocaleDateString() };
+  postBoardAction(payload);
+}
+
+// ── Applicant notes (shared, attributed; delete own only) ───────────────────────
+var SHEET_NOTES = [];
+function loadNotes(done) {
+  if (!QUESTIONS_URL || QUESTIONS_URL.indexOf('PASTE_') === 0) { done && done(false); return; }
+  const cb = 'ntb_' + Math.random().toString(36).slice(2);
+  const s = document.createElement('script');
+  let finished = false;
+  function finish(ok){ if(finished) return; finished = true; delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s); done && done(ok); }
+  window[cb] = function(res){
+    try {
+      if (res && res.status === 'ok' && Array.isArray(res.notes)) { SHEET_NOTES = res.notes; finish(true); }
+      else { finish(false); }
+    } catch(e) { finish(false); }
+  };
+  s.onerror = function(){ finish(false); };
+  s.src = QUESTIONS_URL + (QUESTIONS_URL.indexOf('?')>-1?'&':'?') + 'mode=notes&callback=' + cb + '&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ finish(false); }, 12000);
+}
+function notesFor(uid){
+  const u = String(uid).toUpperCase();
+  return SHEET_NOTES.filter(n => String(n.applicantId).toUpperCase() === u);
+}
+// Shared hidden-iframe POST for board actions (rankings + notes).
+function postBoardAction(payload) {
   try {
     const form = document.createElement('form');
     form.method='POST'; form.action=SHEET_URL; form.target='rkhf'; form.style.display='none';
@@ -3213,7 +3272,7 @@ function setAdminView(view) {
   var appTab = document.getElementById('viewtab-applicants');
   if (appTab) appTab.classList.toggle('active', view === 'applicants');
   if (view === 'analytics') renderAnalytics();
-  if (view === 'applicants') { renderApplicants(); loadRankings(function(){ renderApplicants(); }); }
+  if (view === 'applicants') { renderApplicants(); loadRankings(function(){ renderApplicants(); }); loadNotes(function(){ renderApplicants(); }); }
 }
 
 // Bucket a miss-rate into a severity class for color coding.
@@ -3444,12 +3503,14 @@ function renderRankBoard(applicants) {
       const rks = (byApplicant[String(uid).toUpperCase()] || []).filter(r => r.tier === tier.key);
       const tags = rks.map(r => `<span class="rank-by">${esc2(r.trainer)}</span>`).join('');
       const safeUid = String(uid).replace(/'/g,"\\'");
+      const nCount = notesFor(uid).length;
       return `<div class="rank-card" draggable="true" data-uid="${esc2(uid)}" ondragstart="appDragStart(event)">
         <div class="rank-card-top">
           <span class="rank-card-name">${esc2(name)}</span>
           <button class="rank-card-x" title="Remove from this tier" onclick="event.stopPropagation(); rankApplicant('${safeUid}','')">&times;</button>
         </div>
         <div class="rank-card-by">${tags || '<span class="rank-by muted">unranked by you</span>'}</div>
+        <button class="rank-notes-btn${nCount?' has':''}" onclick="event.stopPropagation(); openNotes('${safeUid}')">&#128172; Notes${nCount?' ('+nCount+')':''}</button>
       </div>`;
     }).join('');
     return `<div class="rank-col rank-${tier.key}" ondragover="appDragOver(event)" ondragleave="appDragLeave(event)" ondrop="appDrop(event,'${tier.key}')">
@@ -3478,6 +3539,113 @@ function rankApplicant(uid, tier){
   renderApplicants();                     // re-render board + list
 }
 
+// ── Notes modal (threaded) ──────────────────────────────────────────────────
+let _notesUid = null;
+let _noteExpanded = {};   // noteId -> true when its replies are shown
+let _noteReplyOpen = null; // noteId whose reply box is currently open
+
+function openNotes(uid){
+  _notesUid = uid;
+  _noteReplyOpen = null;
+  const name = getName(uid) || uid.replace(/^APP-/, '');
+  document.getElementById('notes-title').textContent = name;
+  document.getElementById('modal-notes').style.display = 'flex';
+  renderNotesBody();
+  loadNotes(function(){ if (_notesUid === uid) renderNotesBody(); });
+}
+function closeNotes(){ document.getElementById('modal-notes').style.display = 'none'; _notesUid = null; renderApplicants(); }
+
+// Build a parent→children map and render the thread from the roots.
+function renderNotesBody(){
+  const body = document.getElementById('notes-body');
+  if (!body || !_notesUid) return;
+  const me = currentTrainerName();
+  const all = notesFor(_notesUid).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+  const kids = {};
+  all.forEach(n => { const p = (n.replyTo||'').trim(); (kids[p] = kids[p] || []).push(n); });
+
+  function renderNode(n, depth){
+    const mine = String(n.trainer).trim() === me;
+    const safeId = String(n.noteId).replace(/'/g,"\\'");
+    const children = kids[n.noteId] || [];
+    const expanded = !!_noteExpanded[n.noteId];
+    const replyBox = _noteReplyOpen === n.noteId
+      ? `<div class="note-reply-box">
+           <textarea id="note-reply-input" class="note-input sm" placeholder="Reply as ${esc2(me)}…"></textarea>
+           <div class="note-reply-actions">
+             <button class="note-add-btn sm" onclick="addNoteSubmit('${safeId}')">Post reply</button>
+             <button class="note-cancel" onclick="toggleReply(null)">Cancel</button>
+           </div>
+         </div>` : '';
+    const childHtml = children.length
+      ? `<button class="note-toggle" onclick="toggleExpand('${safeId}')">${expanded?'▾':'▸'} ${children.length} ${children.length>1?'replies':'reply'}</button>
+         <div class="note-children" style="${expanded?'':'display:none;'}">${children.map(c=>renderNode(c, depth+1)).join('')}</div>`
+      : '';
+    return `<div class="note-item${mine?' mine':''}" style="${depth>0?'margin-left:16px;':''}">
+      <div class="note-head"><span class="note-author">${esc2(n.trainer)||'Unknown'}</span><span class="note-date">${esc2(n.date)}</span></div>
+      <div class="note-text">${esc2(n.note)}</div>
+      <div class="note-actions">
+        <button class="note-reply-link" onclick="toggleReply('${safeId}')">Reply</button>
+        ${mine ? `<button class="note-del" onclick="deleteNoteLocal('${safeId}')">Delete</button>` : ''}
+      </div>
+      ${replyBox}
+      ${childHtml}
+    </div>`;
+  }
+
+  const roots = kids[''] || [];
+  const notesHtml = roots.length ? roots.map(n=>renderNode(n,0)).join('')
+    : '<div class="notes-empty">No notes yet. Be the first to add one.</div>';
+
+  body.innerHTML = `
+    <div class="notes-list">${notesHtml}</div>
+    <div class="note-add">
+      <label class="note-add-lbl">Add a note as <strong>${esc2(me)}</strong></label>
+      <textarea id="note-input" class="note-input" placeholder="Share your impression of this applicant…"></textarea>
+      <button class="note-add-btn" onclick="addNoteSubmit('')">Post note</button>
+    </div>`;
+}
+
+function toggleExpand(noteId){ _noteExpanded[noteId] = !_noteExpanded[noteId]; renderNotesBody(); }
+function toggleReply(noteId){ _noteReplyOpen = noteId; renderNotesBody();
+  if (noteId){ const t = document.getElementById('note-reply-input'); if (t) t.focus(); } }
+
+// Post a top-level note (replyTo='') or a reply (replyTo=parent id).
+function addNoteSubmit(replyTo){
+  const inputId = replyTo ? 'note-reply-input' : 'note-input';
+  const ta = document.getElementById(inputId);
+  const text = (ta && ta.value || '').trim();
+  if (!text || !_notesUid) return;
+  const trainer = currentTrainerName();
+  const noteId = 'n' + Date.now() + Math.floor(Math.random()*1000);
+  const date = new Date().toLocaleString();
+  SHEET_NOTES.push({ noteId, applicantId: _notesUid, trainer, note: text, date, replyTo: replyTo || '' });
+  postBoardAction({ action:'addNote', applicantId:_notesUid, trainer, note:text, date, replyTo: replyTo || '' });
+  if (replyTo){ _noteExpanded[replyTo] = true; _noteReplyOpen = null; }
+  if (ta) ta.value = '';
+  renderNotesBody();
+}
+
+function deleteNoteLocal(noteId){
+  // Count descendants so the user knows replies go too.
+  const descend = collectDescendants(noteId);
+  const extra = descend.length - 1;
+  const msg = extra > 0 ? 'Delete your note and its ' + extra + ' ' + (extra>1?'replies':'reply') + '?' : 'Delete your note?';
+  if (!confirm(msg)) return;
+  const kill = {}; descend.forEach(id => kill[id] = true);
+  SHEET_NOTES = SHEET_NOTES.filter(n => !kill[n.noteId]);
+  postBoardAction({ action:'deleteNote', noteId });
+  renderNotesBody();
+}
+// All ids under (and including) a note, following replyTo links.
+function collectDescendants(noteId){
+  const out = [noteId]; let changed = true;
+  while (changed){ changed = false;
+    SHEET_NOTES.forEach(n => { if (n.replyTo && out.indexOf(n.replyTo)>-1 && out.indexOf(n.noteId)===-1){ out.push(n.noteId); changed = true; } });
+  }
+  return out;
+}
+
 function deleteApplicant(uid){
   const name = getName(uid) || uid.replace(/^APP-/, '');
   if (!confirm('Delete applicant "' + name + '" and their test submission? This cannot be undone.')) return;
@@ -3503,10 +3671,11 @@ function deleteApplicant(uid){
 function refreshApplicants(){
   const btn = document.getElementById('app-refresh');
   if (btn){ btn.disabled = true; btn.textContent = 'Refreshing…'; }
-  let pending = 2;
+  let pending = 3;
   function step(){ if (--pending <= 0){ if (btn){ btn.disabled=false; btn.innerHTML='&#8635; Refresh'; } renderApplicants(); } }
   loadResults(step);
   loadRankings(step);
+  loadNotes(step);
 }
 
 // Open an applicant's submission directly in the grading modal (their one test only),
@@ -4512,6 +4681,20 @@ loadQuestions(function(ok){
       <button onclick="closeGrading()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Close</button>
     </div>
     <div id="grading-body" style="padding:1.5rem;"></div>
+  </div>
+</div>
+
+<!-- ══ APPLICANT NOTES MODAL ══════════════════════════════════════ -->
+<div id="modal-notes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:650;align-items:flex-start;justify-content:center;overflow-y:auto;padding:2rem 1rem;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(0,0,0,.4);margin:auto;">
+    <div style="background:var(--navy);border-radius:16px 16px 0 0;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;">Applicant Notes</div>
+        <div id="notes-title" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;"></div>
+      </div>
+      <button onclick="closeNotes()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">Close</button>
+    </div>
+    <div id="notes-body" style="padding:1.5rem;"></div>
   </div>
 </div>
 </body>
