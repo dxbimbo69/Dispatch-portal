@@ -44,6 +44,10 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);line-hei
 .exam-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
 .exam-title{font-family:var(--display);font-weight:800;font-size:18px;color:var(--navy);}
 .exam-prog-count{font-size:13px;color:var(--ink3);font-weight:600;}
+.exam-timer{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:800;font-size:14px;color:var(--navy);background:var(--skysoft);border:1.5px solid var(--sky);border-radius:20px;padding:4px 13px;margin-left:auto;margin-right:10px;font-variant-numeric:tabular-nums;}
+.exam-timer.warn{background:var(--gold-lt);border-color:var(--gold);color:#8a5a00;}
+.exam-timer.crit{background:var(--red-lt);border-color:var(--red);color:var(--red);animation:tpulse 1s ease-in-out infinite;}
+@keyframes tpulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 .exam-prog{height:7px;background:var(--gray);border-radius:99px;overflow:hidden;}
 .exam-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0;transition:width .3s;}
 
@@ -143,6 +147,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);line-hei
   <div class="exam-head">
     <div class="exam-head-row">
       <div class="exam-title" id="exam-title">Assessment</div>
+      <span class="exam-timer" id="exam-timer" style="display:none;"><span>&#9201;</span><span id="exam-timer-val">--:--</span></span>
       <div class="exam-prog-count" id="exam-prog-count">0 / 0</div>
     </div>
     <div class="exam-prog"><div class="exam-prog-fill" id="exam-prog-fill"></div></div>
@@ -224,10 +229,13 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
   const byId = {};
   const list = [];
   (quizRows||[]).forEach(function(qz){
-    const quiz = {
-      id: qz.id, mod: qz.mod||'', name: qz.name||'', sub: qz.sub||'',
+    var subRaw = qz.sub || '';
+    var tSplit = String(subRaw).split('@@T@@');
+    var quiz = {
+      id: qz.id, mod: qz.mod||'', name: qz.name||'', sub: tSplit[0],
       section: qz.section||'', type: qz.type||'kc',
       passMark: Number(qz.passMark)||80, order: Number(qz.order)||999,
+      timeLimit: tSplit.length>1 ? (Number(tSplit[1])||0) : 0,
       questions: []
     };
     byId[qz.id] = quiz; list.push(quiz);
@@ -341,6 +349,35 @@ function renderExam() {
   document.getElementById('exam-content').innerHTML = html;
   setTimeout(initMatchingQuestions, 0);
   updateExamProgress();
+  startExamTimer(currentQuiz ? currentQuiz.timeLimit : 0);
+}
+
+// ── Exam timer (warns at 5 + 1 min, auto-submits at 0) ──────────────────────────
+var _examTimer = { id:null, endsAt:0, warned5:false, warned1:false };
+function startExamTimer(minutes){
+  stopExamTimer();
+  const badge = document.getElementById('exam-timer');
+  const mins = Number(minutes)||0;
+  if (!badge) return;
+  if (mins <= 0){ badge.style.display='none'; return; }
+  badge.style.display='inline-flex';
+  _examTimer.endsAt = Date.now() + mins*60000;
+  _examTimer.warned5=false; _examTimer.warned1=false;
+  tickExamTimer();
+  _examTimer.id = setInterval(tickExamTimer, 1000);
+}
+function stopExamTimer(){ if(_examTimer.id){ clearInterval(_examTimer.id); _examTimer.id=null; } }
+function tickExamTimer(){
+  const valEl=document.getElementById('exam-timer-val'); const badge=document.getElementById('exam-timer');
+  if(!valEl||!badge){ stopExamTimer(); return; }
+  let remain=Math.max(0, Math.round((_examTimer.endsAt-Date.now())/1000));
+  const m=Math.floor(remain/60), s=remain%60;
+  valEl.textContent=m+':'+String(s).padStart(2,'0');
+  badge.classList.toggle('warn', remain<=300 && remain>60);
+  badge.classList.toggle('crit', remain<=60);
+  if(remain<=300 && !_examTimer.warned5 && remain>60){ _examTimer.warned5=true; try{ alert('5 minutes remaining.'); }catch(e){} }
+  if(remain<=60 && !_examTimer.warned1){ _examTimer.warned1=true; try{ alert('1 minute remaining — your assessment will submit automatically when time runs out.'); }catch(e){} }
+  if(remain<=0){ stopExamTimer(); valEl.textContent='0:00'; window._timeExpired=true; try{ alert("Time's up — your assessment is being submitted."); }catch(e){} submitApplicant(); }
 }
 
 function renderMatchingQ(qu) {
@@ -578,6 +615,7 @@ function updateExamProgress() {
 //  SUBMIT  (same payload as the portal, but id = APP-<email>, no score shown)
 // ════════════════════════════════════════════════════════════════════════════
 async function submitApplicant() {
+  stopExamTimer();
   const q = currentQuiz;
   const written = window._examWritten || {};
   const match = window._examMatch || {};
@@ -604,7 +642,8 @@ async function submitApplicant() {
     }
   });
   const ua = totalItems - answeredCount;
-  if (ua > 0 && !confirm(ua + ' item' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+  if (!window._timeExpired && ua > 0 && !confirm(ua + ' item' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+  window._timeExpired = false;
 
   document.getElementById('btn-submit').disabled = true;
   document.getElementById('btn-submit').textContent = 'Submitting…';

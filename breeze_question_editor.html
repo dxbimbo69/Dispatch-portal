@@ -522,7 +522,12 @@ function selectQuiz(id) {
         cite:citeText, img:img
       };
     });
-  working = { quiz: Object.assign({}, meta), questions: qs };
+  const quizMeta = Object.assign({}, meta);
+  // Decode time limit from sub: <sub>@@T@@<minutes>
+  const tParts = String(quizMeta.sub || '').split('@@T@@');
+  quizMeta.sub = tParts[0];
+  quizMeta.timeLimit = tParts.length > 1 ? (Number(tParts[1]) || 0) : 0;
+  working = { quiz: quizMeta, questions: qs };
   dirty = false;
   buildQuizList();
   renderEditor();
@@ -600,6 +605,7 @@ function renderEditor() {
     + field('Subtitle','sub',m.sub,'full')
     + sectionField('Section','section',m.section)
     + field('Pass mark (%)','passMark',m.passMark,'','number')
+    + field('Time limit (min, 0 = none)','timeLimit',m.timeLimit||0,'','number')
     + '</div></div>';
 
   html += '<div class="toolbar"><div class="toolbar-title">Questions ('+working.questions.length+')</div>'
@@ -891,9 +897,15 @@ function saveCurrentQuiz(){
     }
   }
   const btn=document.getElementById('save-btn'); btn.disabled=true; btn.textContent='Saving…';
+  // Encode time limit into sub: <sub>@@T@@<minutes>. Keeps it out of the visible subtitle
+  // and needs no extra sheet column. A 0/blank limit writes plain sub.
+  const _tl = Number(working.quiz.timeLimit) || 0;
+  const _quizOut = Object.assign({}, working.quiz);
+  _quizOut.sub = _tl > 0 ? (working.quiz.sub || '') + '@@T@@' + _tl : (working.quiz.sub || '');
+  delete _quizOut.timeLimit;
   const payload = {
     action:'saveQuiz',
-    quiz: working.quiz,
+    quiz: _quizOut,
     questions: working.questions.map(q=>{
       // Append image metadata to cite as: <cite>@@IMG@@<json> (matching questions skip images).
       let citeOut = q.cite || '';

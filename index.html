@@ -215,6 +215,11 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .exam-prog-track{height:7px;background:var(--skysoft);}
 .exam-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent));transition:width .4s;}
 .exam-prog-count{font-size:12px;opacity:.8;}
+.exam-timer{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:800;font-size:14px;color:var(--navy);background:var(--skysoft);border:1.5px solid var(--sky);border-radius:20px;padding:4px 13px;margin-left:auto;margin-right:10px;font-variant-numeric:tabular-nums;}
+.exam-timer-icon{font-size:13px;}
+.exam-timer.warn{background:var(--gold-lt);border-color:var(--gold);color:#8a5a00;}
+.exam-timer.crit{background:var(--red-lt);border-color:var(--red);color:var(--red);animation:tpulse 1s ease-in-out infinite;}
+@keyframes tpulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 .info-card,.submit-card{background:#fff;border:1.5px solid var(--gray);border-radius:18px;padding:1.6rem;margin-bottom:1rem;}
 .info-title{font-family:var(--display);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:1rem;}
 .info-field{margin-bottom:.75rem;}
@@ -335,6 +340,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
 .app-chip.pending{background:var(--skysoft);color:var(--blue);}
 .app-chip.pass{background:var(--green-lt);color:var(--green);}
 .app-chip.fail{background:var(--gold-lt);color:#8a5a00;}
+.app-row-cta{font-size:12px;font-weight:700;color:var(--blue);white-space:nowrap;}
 
 /* Roster scope toggle (Active / Signed off) + analytics scope */
 .roster-scope{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
@@ -770,6 +776,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--ink);-webkit-
   <div class="exam-topbar">
     <button class="back-to-portal" onclick="backToPortal()">&#8592; Portal</button>
     <span class="exam-topbar-title" id="exam-topbar-title"></span>
+    <span class="exam-timer" id="exam-timer" style="display:none;"><span class="exam-timer-icon">&#9201;</span><span id="exam-timer-val">--:--</span></span>
     <div class="exam-prog-wrap">
       <div class="exam-prog-track"><div class="exam-prog-fill" id="exam-prog-fill" style="width:0%"></div></div>
       <span class="exam-prog-count" id="exam-prog-count">0 / 0</span>
@@ -1227,17 +1234,22 @@ function buildQuizzesFromSheet(quizRows, questionRows) {
   const byId = {};
   quizRows.forEach(function(qz){
     if (!qz.id) return;
+    // Time limit (minutes) is appended to sub as: <sub>@@T@@<minutes> (no sheet schema change).
+    var subRaw = qz.sub || '';
+    var tSplit = String(subRaw).split('@@T@@');
+    var subText = tSplit[0];
+    var timeLimit = tSplit.length > 1 ? (Number(tSplit[1]) || 0) : 0;
     byId[qz.id] = {
       id: qz.id,
       type: (qz.type === 'test' || qz.type === 'practice') ? qz.type : 'kc',
       mod: qz.mod || '',
       name: qz.name || '',
-      sub: qz.sub || '',
+      sub: subText,
       section: qz.section || 'Other',
       passMark: Number(qz.passMark) || 80,
+      timeLimit: timeLimit,
       totalQuestions: 0,
       questions: []
-      // note: no externalUrl — all quizzes now run in-portal
     };
   });
   questionRows.forEach(function(q){
@@ -2050,6 +2062,7 @@ function backToPortal() {
   if (examResults === null && Object.keys(examSelected).length > 0) {
     if (!confirm('Leave this quiz? Your answers will be lost.')) return;
   }
+  stopExamTimer();
   renderPortal();
   showScreen('screen-portal');
 }
@@ -2127,6 +2140,58 @@ function renderExam() {
   content.innerHTML = html;
   // Wire up drag-to-connect matching questions now that the DOM exists.
   setTimeout(initMatchingQuestions, 0);
+  // Start the countdown timer if this quiz has a time limit.
+  startExamTimer(currentQuiz ? currentQuiz.timeLimit : 0);
+}
+
+// ── Exam timer ────────────────────────────────────────────────────────────────
+// Counts down a per-quiz time limit (minutes). Warns at 5 min and 1 min, then
+// auto-submits at zero. A 0/blank limit means no timer.
+var _examTimer = { id: null, endsAt: 0, warned5: false, warned1: false };
+
+function startExamTimer(minutes) {
+  stopExamTimer();
+  const badge = document.getElementById('exam-timer');
+  const mins = Number(minutes) || 0;
+  if (!badge) return;
+  if (mins <= 0) { badge.style.display = 'none'; return; }   // no timer for this quiz
+  badge.style.display = 'inline-flex';
+  _examTimer.endsAt = Date.now() + mins * 60000;
+  _examTimer.warned5 = false; _examTimer.warned1 = false;
+  tickExamTimer();
+  _examTimer.id = setInterval(tickExamTimer, 1000);
+}
+
+function stopExamTimer() {
+  if (_examTimer.id) { clearInterval(_examTimer.id); _examTimer.id = null; }
+}
+
+function tickExamTimer() {
+  const valEl = document.getElementById('exam-timer-val');
+  const badge = document.getElementById('exam-timer');
+  if (!valEl || !badge) { stopExamTimer(); return; }
+  let remain = Math.max(0, Math.round((_examTimer.endsAt - Date.now()) / 1000));
+  const m = Math.floor(remain / 60), s = remain % 60;
+  valEl.textContent = m + ':' + String(s).padStart(2, '0');
+
+  badge.classList.toggle('warn', remain <= 300 && remain > 60);
+  badge.classList.toggle('crit', remain <= 60);
+
+  if (remain <= 300 && !_examTimer.warned5 && remain > 60) {
+    _examTimer.warned5 = true;
+    try { alert('5 minutes remaining.'); } catch(e){}
+  }
+  if (remain <= 60 && !_examTimer.warned1) {
+    _examTimer.warned1 = true;
+    try { alert('1 minute remaining — your test will submit automatically when time runs out.'); } catch(e){}
+  }
+  if (remain <= 0) {
+    stopExamTimer();
+    valEl.textContent = '0:00';
+    window._timeExpired = true;
+    try { alert("Time's up — your test is being submitted."); } catch(e){}
+    if (typeof submitExam === 'function') submitExam();
+  }
 }
 
 // Determine a question's exam type. Explicit qtype wins; otherwise fall back to
@@ -2428,6 +2493,7 @@ function updateExamProgress() {
 }
 
 async function submitExam() {
+  stopExamTimer();
   const q = currentQuiz;
   const written = window._examWritten || {};
   const match = window._examMatch || {};
@@ -2455,7 +2521,8 @@ async function submitExam() {
     }
   });
   const ua = totalItems - answeredCount;
-  if (ua > 0 && !confirm(ua + ' question' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+  if (!window._timeExpired && ua > 0 && !confirm(ua + ' question' + (ua>1?'s are':' is') + ' unanswered. Submit anyway?')) return;
+  window._timeExpired = false;
 
   let mcEarned = 0;
   let mcPts = 0;             // total auto-scored points possible (MC + matching + scenario MC subs)
@@ -3103,14 +3170,14 @@ function renderApplicants() {
   const rows = entries.map(([uid, scoresObj]) => {
     const name = getName(uid) || uid.replace(/^APP-/, '');
     const email = emailFromId(uid);
-    const attempts = Object.values(scoresObj);
-    const a = attempts[0] || {};
+    const attempts = Object.entries(scoresObj);
+    const [quizId, a] = attempts[0] || ['', {}];
     const statusChip = a.status === 'pending'
       ? '<span class="app-chip pending">Awaiting grade</span>'
       : (a.pass ? '<span class="app-chip pass">Pass</span>' : '<span class="app-chip fail">Review</span>');
     const scoreTxt = a.status === 'pending' ? '—' : (a.score != null ? a.score + '%' : '—');
     const when = a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : (a.date || '');
-    return `<div class="app-row" onclick="openTrainee('${String(uid).replace(/'/g,"\\'")}')">
+    return `<div class="app-row" onclick="openApplicant('${String(uid).replace(/'/g,"\\'")}','${String(quizId).replace(/'/g,"\\'")}')">
       <div class="app-row-main">
         <div class="app-row-name">${esc2(name)}</div>
         <div class="app-row-email">${esc2(email)}</div>
@@ -3119,10 +3186,22 @@ function renderApplicants() {
         <span class="app-row-date">${when}</span>
         <span class="app-row-score">${scoreTxt}</span>
         ${statusChip}
+        <span class="app-row-cta">${a.status === 'pending' ? 'Grade →' : 'Review →'}</span>
       </div>
     </div>`;
   }).join('');
   listEl.innerHTML = `<div class="app-rows">${rows}</div>`;
+}
+
+// Open an applicant's submission directly in the grading modal (their one test only),
+// rather than the trainee module list. Falls back to the Applicant-section quiz id.
+function openApplicant(uid, quizId) {
+  if (!quizId) {
+    const appQuiz = QUIZZES.find(q => q.section === 'Applicant');
+    quizId = appQuiz ? appQuiz.id : null;
+  }
+  if (!quizId) { alert('Could not find this applicant\u2019s test.'); return; }
+  openGrading(uid, quizId);
 }
 
 function renderAnalytics() {
@@ -3858,7 +3937,8 @@ function openGrading(uid, quizId) {
   const scores = getScores(uid);
   const mcScore = scores[quizId] ? (scores[quizId].score || 0) : 0;
 
-  document.getElementById('grading-title').textContent = uid + ' — ' + testInfo.name;
+  const _gradeName = getName(uid) || (String(uid).indexOf('APP-')===0 ? uid.replace(/^APP-/,'') : uid);
+  document.getElementById('grading-title').textContent = _gradeName + ' — ' + testInfo.name;
 
   const savedNotes = (grades[quizId + '_notes'] || {});
   // Reconstruct MC earned + total possible from the sheet attempt / quiz definition,
